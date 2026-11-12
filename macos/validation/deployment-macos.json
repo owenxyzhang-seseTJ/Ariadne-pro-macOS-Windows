@@ -57,7 +57,6 @@
     "duplicate_reference_executions": 13
   },
   "optimization": {
-    "report": "optimization/Ariadne pro 本机优化报告.md",
     "comparison": "optimization/paired-comparison.json",
     "patch": "optimization/ariadne-pro-local-speedup.patch",
     "order": [
