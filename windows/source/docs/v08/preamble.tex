@@ -1,0 +1,56 @@
+\usepackage[a4paper,margin=24mm,headheight=15pt,footskip=12mm]{geometry}
+\usepackage{fontspec}
+\setmainfont[Path=fonts/,BoldFont=ReportSerif-Bold.ttf]{ReportSerif-Regular.ttf}
+\setsansfont[Path=fonts/,BoldFont=ReportSans-Bold.ttf]{ReportSans-Regular.ttf}
+\setmonofont{Latin Modern Mono}[Scale=0.86]
+\newfontfamily\latintext{Latin Modern Roman}
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip=0pt plus 0.08em
+\usepackage{amsmath,amssymb,mathtools,bm,amsthm}
+\usepackage{graphicx,booktabs,longtable,tabularx,array}
+\usepackage{xcolor,enumitem,fancyhdr,titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,shapes.geometric}
+\usepackage[unicode,colorlinks=true,linkcolor=blue!35!black,citecolor=blue!35!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{listings}
+\definecolor{ink}{HTML}{1D354D}
+\definecolor{accent}{HTML}{B86937}
+\definecolor{pale}{HTML}{F2F5F7}
+\titleformat{\chapter}[display]{\Large\bfseries\color{ink}}{\large 第\thechapter 章}{7pt}{\huge}
+\titlespacing*{\chapter}{0pt}{-8pt}{20pt}
+\titleformat{\section}{\large\bfseries\color{ink}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\bibname}{参考文献}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\appendixname}{附录}
+\setcounter{tocdepth}{1}
+\setcounter{secnumdepth}{2}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{3pt}
+\linespread{1.12}
+\setlist{itemsep=3pt,topsep=5pt,leftmargin=2em}
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[L]{\small Ariadne：从衍射像素到晶体结构}
+\fancyhead[R]{\small 原理与实现 · 0.8.0}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\dif}{\mathrm{d}}
+\newcommand{\iu}{\mathrm{i}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\angstrom}{\text{\AA}}
+\newenvironment{worked}[1]{\begin{quote}\small\textbf{例：#1}\par}{\end{quote}}
+\newenvironment{principle}{\begin{quote}\small\color{ink}}{\end{quote}}
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true,frame=single,rulecolor=\color{black!15},backgroundcolor=\color{pale},columns=fullflexible,keepspaces=true,showstringspaces=false}
+\renewcommand{\topfraction}{0.9}\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.08}\renewcommand{\floatpagefraction}{0.75}
+\emergencystretch=3em\allowdisplaybreaks
+\hypersetup{pdftitle={Ariadne 0.8.0：从衍射像素到晶体结构——数学、算法与原生智能体},pdfauthor={Ariadne technical documentation}}
+\setlength{\intextsep}{8pt}\setlength{\textfloatsep}{12pt}

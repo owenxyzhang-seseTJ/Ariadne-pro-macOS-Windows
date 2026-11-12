@@ -1,0 +1,50 @@
+{
+  "schema": "ariadne-agent/1",
+  "mode": "custom",
+  "inputs": {
+    "model": "fen4_start.json",
+    "reflections": "fen4_measured.json"
+  },
+  "nodes": [
+    {
+      "id": "refine",
+      "tool": "native.run",
+      "args": {
+        "request": {
+          "action": "refine",
+          "structure": "fen4_start.json",
+          "hkl": "fen4_measured.json",
+          "options": {
+            "weight_a": 0.0282,
+            "weight_b": 0.3122,
+            "weight_cycles": 20,
+            "covariance_scale": "reduced_chi2"
+          },
+          "graphics": false
+        },
+        "inputs": {
+          "fen4_start.json": {
+            "$input": "model"
+          },
+          "fen4_measured.json": {
+            "$input": "reflections"
+          }
+        }
+      }
+    },
+    {
+      "id": "package",
+      "tool": "package",
+      "depends_on": [
+        "refine"
+      ],
+      "args": {
+        "evidence": {
+          "$results": [
+            "refine"
+          ]
+        }
+      }
+    }
+  ]
+}

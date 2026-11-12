@@ -1,0 +1,156 @@
+running egg_info
+writing src/ariadne_xtal.egg-info/PKG-INFO
+writing dependency_links to src/ariadne_xtal.egg-info/dependency_links.txt
+writing entry points to src/ariadne_xtal.egg-info/entry_points.txt
+writing requirements to src/ariadne_xtal.egg-info/requires.txt
+writing top-level names to src/ariadne_xtal.egg-info/top_level.txt
+reading manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+running bdist_wheel
+running build
+running build_py
+running egg_info
+writing src/ariadne_xtal.egg-info/PKG-INFO
+writing dependency_links to src/ariadne_xtal.egg-info/dependency_links.txt
+writing entry points to src/ariadne_xtal.egg-info/entry_points.txt
+writing requirements to src/ariadne_xtal.egg-info/requires.txt
+writing top-level names to src/ariadne_xtal.egg-info/top_level.txt
+reading manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+installing to build/bdist.linux-x86_64/wheel
+running install
+running install_lib
+creating build/bdist.linux-x86_64/wheel
+creating build/bdist.linux-x86_64/wheel/ariadne_xtal
+copying build/lib/ariadne_xtal/symmetry.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+creating build/bdist.linux-x86_64/wheel/ariadne_xtal/cpp
+copying build/lib/ariadne_xtal/cpp/intensity_kernel.cpp -> build/bdist.linux-x86_64/wheel/./ariadne_xtal/cpp
+copying build/lib/ariadne_xtal/scattering.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/derivatives.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/io.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/model.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/validation.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/__main__.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/mcp_server.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/phasing.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/spacegroup_search.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/kernels.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/restraints.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/refinement.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/compat.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/feedback.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/agent.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/visualization.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/reduction_bridge.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/joint_refinement.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/absolute.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/cli.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/capabilities.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/hybrid_phasing.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/shelx.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/maps.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/__init__.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/evidence_solver.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/direct_methods.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+copying build/lib/ariadne_xtal/autonomy.py -> build/bdist.linux-x86_64/wheel/./ariadne_xtal
+running install_egg_info
+Copying src/ariadne_xtal.egg-info to build/bdist.linux-x86_64/wheel/./ariadne_xtal-0.8.0-py3.12.egg-info
+running install_scripts
+creating build/bdist.linux-x86_64/wheel/ariadne_xtal-0.8.0.dist-info/WHEEL
+creating '/tmp/ariadne-kernel-build-rxtwmdm7/python/.tmp-_e85s6vx/ariadne_xtal-0.8.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+adding 'ariadne_xtal/__init__.py'
+adding 'ariadne_xtal/__main__.py'
+adding 'ariadne_xtal/absolute.py'
+adding 'ariadne_xtal/agent.py'
+adding 'ariadne_xtal/autonomy.py'
+adding 'ariadne_xtal/capabilities.py'
+adding 'ariadne_xtal/cli.py'
+adding 'ariadne_xtal/compat.py'
+adding 'ariadne_xtal/derivatives.py'
+adding 'ariadne_xtal/direct_methods.py'
+adding 'ariadne_xtal/evidence_solver.py'
+adding 'ariadne_xtal/feedback.py'
+adding 'ariadne_xtal/hybrid_phasing.py'
+adding 'ariadne_xtal/io.py'
+adding 'ariadne_xtal/joint_refinement.py'
+adding 'ariadne_xtal/kernels.py'
+adding 'ariadne_xtal/maps.py'
+adding 'ariadne_xtal/mcp_server.py'
+adding 'ariadne_xtal/model.py'
+adding 'ariadne_xtal/phasing.py'
+adding 'ariadne_xtal/reduction_bridge.py'
+adding 'ariadne_xtal/refinement.py'
+adding 'ariadne_xtal/restraints.py'
+adding 'ariadne_xtal/scattering.py'
+adding 'ariadne_xtal/shelx.py'
+adding 'ariadne_xtal/spacegroup_search.py'
+adding 'ariadne_xtal/symmetry.py'
+adding 'ariadne_xtal/validation.py'
+adding 'ariadne_xtal/visualization.py'
+adding 'ariadne_xtal/cpp/intensity_kernel.cpp'
+adding 'ariadne_xtal-0.8.0.dist-info/licenses/LICENSE'
+adding 'ariadne_xtal-0.8.0.dist-info/METADATA'
+adding 'ariadne_xtal-0.8.0.dist-info/WHEEL'
+adding 'ariadne_xtal-0.8.0.dist-info/entry_points.txt'
+adding 'ariadne_xtal-0.8.0.dist-info/top_level.txt'
+adding 'ariadne_xtal-0.8.0.dist-info/RECORD'
+removing build/bdist.linux-x86_64/wheel
+Successfully built ariadne_xtal-0.8.0-py3-none-any.whl
+* Getting build dependencies for wheel...
+warning: no files found matching '*.svg' under directory 'docs'
+warning: no files found matching '*.res' under directory 'examples'
+warning: no files found matching '*.html' under directory 'examples'
+warning: no files found matching '*.svg' under directory 'examples'
+warning: no files found matching '*.pdf' under directory 'examples'
+warning: no files found matching '*.npz' under directory 'examples'
+warning: no files found matching '*.ccp4' under directory 'examples'
+warning: no files found matching '*.txt' under directory 'validation'
+warning: no files found matching '*.md' under directory 'tools'
+no previously-included directories found matching 'docs/fonts'
+warning: no previously-included files matching '__pycache__' found anywhere in distribution
+warning: no previously-included files matching '*.py[cod]' found anywhere in distribution
+warning: no previously-included files matching '.DS_Store' found anywhere in distribution
+WARNING `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+* Building wheel...
+warning: no files found matching '*.svg' under directory 'docs'
+warning: no files found matching '*.res' under directory 'examples'
+warning: no files found matching '*.html' under directory 'examples'
+warning: no files found matching '*.svg' under directory 'examples'
+warning: no files found matching '*.pdf' under directory 'examples'
+warning: no files found matching '*.npz' under directory 'examples'
+warning: no files found matching '*.ccp4' under directory 'examples'
+warning: no files found matching '*.txt' under directory 'validation'
+warning: no files found matching '*.md' under directory 'tools'
+no previously-included directories found matching 'docs/fonts'
+warning: no previously-included files matching '__pycache__' found anywhere in distribution
+warning: no previously-included files matching '*.py[cod]' found anywhere in distribution
+warning: no previously-included files matching '.DS_Store' found anywhere in distribution
+WARNING `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!

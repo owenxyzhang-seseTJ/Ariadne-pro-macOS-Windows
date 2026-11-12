@@ -1,0 +1,12 @@
+{
+  "action": "refine",
+  "structure": "fen4_start.json",
+  "hkl": "fen4_measured.json",
+  "options": {
+    "weight_a": 0.0282,
+    "weight_b": 0.3122,
+    "weight_cycles": 20,
+    "covariance_scale": "reduced_chi2"
+  },
+  "graphics": false
+}

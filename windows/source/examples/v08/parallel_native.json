@@ -1,0 +1,123 @@
+{
+  "schema": "ariadne-agent/1",
+  "mode": "custom",
+  "inputs": {
+    "model_a": "fen4_start.json",
+    "model_b": "fen4_alternative_start.json",
+    "reflections": "fen4_measured.json"
+  },
+  "scheduler": {
+    "max_workers": 2,
+    "cpu_threads": 2,
+    "memory_mb": 512,
+    "default_task_memory_mb": 256,
+    "isolate_actions": true
+  },
+  "budget": {
+    "max_actions": 4,
+    "max_decisions": 4,
+    "wall_seconds": 120,
+    "action_seconds": 60
+  },
+  "nodes": [
+    {
+      "id": "refine_a",
+      "tool": "native.run",
+      "args": {
+        "request": {
+          "action": "refine",
+          "structure": "start.json",
+          "hkl": "measured.json",
+          "options": {
+            "weight_a": 0.0282,
+            "weight_b": 0.3122,
+            "weight_cycles": 20,
+            "covariance_scale": "reduced_chi2"
+          },
+          "graphics": false
+        },
+        "inputs": {
+          "start.json": {
+            "$input": "model_a"
+          },
+          "measured.json": {
+            "$input": "reflections"
+          }
+        }
+      },
+      "depends_on": [],
+      "allow_failed_dependencies": false,
+      "resources": {
+        "cpu_threads": 1,
+        "memory_mb": 256
+      }
+    },
+    {
+      "id": "refine_b",
+      "tool": "native.run",
+      "args": {
+        "request": {
+          "action": "refine",
+          "structure": "start.json",
+          "hkl": "measured.json",
+          "options": {
+            "weight_a": 0.0282,
+            "weight_b": 0.3122,
+            "weight_cycles": 20,
+            "covariance_scale": "reduced_chi2"
+          },
+          "graphics": false
+        },
+        "inputs": {
+          "start.json": {
+            "$input": "model_b"
+          },
+          "measured.json": {
+            "$input": "reflections"
+          }
+        }
+      },
+      "depends_on": [],
+      "allow_failed_dependencies": false,
+      "resources": {
+        "cpu_threads": 1,
+        "memory_mb": 256
+      }
+    },
+    {
+      "id": "review",
+      "tool": "review",
+      "args": {
+        "evidence": {
+          "$results": [
+            "refine_a",
+            "refine_b"
+          ]
+        }
+      },
+      "depends_on": [
+        "refine_a",
+        "refine_b"
+      ],
+      "allow_failed_dependencies": true
+    },
+    {
+      "id": "package",
+      "tool": "package",
+      "args": {
+        "evidence": [
+          {
+            "$ref": {
+              "node": "review",
+              "pointer": ""
+            }
+          }
+        ]
+      },
+      "depends_on": [
+        "review"
+      ],
+      "allow_failed_dependencies": false
+    }
+  ]
+}

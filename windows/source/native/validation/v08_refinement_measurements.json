@@ -1,0 +1,186 @@
+{
+  "schema": "ariadne_xtal.v08_refinement_validation/1",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "scipy": "1.17.0",
+  "gemmi": "0.7.5",
+  "numeric_backend": {
+    "requested": "python",
+    "resolved": "python",
+    "compiled_available": true,
+    "build": {
+      "kernel_version": 1,
+      "binding": "CPython checked native buffers",
+      "compiler": "13.3.0",
+      "architecture": "x86_64",
+      "internal_threads": 1,
+      "releases_gil": true,
+      "openmp": false,
+      "fast_math": false
+    },
+    "fallback_reason": null,
+    "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+    "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+  },
+  "blas_threads": 1,
+  "derivatives": [
+    {
+      "case": "oblique_anomalous",
+      "n_reflections": 124,
+      "n_parameters": 18,
+      "maximum_scaled_derivative_error": 4.317933325720194e-09,
+      "maximum_intensity_error": 6.821210263296962e-13
+    },
+    {
+      "case": "special_repeated_eigenvalues",
+      "n_reflections": 124,
+      "n_parameters": 9,
+      "maximum_scaled_derivative_error": 4.8209368494959975e-09,
+      "maximum_intensity_error": 1.3642420526593924e-12
+    },
+    {
+      "case": "nonsymmorphic",
+      "n_reflections": 124,
+      "n_parameters": 18,
+      "maximum_scaled_derivative_error": 3.6742127411835524e-09,
+      "maximum_intensity_error": 1.8189894035458565e-11
+    },
+    {
+      "case": "occupancy_and_inversion_twin",
+      "n_reflections": 124,
+      "n_parameters": 17,
+      "maximum_scaled_derivative_error": 9.01918948169297e-09,
+      "maximum_intensity_error": 9.094947017729282e-13
+    },
+    {
+      "case": "merohedral_three_domains",
+      "n_reflections": 124,
+      "n_parameters": 17,
+      "maximum_scaled_derivative_error": 4.286916470435069e-09,
+      "maximum_intensity_error": 0.0
+    }
+  ],
+  "refinement": {
+    "kind": "synthetic_local_refinement",
+    "observation_generator": "Gemmi independent SF calculator",
+    "n_atoms": 18,
+    "n_reflections": 1098,
+    "n_parameters": 70,
+    "median_wall_speed_ratio": 22.864122136064182,
+    "prediction_difference_sigma_rms": 5.323701752779225e-10,
+    "summary": {
+      "analytic": {
+        "median_wall_seconds": 0.11728958300000158,
+        "median_cpu_seconds": 0.11717811400000011,
+        "diffraction_evaluations": 7
+      },
+      "finite_difference": {
+        "median_wall_seconds": 2.6817233510000733,
+        "median_cpu_seconds": 2.680978889,
+        "diffraction_evaluations": 988
+      }
+    },
+    "runs": [
+      {
+        "method": "analytic",
+        "repeat": 1,
+        "wall_seconds": 0.12112431600007767,
+        "cpu_seconds": 0.121123443,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3951728969362,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 1,
+        "wall_seconds": 2.6817233510000733,
+        "cpu_seconds": 2.680978889,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3951728969371,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "analytic",
+        "repeat": 2,
+        "wall_seconds": 0.11728958300000158,
+        "cpu_seconds": 0.11717811400000011,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3951728969362,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 2,
+        "wall_seconds": 2.6691980750001676,
+        "cpu_seconds": 2.667699702,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3951728969371,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "analytic",
+        "repeat": 3,
+        "wall_seconds": 0.1128574600002139,
+        "cpu_seconds": 0.11285887099999936,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3951728969362,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 3,
+        "wall_seconds": 2.731444347999968,
+        "cpu_seconds": 2.730515211,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3951728969371,
+        "success": true,
+        "negative_intensities": 18
+      }
+    ],
+    "interpretation": "Local timing in one environment, not a performance guarantee or SHELXL comparison"
+  },
+  "source_sha256": {
+    "derivatives.py": "98fb9d63dd904442b432a7717a69b5685e8c5189e07751b26c4ae4b4e9a54068",
+    "refinement.py": "72b9f6b7adfaf82375d0cfa54a05a18b14e7edffb79cd634dcccff02e260f982",
+    "scattering.py": "b021d5a9236c75c07a80eeb6a84ac88454ffa78f79b289fd8f8f96fbaf6fd983",
+    "kernels.py": "a709f135fe189bd40f36ea2d6c7f4dde5718ebd9697d94592347bc99af13194a"
+  },
+  "memory": [
+    {
+      "method": "full_svd",
+      "shape": [
+        3500,
+        64
+      ],
+      "peak_process_rss_kib": 260500,
+      "checksum": 3781.7239906941127
+    },
+    {
+      "method": "streamed_qr",
+      "shape": [
+        3500,
+        64
+      ],
+      "peak_process_rss_kib": 81444,
+      "checksum": 3781.4582028817244
+    }
+  ],
+  "memory_interpretation": "Separate Linux processes; peak RSS includes Python and loaded libraries. Both use identical 3500 x 64 input. The old full left-singular matrix alone has 98,000,000 bytes; the new QR update stores no such matrix. Dense least_squares still retains the real N x P Jacobian."
+}

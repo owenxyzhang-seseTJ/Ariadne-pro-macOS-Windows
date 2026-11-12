@@ -1,0 +1,246 @@
+running egg_info
+writing src/ariadne_xtal.egg-info/PKG-INFO
+writing dependency_links to src/ariadne_xtal.egg-info/dependency_links.txt
+writing entry points to src/ariadne_xtal.egg-info/entry_points.txt
+writing requirements to src/ariadne_xtal.egg-info/requires.txt
+writing top-level names to src/ariadne_xtal.egg-info/top_level.txt
+reading manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+running sdist
+running egg_info
+writing src/ariadne_xtal.egg-info/PKG-INFO
+writing dependency_links to src/ariadne_xtal.egg-info/dependency_links.txt
+writing entry points to src/ariadne_xtal.egg-info/entry_points.txt
+writing requirements to src/ariadne_xtal.egg-info/requires.txt
+writing top-level names to src/ariadne_xtal.egg-info/top_level.txt
+reading manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+writing manifest file 'src/ariadne_xtal.egg-info/SOURCES.txt'
+running check
+creating ariadne_xtal-0.8.0
+creating ariadne_xtal-0.8.0/docs
+creating ariadne_xtal-0.8.0/docs/archive
+creating ariadne_xtal-0.8.0/docs/chapters
+creating ariadne_xtal-0.8.0/docs/figures
+creating ariadne_xtal-0.8.0/examples
+creating ariadne_xtal-0.8.0/src/ariadne_xtal
+creating ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+creating ariadne_xtal-0.8.0/src/ariadne_xtal/cpp
+creating ariadne_xtal-0.8.0/tests
+creating ariadne_xtal-0.8.0/tools
+creating ariadne_xtal-0.8.0/validation
+creating ariadne_xtal-0.8.0/validation/phasing_recovery
+creating ariadne_xtal-0.8.0/validation/public_data
+creating ariadne_xtal-0.8.0/validation/real_fen4
+creating ariadne_xtal-0.8.0/validation/real_fen4/figures
+creating ariadne_xtal-0.8.0/validation/v08_phasing
+creating ariadne_xtal-0.8.0/validation/v08_phasing/figures
+creating ariadne_xtal-0.8.0/validation/v08_real_fen4
+copying files to ariadne_xtal-0.8.0...
+copying API_CONTRACT.md -> ariadne_xtal-0.8.0
+copying LICENSE -> ariadne_xtal-0.8.0
+copying MANIFEST.in -> ariadne_xtal-0.8.0
+copying README.md -> ariadne_xtal-0.8.0
+copying THIRD_PARTY_NOTICES.md -> ariadne_xtal-0.8.0
+copying pyproject.toml -> ariadne_xtal-0.8.0
+copying setup.py -> ariadne_xtal-0.8.0
+copying shelx_instruction_matrix.json -> ariadne_xtal-0.8.0
+copying docs/API.md -> ariadne_xtal-0.8.0/docs
+copying docs/BUILD.md -> ariadne_xtal-0.8.0/docs
+copying docs/COMPATIBILITY.md -> ariadne_xtal-0.8.0/docs
+copying docs/references.tex -> ariadne_xtal-0.8.0/docs
+copying docs/report.pdf -> ariadne_xtal-0.8.0/docs
+copying docs/report.tex -> ariadne_xtal-0.8.0/docs
+copying docs/archive/DELIVERY_MANIFEST_0_1_0.json -> ariadne_xtal-0.8.0/docs/archive
+copying docs/chapters/01_scattering.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/02_geometry_symmetry.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/03_statistics.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/04_phasing.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/05_refinement.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/06_constraints.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/07_disorder_twins.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/08_uncertainty.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/09_agent.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/10_feedback.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/11_visualization.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/12_implementation.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/appendix_capabilities.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/appendix_usage.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/chapters/appendix_validation.tex -> ariadne_xtal-0.8.0/docs/chapters
+copying docs/figures/density_sections.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying docs/figures/fen4_density_sections.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying docs/figures/fen4_refinement_diagnostics.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying docs/figures/fen4_structure_ellipsoids.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying docs/figures/parameter_correlation.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying docs/figures/refinement_diagnostics.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying docs/figures/structure_ellipsoids.pdf -> ariadne_xtal-0.8.0/docs/figures
+copying examples/PROVENANCE.json -> ariadne_xtal-0.8.0/examples
+copying examples/demo_reflections.hkl -> ariadne_xtal-0.8.0/examples
+copying examples/demo_reflections.json -> ariadne_xtal-0.8.0/examples
+copying examples/demo_start.cif -> ariadne_xtal-0.8.0/examples
+copying examples/demo_start.json -> ariadne_xtal-0.8.0/examples
+copying examples/demo_truth.json -> ariadne_xtal-0.8.0/examples
+copying examples/generate_examples.py -> ariadne_xtal-0.8.0/examples
+copying examples/refine_job.json -> ariadne_xtal-0.8.0/examples
+copying src/ariadne_xtal/__init__.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/__main__.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/absolute.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/agent.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/autonomy.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/capabilities.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/cli.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/compat.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/derivatives.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/direct_methods.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/evidence_solver.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/feedback.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/hybrid_phasing.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/io.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/joint_refinement.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/kernels.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/maps.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/mcp_server.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/model.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/phasing.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/reduction_bridge.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/refinement.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/restraints.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/scattering.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/shelx.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/spacegroup_search.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/symmetry.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/validation.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal/visualization.py -> ariadne_xtal-0.8.0/src/ariadne_xtal
+copying src/ariadne_xtal.egg-info/PKG-INFO -> ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+copying src/ariadne_xtal.egg-info/SOURCES.txt -> ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+copying src/ariadne_xtal.egg-info/dependency_links.txt -> ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+copying src/ariadne_xtal.egg-info/entry_points.txt -> ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+copying src/ariadne_xtal.egg-info/requires.txt -> ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+copying src/ariadne_xtal.egg-info/top_level.txt -> ariadne_xtal-0.8.0/src/ariadne_xtal.egg-info
+copying src/ariadne_xtal/cpp/intensity_kernel.cpp -> ariadne_xtal-0.8.0/src/ariadne_xtal/cpp
+copying tests/test_agent.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_agent_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_autonomy_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_core.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_evidence_solver_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_io.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_joint_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_kernels_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_phasing_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_refinement.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_refinement_v08.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_visualization.py -> ariadne_xtal-0.8.0/tests
+copying tests/test_workflows_audit.py -> ariadne_xtal-0.8.0/tests
+copying tools/build_optional_kernel.py -> ariadne_xtal-0.8.0/tools
+copying tools/check_release.py -> ariadne_xtal-0.8.0/tools
+copying tools/fetch_report_fonts.py -> ariadne_xtal-0.8.0/tools
+copying validation/check_v08_kernel_build.py -> ariadne_xtal-0.8.0/validation
+copying validation/run_phasing_recovery.py -> ariadne_xtal-0.8.0/validation
+copying validation/run_real_fen4.py -> ariadne_xtal-0.8.0/validation
+copying validation/run_v08_joint.py -> ariadne_xtal-0.8.0/validation
+copying validation/run_v08_kernels.py -> ariadne_xtal-0.8.0/validation
+copying validation/run_v08_phasing_autonomy.py -> ariadne_xtal-0.8.0/validation
+copying validation/run_v08_refinement.py -> ariadne_xtal-0.8.0/validation
+copying validation/v08_agent_transport_tests.xml -> ariadne_xtal-0.8.0/validation
+copying validation/v08_agent_transport_validation.json -> ariadne_xtal-0.8.0/validation
+copying validation/v08_joint_measurements.json -> ariadne_xtal-0.8.0/validation
+copying validation/v08_kernel_measurements.json -> ariadne_xtal-0.8.0/validation
+copying validation/v08_kernel_packaging.json -> ariadne_xtal-0.8.0/validation
+copying validation/v08_kernel_tests.xml -> ariadne_xtal-0.8.0/validation
+copying validation/v08_phasing_notes.md -> ariadne_xtal-0.8.0/validation
+copying validation/v08_refinement_measurements.json -> ariadne_xtal-0.8.0/validation
+copying validation/v08_refinement_notes.md -> ariadne_xtal-0.8.0/validation
+copying validation/phasing_recovery/candidate_1.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/candidate_2.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/candidate_3.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/candidate_4.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/refined_1.cif -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/refined_2.cif -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/refined_3.cif -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/refined_4.cif -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/result.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/synthetic_reflections.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/phasing_recovery/truth.json -> ariadne_xtal-0.8.0/validation/phasing_recovery
+copying validation/public_data/2242624.cif -> ariadne_xtal-0.8.0/validation/public_data
+copying validation/public_data/2242624.hkl -> ariadne_xtal-0.8.0/validation/public_data
+copying validation/public_data/4003024.cif -> ariadne_xtal-0.8.0/validation/public_data
+copying validation/public_data/README.md -> ariadne_xtal-0.8.0/validation/public_data
+copying validation/real_fen4/input_model.json -> ariadne_xtal-0.8.0/validation/real_fen4
+copying validation/real_fen4/measured_reflections.json -> ariadne_xtal-0.8.0/validation/real_fen4
+copying validation/real_fen4/refined.cif -> ariadne_xtal-0.8.0/validation/real_fen4
+copying validation/real_fen4/result.json -> ariadne_xtal-0.8.0/validation/real_fen4
+copying validation/real_fen4/figures/density_sections.pdf -> ariadne_xtal-0.8.0/validation/real_fen4/figures
+copying validation/real_fen4/figures/density_sections.svg -> ariadne_xtal-0.8.0/validation/real_fen4/figures
+copying validation/real_fen4/figures/refinement_diagnostics.pdf -> ariadne_xtal-0.8.0/validation/real_fen4/figures
+copying validation/real_fen4/figures/refinement_diagnostics.svg -> ariadne_xtal-0.8.0/validation/real_fen4/figures
+copying validation/real_fen4/figures/structure_ellipsoids.pdf -> ariadne_xtal-0.8.0/validation/real_fen4/figures
+copying validation/real_fen4/figures/structure_ellipsoids.svg -> ariadne_xtal-0.8.0/validation/real_fen4/figures
+copying validation/v08_phasing/overlap_input.json -> ariadne_xtal-0.8.0/validation/v08_phasing
+copying validation/v08_phasing/result.json -> ariadne_xtal-0.8.0/validation/v08_phasing
+copying validation/v08_phasing/figures/blind_recovery_and_evidence.pdf -> ariadne_xtal-0.8.0/validation/v08_phasing/figures
+copying validation/v08_phasing/figures/signed_intensity_prox.pdf -> ariadne_xtal-0.8.0/validation/v08_phasing/figures
+copying validation/v08_real_fen4/input_model.json -> ariadne_xtal-0.8.0/validation/v08_real_fen4
+copying validation/v08_real_fen4/measured_reflections.json -> ariadne_xtal-0.8.0/validation/v08_real_fen4
+copying validation/v08_real_fen4/refined.cif -> ariadne_xtal-0.8.0/validation/v08_real_fen4
+copying validation/v08_real_fen4/result.json -> ariadne_xtal-0.8.0/validation/v08_real_fen4
+Writing ariadne_xtal-0.8.0/setup.cfg
+Creating tar archive
+removing 'ariadne_xtal-0.8.0' (and everything under it)
+Successfully built ariadne_xtal-0.8.0.tar.gz
+* Getting build dependencies for sdist...
+warning: no files found matching '*.svg' under directory 'docs'
+warning: no files found matching '*.res' under directory 'examples'
+warning: no files found matching '*.html' under directory 'examples'
+warning: no files found matching '*.svg' under directory 'examples'
+warning: no files found matching '*.pdf' under directory 'examples'
+warning: no files found matching '*.npz' under directory 'examples'
+warning: no files found matching '*.ccp4' under directory 'examples'
+warning: no files found matching '*.txt' under directory 'validation'
+warning: no files found matching '*.md' under directory 'tools'
+no previously-included directories found matching 'docs/fonts'
+warning: no previously-included files matching '__pycache__' found anywhere in distribution
+warning: no previously-included files matching '*.py[cod]' found anywhere in distribution
+warning: no previously-included files matching '.DS_Store' found anywhere in distribution
+WARNING `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+* Building sdist...
+warning: no files found matching '*.svg' under directory 'docs'
+warning: no files found matching '*.res' under directory 'examples'
+warning: no files found matching '*.html' under directory 'examples'
+warning: no files found matching '*.svg' under directory 'examples'
+warning: no files found matching '*.pdf' under directory 'examples'
+warning: no files found matching '*.npz' under directory 'examples'
+warning: no files found matching '*.ccp4' under directory 'examples'
+warning: no files found matching '*.txt' under directory 'validation'
+warning: no files found matching '*.md' under directory 'tools'
+no previously-included directories found matching 'docs/fonts'
+warning: no previously-included files matching '__pycache__' found anywhere in distribution
+warning: no previously-included files matching '*.py[cod]' found anywhere in distribution
+warning: no previously-included files matching '.DS_Store' found anywhere in distribution
+WARNING `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!

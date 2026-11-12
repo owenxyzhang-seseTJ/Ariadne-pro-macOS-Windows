@@ -1,0 +1,53 @@
+{
+  "schema": "ariadne-delivery/2",
+  "version": "0.8.0",
+  "build": "0.8.0-native-20261108",
+  "date": "2026-11-08",
+  "release_kind": "complete source and local validated builds",
+  "baseline_reduction_commit": "60a3cfb166dab5580c1afdcde248357c4b7e9315",
+  "baseline_native": "preserved Ariadne-Xtal 0.1.0 source",
+  "remote_publication": "No GitHub push or tag asserted for this delivery.",
+  "reports": [
+    "docs/v08/Ariadne_0_8_0_Textbook.pdf",
+    "docs/v08/Ariadne_0_8_0_Loop.pdf"
+  ],
+  "report_sources": [
+    "docs/v08/Ariadne_0_8_0_Textbook.tex",
+    "docs/v08/Ariadne_0_8_0_Loop.tex"
+  ],
+  "guide": "docs/v08/Ariadne_0_8_0_Guide.zh-CN.md",
+  "validation": "docs/v08/results/release_validation.json",
+  "source_manifest": "RELEASE_MANIFEST.json",
+  "distributions": [
+    "dist/v0.8/ariadne-0.8.0-py3-none-any.whl",
+    "dist/v0.8/ariadne-0.8.0.tar.gz",
+    "dist/v0.8/ariadne_xtal-0.8.0-cp312-cp312-linux_x86_64.whl",
+    "dist/v0.8/ariadne_xtal-0.8.0-py3-none-any.whl",
+    "dist/v0.8/ariadne_xtal-0.8.0.tar.gz"
+  ],
+  "optional_kernel": {
+    "language": "C++17",
+    "source": "native/src/ariadne_xtal/cpp/intensity_kernel.cpp",
+    "tested_compiled_wheel": "CPython 3.12, Linux x86_64",
+    "portable_fallback": "NumPy analytic reference; pure-Python wheel supplied"
+  },
+  "scheduler": {
+    "implementation": "POSIX subprocess DAG with CPU and declared memory admission",
+    "tested_platform": "Linux",
+    "memory_policy": "Admission reservations, not OS hard RSS quotas."
+  },
+  "included_font_license": "Subset Noto SC fonts renamed; SIL OFL 1.1 notices in docs/v08/fonts/",
+  "licenses": [
+    "LICENSE",
+    "native/LICENSE",
+    "native/THIRD_PARTY_NOTICES.md"
+  ],
+  "not_redistributed": [
+    "DIALS/cctbx/dxtbx compiled runtime",
+    "SHELXT",
+    "SHELXL",
+    "API credentials"
+  ],
+  "capability_scope": "Native phasing, analytic refinement and indexed same-phase observation-group refinement; full SHELX instruction and production parity not claimed.",
+  "archive_verification": "python scripts/verify_release.py /absolute/path/to/source.zip"
+}

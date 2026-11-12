@@ -1,0 +1,160 @@
+{
+  "schema": "ariadne_xtal.v08_kernel_packaging/1",
+  "builds": [
+    {
+      "command": [
+        "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+        "-m",
+        "build",
+        "--no-isolation",
+        "--wheel",
+        "--outdir",
+        "/tmp/ariadne-kernel-build-rxtwmdm7/python"
+      ],
+      "returncode": 0,
+      "log": "validation/kernel_build_logs/wheel_python.log"
+    },
+    {
+      "command": [
+        "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+        "-m",
+        "build",
+        "--no-isolation",
+        "--wheel",
+        "--outdir",
+        "/tmp/ariadne-kernel-build-rxtwmdm7/cpp"
+      ],
+      "returncode": 0,
+      "log": "validation/kernel_build_logs/wheel_cpp.log"
+    },
+    {
+      "command": [
+        "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+        "setup.py",
+        "build_ext",
+        "--force",
+        "--build-lib",
+        "/tmp/ariadne-kernel-build-rxtwmdm7/missing_auto",
+        "--build-temp",
+        "/tmp/ariadne-kernel-build-rxtwmdm7/objects_auto"
+      ],
+      "returncode": 0,
+      "log": "validation/kernel_build_logs/missing_compiler_auto.log"
+    },
+    {
+      "command": [
+        "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+        "setup.py",
+        "build_ext",
+        "--force",
+        "--build-lib",
+        "/tmp/ariadne-kernel-build-rxtwmdm7/missing_1",
+        "--build-temp",
+        "/tmp/ariadne-kernel-build-rxtwmdm7/objects_1"
+      ],
+      "returncode": 1,
+      "log": "validation/kernel_build_logs/missing_compiler_1.log"
+    },
+    {
+      "command": [
+        "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+        "-m",
+        "build",
+        "--no-isolation",
+        "--sdist",
+        "--outdir",
+        "/workspace/scratch/4f12e5e7e14c/Ariadne/dist/v0.8"
+      ],
+      "returncode": 0,
+      "log": "validation/kernel_build_logs/source_archive.log"
+    }
+  ],
+  "wheels": [
+    {
+      "filename": "ariadne_xtal-0.8.0-py3-none-any.whl",
+      "bytes": 130813,
+      "sha256": "a2c4ff41a342db7e5f6486ef8bbc0aaa5ddf120a06068a9dcabe0f4b6822ff7f",
+      "compiled_members": [],
+      "smoke": {
+        "status": {
+          "requested": "auto",
+          "resolved": "python",
+          "compiled_available": false,
+          "build": null,
+          "fallback_reason": "cannot import name '_intensity_cpp' from 'ariadne_xtal' (/tmp/ariadne-kernel-build-rxtwmdm7/python_unpacked/ariadne_xtal/__init__.py)",
+          "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+          "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+        },
+        "intensity": [
+          31.069299960889808,
+          10.521329812160785
+        ],
+        "jacobian_shape": [
+          2,
+          2
+        ],
+        "module_from_extracted_wheel": true,
+        "explicit_cpp_failure": "C++ numeric backend is unavailable; build with python tools/build_optional_kernel.py --inplace or select python/auto"
+      }
+    },
+    {
+      "filename": "ariadne_xtal-0.8.0-cp312-cp312-linux_x86_64.whl",
+      "bytes": 178982,
+      "sha256": "abf14065f7b5af099d6816e7ceb6b96cbacab525d73d6ddad0f99a6ad6c47c4e",
+      "compiled_members": [
+        "ariadne_xtal/_intensity_cpp.cpython-312-x86_64-linux-gnu.so"
+      ],
+      "smoke": {
+        "status": {
+          "requested": "auto",
+          "resolved": "cpp",
+          "compiled_available": true,
+          "build": {
+            "kernel_version": 1,
+            "binding": "CPython checked native buffers",
+            "compiler": "13.3.0",
+            "architecture": "x86_64",
+            "internal_threads": 1,
+            "releases_gil": true,
+            "openmp": false,
+            "fast_math": false
+          },
+          "fallback_reason": null,
+          "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+          "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+        },
+        "intensity": [
+          31.069299960889808,
+          10.521329812160788
+        ],
+        "jacobian_shape": [
+          2,
+          2
+        ],
+        "module_from_extracted_wheel": true,
+        "explicit_cpp_failure": null
+      }
+    }
+  ],
+  "sdist": {
+    "filename": "ariadne_xtal-0.8.0.tar.gz",
+    "bytes": 2156035,
+    "sha256": "965ae53af52f4d5d3d30d684aca26db45980e30b671b3190d3e762f5ea46b39d",
+    "required_source_members_verified": [
+      "src/ariadne_xtal/cpp/intensity_kernel.cpp",
+      "src/ariadne_xtal/kernels.py",
+      "tools/build_optional_kernel.py",
+      "setup.py",
+      "tests/test_kernels_v08.py"
+    ]
+  },
+  "source_sha256": {
+    "setup.py": "0ad85a315f157eef27403103b07308064f8fa9603eee56c60686d933ca3b41ec",
+    "pyproject.toml": "c0efea79cd91529d3b4f19a6ca70887b9ab08d7cfc55bcb1f74dbb1bfc524ce4",
+    "MANIFEST.in": "bb58daad48bd1af0d4108ce0e3fad49d2251d3b19618f16a871d241c69756cb7",
+    "tools/build_optional_kernel.py": "377df3ecc14c323b41f74bf9cc6c98b7f6a8880127dd6a6e1a39c954bfad1b22",
+    "src/ariadne_xtal/cpp/intensity_kernel.cpp": "e345338e8545d62222668f36aa0bed8541408a056807e2b2d06817d644388b82",
+    "validation/check_v08_kernel_build.py": "3372317d24d2701e4348bc58ab996999c56e773918960647ae521ddb71da8d78"
+  },
+  "interpretation": "Both wheels were imported from separate extracted directories, excluding the editable native source path. The compiled wheel is specific to this Python ABI/platform; the pure wheel is portable Python. No dependency installation or compiler download occurred. Source archive contains buildable C++ source."
+}

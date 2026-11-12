@@ -1,0 +1,649 @@
+{
+  "schema": "ariadne-pro.local-performance/1",
+  "product": "Ariadne pro",
+  "generated_utc": "2026-11-09T01:08:47.703825+00:00",
+  "environment": {
+    "platform": "macOS-26.5-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.15",
+    "logical_cpus": 10,
+    "hardware": [
+      "Apple M5",
+      "17179869184",
+      "10",
+      "10"
+    ],
+    "packages": {
+      "ariadne": "0.8.0",
+      "ariadne-xtal": "0.8.0",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "gemmi": "0.7.5"
+    },
+    "thread_limit": 1,
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libopenblas",
+        "filepath": "/Users/xiaoyuzhang/CrystallographyPrograms/scxrd-open/lib/libopenblas.0.dylib",
+        "version": "0.3.34",
+        "threading_layer": "openmp",
+        "architecture": "VORTEX"
+      },
+      {
+        "user_api": "openmp",
+        "internal_api": "openmp",
+        "num_threads": 1,
+        "prefix": "libomp",
+        "filepath": "/Users/xiaoyuzhang/CrystallographyPrograms/scxrd-open/lib/libomp.dylib",
+        "version": null
+      }
+    ],
+    "kernel": {
+      "requested": "cpp",
+      "resolved": "cpp",
+      "compiled_available": true,
+      "build": {
+        "kernel_version": 1,
+        "binding": "CPython checked native buffers",
+        "compiler": "Apple LLVM 21.0.0 (clang-2100.0.123.102)",
+        "architecture": "aarch64",
+        "internal_threads": 1,
+        "releases_gil": true,
+        "openmp": false,
+        "fast_math": false
+      },
+      "fallback_reason": null,
+      "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+      "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+    }
+  },
+  "predictor": [
+    {
+      "case": "three_atoms_three_domains",
+      "n_atoms": 3,
+      "n_domains": 3,
+      "n_reflections": 7280,
+      "n_parameters": 17,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.11979358299868181,
+          "median_cpu_seconds": 0.11875099999999994
+        },
+        "cpp": {
+          "median_wall_seconds": 0.02166683296673,
+          "median_cpu_seconds": 0.021531000000000078
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.11790262500289828,
+          "cpu_seconds": 0.11729300000000009
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.021423708007205278,
+          "cpu_seconds": 0.02132400000000001
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.02166683296673,
+          "cpu_seconds": 0.021531000000000078
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.11874374997569248,
+          "cpu_seconds": 0.11797499999999994
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.11979358299868181,
+          "cpu_seconds": 0.11875099999999994
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.0216926250141114,
+          "cpu_seconds": 0.021571000000000007
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.021078249963466078,
+          "cpu_seconds": 0.020974999999999966
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 0.12250020797364414,
+          "cpu_seconds": 0.12137100000000012
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 0.12778841698309407,
+          "cpu_seconds": 0.12552600000000003
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.02192329097306356,
+          "cpu_seconds": 0.021750999999999854
+        }
+      ],
+      "median_wall_speedup": 5.5288921635491475,
+      "maximum_intensity_absolute_difference": 1.0231815394945443e-12,
+      "maximum_scaled_jacobian_difference": 2.3023138081829925e-15,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache",
+      "python_per_evaluation_ms": 14.974197874835227,
+      "cpp_per_evaluation_ms": 2.70835412084125
+    },
+    {
+      "case": "thirty_two_atoms",
+      "n_atoms": 32,
+      "n_domains": 1,
+      "n_reflections": 4096,
+      "n_parameters": 126,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.25231716700363904,
+          "median_cpu_seconds": 0.24583999999999984
+        },
+        "cpp": {
+          "median_wall_seconds": 0.04344487498747185,
+          "median_cpu_seconds": 0.043011000000000355
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.24117516697151586,
+          "cpu_seconds": 0.23977499999999985
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.04228866699850187,
+          "cpu_seconds": 0.042184
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.04259525000816211,
+          "cpu_seconds": 0.04169800000000001
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.2611211249604821,
+          "cpu_seconds": 0.256872
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.25231716700363904,
+          "cpu_seconds": 0.24520300000000028
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.04550300003029406,
+          "cpu_seconds": 0.0448599999999999
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.04344487498747185,
+          "cpu_seconds": 0.043011000000000355
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 0.24694070901023224,
+          "cpu_seconds": 0.24583999999999984
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 0.2563458750373684,
+          "cpu_seconds": 0.25110100000000024
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.0467738329898566,
+          "cpu_seconds": 0.04592799999999997
+        }
+      ],
+      "median_wall_speedup": 5.807754472222546,
+      "maximum_intensity_absolute_difference": 8.36735125631094e-11,
+      "maximum_scaled_jacobian_difference": 1.6662988848892482e-14,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache",
+      "python_per_evaluation_ms": 31.53964587545488,
+      "cpp_per_evaluation_ms": 5.430609373433981
+    },
+    {
+      "case": "eighty_atoms_memory",
+      "n_atoms": 80,
+      "n_domains": 1,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 1.3101620840025134,
+          "median_cpu_seconds": 1.293228000000001
+        },
+        "cpp": {
+          "median_wall_seconds": 0.17854979197727516,
+          "median_cpu_seconds": 0.17773800000000062
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 1.3101620840025134,
+          "cpu_seconds": 1.300627
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.1838948749937117,
+          "cpu_seconds": 0.18292800000000042
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.17812404199503362,
+          "cpu_seconds": 0.17773800000000062
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 1.3235319999512285,
+          "cpu_seconds": 1.313517
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 1.3004589580232278,
+          "cpu_seconds": 1.288386
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.1827366670477204,
+          "cpu_seconds": 0.181025
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.17854979197727516,
+          "cpu_seconds": 0.17687900000000045
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 1.3133941660053097,
+          "cpu_seconds": 1.293228000000001
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 1.2570773750194348,
+          "cpu_seconds": 1.2504869999999997
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.17601825000019744,
+          "cpu_seconds": 0.17540500000000137
+        }
+      ],
+      "median_wall_speedup": 7.337796754024018,
+      "maximum_intensity_absolute_difference": 2.764863893389702e-10,
+      "maximum_scaled_jacobian_difference": 1.8607142093430356e-14,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache",
+      "python_per_evaluation_ms": 163.77026050031418,
+      "cpp_per_evaluation_ms": 22.318723997159395
+    }
+  ],
+  "refinement": {
+    "kind": "synthetic_local_refinement",
+    "observation_generator": "Gemmi independent SF calculator",
+    "n_atoms": 18,
+    "n_reflections": 1098,
+    "n_parameters": 70,
+    "summary": {
+      "python": {
+        "median_wall_seconds": 0.06280020804842934,
+        "median_cpu_seconds": 0.06161200000000022
+      },
+      "cpp": {
+        "median_wall_seconds": 0.03396862500812858,
+        "median_cpu_seconds": 0.033750999999998754
+      }
+    },
+    "runs": [
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 1,
+        "wall_seconds": 0.06280020804842934,
+        "cpu_seconds": 0.06161200000000022,
+        "success": true,
+        "chi_squared": 1009.3952271514706,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 1,
+        "wall_seconds": 0.03401291702175513,
+        "cpu_seconds": 0.0339109999999998,
+        "success": true,
+        "chi_squared": 1009.3952271514734,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 2,
+        "wall_seconds": 0.03396862500812858,
+        "cpu_seconds": 0.033750999999998754,
+        "success": true,
+        "chi_squared": 1009.3952271514734,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 2,
+        "wall_seconds": 0.06372466695029289,
+        "cpu_seconds": 0.06323300000000032,
+        "success": true,
+        "chi_squared": 1009.3952271514706,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 3,
+        "wall_seconds": 0.06105116702383384,
+        "cpu_seconds": 0.06060300000000041,
+        "success": true,
+        "chi_squared": 1009.3952271514706,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 3,
+        "wall_seconds": 0.03295404196251184,
+        "cpu_seconds": 0.03285600000000066,
+        "success": true,
+        "chi_squared": 1009.3952271514734,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      }
+    ],
+    "median_wall_speedup": 1.848770977141449,
+    "prediction_difference_sigma_rms": 4.522370954283784e-11,
+    "chi_squared_difference": 2.7284841053187847e-12,
+    "timing_scope": "Entire refine call, including initialization, analytic least squares, restraints, rank and covariance; same starting model, no ab initio or external-software comparison"
+  },
+  "analytic_vs_finite_difference": {
+    "kind": "synthetic_local_refinement",
+    "observation_generator": "Gemmi independent SF calculator",
+    "n_atoms": 18,
+    "n_reflections": 1098,
+    "n_parameters": 70,
+    "median_wall_speed_ratio": 21.569462247877823,
+    "prediction_difference_sigma_rms": 5.325836871004395e-10,
+    "summary": {
+      "analytic": {
+        "median_wall_seconds": 0.059759374998975545,
+        "median_cpu_seconds": 0.05957599999999985,
+        "diffraction_evaluations": 7
+      },
+      "finite_difference": {
+        "median_wall_seconds": 1.2889775829971768,
+        "median_cpu_seconds": 1.2833480000000002,
+        "diffraction_evaluations": 988
+      }
+    },
+    "runs": [
+      {
+        "method": "analytic",
+        "repeat": 1,
+        "wall_seconds": 0.059759374998975545,
+        "cpu_seconds": 0.05957599999999985,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3952271514706,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 1,
+        "wall_seconds": 1.404704209009651,
+        "cpu_seconds": 1.3972930000000012,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3952271514737,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "analytic",
+        "repeat": 2,
+        "wall_seconds": 0.061452959023881704,
+        "cpu_seconds": 0.06109200000000037,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3952271514706,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 2,
+        "wall_seconds": 1.2113607079954818,
+        "cpu_seconds": 1.1996070000000003,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3952271514737,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "analytic",
+        "repeat": 3,
+        "wall_seconds": 0.059584999980870634,
+        "cpu_seconds": 0.05933000000000099,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3952271514706,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 3,
+        "wall_seconds": 1.2889775829971768,
+        "cpu_seconds": 1.2833480000000002,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3952271514737,
+        "success": true,
+        "negative_intensities": 18
+      }
+    ],
+    "interpretation": "Local timing in one environment, not a performance guarantee or SHELXL comparison"
+  },
+  "memory": [
+    {
+      "backend": "python",
+      "block_size": 1024,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 5210112,
+      "checksum": 102578858.34100105,
+      "baseline_peak_rss_bytes": 107331584,
+      "peak_process_rss_bytes": 175702016,
+      "increase_over_baseline_peak_bytes": 68370432,
+      "rss_native_unit": "bytes"
+    },
+    {
+      "backend": "cpp",
+      "block_size": 1024,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 5210112,
+      "checksum": 102578858.34100106,
+      "baseline_peak_rss_bytes": 106479616,
+      "peak_process_rss_bytes": 137953280,
+      "increase_over_baseline_peak_bytes": 31473664,
+      "rss_native_unit": "bytes"
+    },
+    {
+      "backend": "python",
+      "block_size": 8192,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 41680896,
+      "checksum": 102578858.34100105,
+      "baseline_peak_rss_bytes": 107184128,
+      "peak_process_rss_bytes": 256393216,
+      "increase_over_baseline_peak_bytes": 149209088,
+      "rss_native_unit": "bytes"
+    },
+    {
+      "backend": "cpp",
+      "block_size": 8192,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 41680896,
+      "checksum": 102578858.34100106,
+      "baseline_peak_rss_bytes": 106987520,
+      "peak_process_rss_bytes": 151502848,
+      "increase_over_baseline_peak_bytes": 44515328,
+      "rss_native_unit": "bytes"
+    }
+  ],
+  "matrix_memory": [
+    {
+      "method": "full_svd",
+      "shape": [
+        3500,
+        64
+      ],
+      "checksum": 3781.7239906941127,
+      "peak_process_rss_bytes": 305086464,
+      "rss_native_unit": "bytes"
+    },
+    {
+      "method": "streamed_qr",
+      "shape": [
+        3500,
+        64
+      ],
+      "checksum": 3781.4582028817226,
+      "peak_process_rss_bytes": 106807296,
+      "rss_native_unit": "bytes"
+    }
+  ],
+  "compression": {
+    "pixels": 250000,
+    "signal_columns": 4,
+    "background_columns": 2,
+    "chunk_rows": 1024,
+    "timing": {
+      "streamed_complete_compression": {
+        "repeats": 5,
+        "wall_seconds": [
+          0.008959792030509561,
+          0.010574250016361475,
+          0.010531999985687435,
+          0.010385875008068979,
+          0.008120999962557107
+        ],
+        "median_wall_seconds": 0.010385875008068979
+      },
+      "dense_augmented_qr_only": {
+        "repeats": 5,
+        "wall_seconds": [
+          0.007582582999020815,
+          0.007716457999777049,
+          0.007364583027083427,
+          0.00775116600561887,
+          0.008148333989083767
+        ],
+        "median_wall_seconds": 0.007716457999777049
+      }
+    },
+    "peak_traced_bytes": {
+      "streamed_complete_compression": 442760,
+      "dense_augmented_qr_only": 28000776
+    },
+    "peak_traced_memory_ratio_dense_over_streamed": 63.241431023579366,
+    "maximum_relative_likelihood_error": 3.803326923700949e-15,
+    "output_rank": 4,
+    "dense_factor_shape": [
+      7,
+      7
+    ],
+    "scope": "流式路径包含背景消元与诊断；密集路径只做 QR。内存为输入分配后的额外追踪分配，非进程总 RSS。"
+  },
+  "total_elapsed_seconds": 18.143545583006926,
+  "acceptance": {
+    "all_refinements_converged": true,
+    "correct_requested_backends": true,
+    "predictor_scaled_jacobian_difference_below_1e_10": true,
+    "refinement_prediction_sigma_rms_below_1e_6": true,
+    "finite_difference_prediction_sigma_rms_below_1e_6": true,
+    "compression_relative_error_below_1e_10": true
+  },
+  "scope": "本机单线程合成计算与已知初值局部精修；未测试原始图像端到端处理或未知结构求解成功率。"
+}

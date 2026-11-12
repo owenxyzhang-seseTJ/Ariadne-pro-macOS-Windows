@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ariadne"
+version = "0.8.0"
+description = "Single-crystal observable likelihoods, DIALS extensions and native-agent workflows"
+requires-python = ">=3.12"
+license = {text = "Proprietary"}
+dependencies = ["numpy>=1.26", "scipy>=1.11", "gemmi>=0.7.4,<0.8", "mcp>=1.12,<2", "threadpoolctl>=3.2,<4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "build>=1,<2", "ruff>=0.11,<1"]
+
+[project.entry-points."dials.spotfinder.threshold"]
+ariadne = "dials.extensions.ariadne_spotfinder_threshold_ext:AriadneThresholdExt"
+
+[project.scripts]
+ariadne-mcp = "ariadne.server:main"
+ariadne-agent = "ariadne.agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

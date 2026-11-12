@@ -1,0 +1,25 @@
+#!/bin/sh
+# Ariadne pro macOS 入口。需要 arm64 CPython 3.12；默认 python3.12，可用
+# ARIADNE_PRO_PYTHON 指向带 DIALS/cctbx 的解释器。
+ROOT=$(cd "$(dirname "$0")" && pwd)
+PY=${ARIADNE_PRO_PYTHON:-python3.12}
+PATHS="$ROOT/source/python/src:$ROOT/source/native/src"
+if [ -d "$ROOT/overlay" ]; then
+  PATHS="$PATHS:$ROOT/overlay"
+fi
+export PYTHONNOUSERSITE=1
+export PYTHONPATH="$PATHS${PYTHONPATH:+:$PYTHONPATH}"
+if [ "$#" -eq 0 ]; then
+  cat <<'EOF'
+Ariadne pro macOS 0.8.0（arm64）
+
+用法：
+  ./ariadne-pro-env -m ariadne_xtal capabilities
+  ./ariadne-pro-env -m ariadne_xtal refine --help
+  ./ariadne-pro-env your_script.py
+
+指定解释器：ARIADNE_PRO_PYTHON=/path/to/python3.12 ./ariadne-pro-env ...
+EOF
+  exit 0
+fi
+exec "$PY" "$@"

@@ -1,0 +1,149 @@
+--- a/native/src/ariadne_xtal/derivatives.py
++++ b/native/src/ariadne_xtal/derivatives.py
+@@ -211,11 +211,19 @@
+         tangent = None if tangents is None else tangents[i]
+         for rotation, translation, cart_rotations in orbit:
+             position = (rotation @ atom.frac + translation) % 1
+-            rotated_u = np.mean(cart_rotations @ u @ cart_rotations.transpose(0, 2, 1), axis=0)
++            if len(cart_rotations) == 1:
++                cart = cart_rotations[0]
++                rotated_u = cart @ u @ cart.T
++            else:
++                rotated_u = np.mean(cart_rotations @ u @ cart_rotations.transpose(0, 2, 1), axis=0)
+             if tangent is not None and len(tangent.columns):
+                 dx = tangent.xyz @ rotation.T
+-                du = np.einsum("aij,pjk,alk->pil", cart_rotations, tangent.tensor,
+-                               cart_rotations, optimize=True) / len(cart_rotations)
++                # 小张量直接批量相乘，避免每个原子重复规划 einsum 路径。
++                if len(cart_rotations) == 1:
++                    du = cart @ tangent.tensor @ cart.T
++                else:
++                    cart = cart_rotations[:, None, :, :]
++                    du = np.mean(cart @ tangent.tensor @ cart.swapaxes(-1, -2), axis=0)
+                 prepared.append((i, position, rotated_u, tangent.columns,
+                                  dx, du, tangent.occupancy))
+             else:
+--- a/native/src/ariadne_xtal/refinement.py
++++ b/native/src/ariadne_xtal/refinement.py
+@@ -778,9 +778,13 @@
+         pseudo = (estimable / singular[:rank]**2) @ estimable.T if rank else np.zeros((npar, npar))
+         nullspace = vt[rank:]
+         covariance = pseudo.copy() if rank == npar else None
+-        work_singular, _ = right_singular_system(jacobian[:nobs], options.reflection_block_size)
+-        work_threshold = options.covariance_rcond * work_singular[0] if len(work_singular) else 0
+-        work_rank = int(np.count_nonzero(work_singular > work_threshold))
++        if not restraints:
++            # 无约束残差时两者是同一矩阵，直接复用已计算的秩。
++            work_rank = rank
++        else:
++            work_singular, _ = right_singular_system(jacobian[:nobs], options.reflection_block_size)
++            work_threshold = options.covariance_rcond * work_singular[0] if len(work_singular) else 0
++            work_rank = int(np.count_nonzero(work_singular > work_threshold))
+         condition = float(singular[0] / singular[-1]) if rank == npar else None
+     else:
+         singular = np.empty(0)
+--- a/native/src/ariadne_xtal/cpp/intensity_kernel.cpp
++++ b/native/src/ariadne_xtal/cpp/intensity_kernel.cpp
+@@ -210,6 +210,15 @@
+         std::vector<double> contribution_real(tangents ? sites : 0);
+         std::vector<double> contribution_imag(tangents ? sites : 0);
+         std::vector<double> gradient_correction(parameters);
++        // 每次调用只检查一次精确零方向，避免逐反射计算不存在的坐标或 ADP 导数。
++        std::vector<unsigned char> tangent_kind(tangents, 0);
++        for (Py_ssize_t t = 0; t < tangents; ++t) {
++            const double* direction = tangent_data + t * 10;
++            for (int j = 0; j < 3; ++j)
++                if (direction[j] != 0.0) tangent_kind[t] |= 1;
++            for (int j = 3; j < 9; ++j)
++                if (direction[j] != 0.0) tangent_kind[t] |= 2;
++        }
+         Py_BEGIN_ALLOW_THREADS
+         for (Py_ssize_t h = 0; h < n && !numeric_error; ++h) {
+             const double hx = static_cast<double>(b[0].integer(h * 3));
+@@ -217,6 +226,8 @@
+             const double hz = static_cast<double>(b[0].integer(h * 3 + 2));
+             const double qx = q[h * 3], qy = q[h * 3 + 1], qz = q[h * 3 + 2];
+             const double metric[6] = {qx*qx, qy*qy, qz*qz, 2*qx*qy, 2*qx*qz, 2*qy*qz};
++            bool finite_metric = true;
++            for (double value : metric) finite_metric &= std::isfinite(value);
+             double real = 0, imag = 0, correction_real = 0, correction_imag = 0;
+             for (Py_ssize_t site = 0; site < sites; ++site) {
+                 const double* a = site_data + site * 12;
+@@ -254,9 +265,12 @@
+                 for (std::int64_t t = b[5].integer(site); t < b[5].integer(site + 1); ++t) {
+                     const double* direction = tangent_data + t * 10;
+                     double quadratic = 0;
+-                    for (int j = 0; j < 6; ++j) quadratic += metric[j] * direction[3 + j];
++                    // 极端输入发生 metric 溢出时保留原计算路径及非有限值报错。
++                    if ((tangent_kind[t] & 2) || !finite_metric)
++                        for (int j = 0; j < 6; ++j) quadratic += metric[j] * direction[3 + j];
+                     const double ddecay = MINUS_TWO_PI_SQUARED * quadratic;
+-                    const double dphase = TWO_PI * (hx * direction[0] + hy * direction[1] + hz * direction[2]);
++                    const double dphase = (tangent_kind[t] & 1)
++                        ? TWO_PI * (hx * direction[0] + hy * direction[1] + hz * direction[2]) : 0.0;
+                     const double value = real_weight * (direction[9] + occupancy * ddecay)
+                                        + imag_weight * occupancy * dphase;
+                     const auto column = b[6].integer(t);
+--- a/native/tests/test_kernels_v08.py
++++ b/native/tests/test_kernels_v08.py
+@@ -183,6 +183,60 @@
+ 
+ 
+ @CPP
++@pytest.mark.parametrize("occupancy", [0.0, 0.75])
++def test_sparse_and_mixed_tangents_match_independent_differences(occupancy):
++    # 两个位点产生干涉，覆盖坐标、ADP、占有率及混合方向。
++    hkl = np.array([[1, 2, 3], [2, -1, 1], [0, 1, 2]], dtype=np.int64)
++    q = hkl.astype(float) / 10
++    ff = np.full((1, len(hkl)), 2.0)
++    sites = np.zeros((2, 12))
++    sites[:, :3] = [[.1, .2, .3], [.32, .1, .25]]
++    sites[:, 3:6] = .02
++    sites[:, 9] = [occupancy, 1.0]
++    directions = np.zeros((5, 10))
++    directions[0, :3] = [.3, .1, -.2]
++    directions[1, 3:6] = [.02, .04, .06]
++    directions[2, 9] = 1.0
++    directions[3] = directions[:3].sum(axis=0)
++    power, derivative = np.empty(len(hkl)), np.empty((len(hkl), len(directions)))
++    kernels._cpp.intensity_block(hkl, q, ff, sites, np.zeros(2, np.int64),
++        np.array([0, len(directions), len(directions)], np.int64),
++        np.arange(len(directions), dtype=np.int64), directions, power, derivative)
++
++    def reference(values):
++        tensors = np.zeros((len(values), 3, 3))
++        tensors[:, range(3), range(3)] = values[:, 3:6]
++        for column, (i, j) in enumerate(((0, 1), (0, 2), (1, 2)), start=6):
++            tensors[:, i, j] = tensors[:, j, i] = values[:, column]
++        decay = np.exp(-2 * np.pi**2 * np.einsum("ni,sij,nj->ns", q, tensors, q))
++        phase = np.exp(2j * np.pi * (hkl @ values[:, :3].T))
++        return np.abs(np.sum(values[:, 9] * 2.0 * decay * phase, axis=1))**2
++
++    expected = np.empty_like(derivative)
++    for column, direction in enumerate(directions):
++        plus, minus = sites.copy(), sites.copy()
++        plus[0, :10] += 1e-6 * direction
++        minus[0, :10] -= 1e-6 * direction
++        expected[:, column] = (reference(plus) - reference(minus)) / 2e-6
++    assert np.allclose(power, reference(sites), rtol=3e-14, atol=1e-14)
++    assert np.allclose(derivative, expected, rtol=2e-7, atol=2e-9)
++    assert np.array_equal(derivative[:, -1], np.zeros(len(hkl)))
++    if occupancy == 0:
++        assert np.array_equal(derivative[:, :2], np.zeros((len(hkl), 2)))
++        assert np.any(np.abs(derivative[:, 2]) > .1)
++
++
++@CPP
++def test_sparse_tangents_preserve_nonfinite_metric_error():
++    # 平方溢出不能被零方向跳过而变成静默的有效结果。
++    values = _raw_buffers()
++    values[1][:, 0] = 1e200
++    values[3][:, 3:6] = .02
++    with pytest.raises(ValueError, match="finite floating-point range"):
++        kernels._cpp.intensity_block(*values)
++
++
++@CPP
+ def test_independent_kernel_calls_are_thread_safe_without_internal_threads():
+     def execute(_):
+         parameterization, values, hkl, laws = _problem()

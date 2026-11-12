@@ -1,0 +1,70 @@
+\documentclass[11pt,oneside,openany]{book}
+\input{preamble}
+\hypersetup{pdftitle={Ariadne 0.8.0：结构反馈与原生智能体闭环}}
+\begin{document}
+\frontmatter
+\begin{titlepage}
+\vspace*{28mm}
+\noindent{\large\color{accent} ARIADNE · 专题技术报告}\par
+\vspace{15mm}
+\noindent{\Huge\bfseries 结构反馈与\\[7pt]原生智能体闭环}\par
+\vspace{14mm}
+\noindent{\Large 弱衍射、重叠观测与独立验证}\par
+\vfill
+\noindent Ariadne 0.8.0 · 2026 年 11 月 8 日\par
+\vspace{5mm}
+\noindent\small 配套完整教材：\textbf{从衍射像素到晶体结构}。本报告单独解释闭环的数学接口、数据角色和当前实现。
+\end{titlepage}
+\tableofcontents
+\mainmatter
+\chapter{连接观测与结构的最小数学接口}
+\section{固定观测，更新解释}
+原始像素是实验记录。结构模型给出 $F_h(\theta)$，并通过轮廓、晶畴和校正参数产生像素均值：
+\begin{equation}
+ \mu_i=b_i+\sum_jP_{ij}c_j\alpha_{d(j)}k|F_{h_j}(\theta)|^2.
+\end{equation}
+所谓结构反馈，是用这个预测检查和改进上游解释。它可以改变结构假设、轮廓或背景模型，但每次评价都回到同一份观测。结构预测不会变成新的实验强度。
+
+\section{高斯观测为何可以压缩}
+对固定方差高斯像素，设 $y=PI+B_g\beta+\varepsilon$，$\Cov(\varepsilon)=W^{-1}$。背景是线性的，先白化再用 QR 消元，可以保存
+\begin{equation}
+ \min_\beta\|W^{1/2}(y-PI-B_g\beta)\|^2=\|RI-z\|^2+c.
+\end{equation}
+这个式子对所有试探强度向量都成立，因此直接代入结构的预测不会改变目标。若 $R$ 不满列秩，某些单反射强度无法独立测量；程序保留这些零空间，仍可用可测方向评价结构。
+
+\section{共同结构可以提供跨反射约束}
+联合目标写成
+\begin{equation}
+ Q(\theta,\alpha)=\sum_g\left\|
+ R_g\diag(c_g\alpha_{d_g})k|F_{h_g}(\theta)|^2-z_g
+ \right\|^2+\sum_gc_g^{\rm residual}.
+\end{equation}
+不同区域中的反射来自同一个原子结构。它们的导数可以共同确定结构参数，即使每个区域本身只有一部分可测强度组合。这个能力是以同相结构模型为条件的，不等于生成了一张独立去孪晶测量表。
+
+一个反例是无反常散射的完全重叠反演孪晶：$|F_h|^2=|F_{-h}|^2$，比例导数为零。任何闭环都无法从这些观测中确定反演比例。0.8.0 对这种情况返回不可辨识状态，而不是把优化器的一个数值停点当作结论。
+
+纯泊松计数需要保留原像素似然 $\sum_i(\mu_i-y_i\log\mu_i)$。本版已经有信号--背景联合估计和条件剖面接口；下面的自动结构闭环使用固定方差高斯组，不把泊松数据强制压缩成高斯数据。
+
+\input{chapters/09_loop}
+\chapter{本次实现的证据与使用方式}
+\section{完整流程的合成盲解}
+本次实验使用 2497 个有明确索引和分量系数的合成高斯观测组。几何隔离的参考畴 work 观测为 1121 个，其中 95 个为负；它们负责相位初始化。四个混合相位起点随后进入全部 work 组的共同结构精修。最终比例约为 $(0.63237,0.36763)$，合成真值为 $(0.63,0.37)$；坐标 RMS 为 $0.002203\angstrom$，封存审计模式 RMS 为 1.02375。
+
+这是有给定组成、运动学散射和已声明观测算子的受控实验。它验证闭环的计算路径，不是复杂 MOF 或真实仪器帧的成功率测量。另有 7011 像素的局部精修例，验证压缩目标与原像素背景剖面目标在约 $10^{-12}$ 的绝对误差内一致。
+\begin{figure}[!htbp]
+\centering\includegraphics[width=0.92\textwidth]{figures/09_blind_recovery.pdf}
+\caption{完整教材中的合成验证图。左侧为四原子盲解的不同噪声条件；右侧为含重叠观测的闭环恢复。没有提供真值坐标作为求解初值。}
+\end{figure}
+
+\section{运行入口}
+安装完整源码包中的两个 Python 项目，然后运行提供的 JSON 示例：
+\begin{lstlisting}
+ariadne-xtal run examples/v08/solve_observations.json --root examples/v08
+\end{lstlisting}
+此动作也可通过 JSONL、MCP 或持久化 Ariadne 的 \code{native.run} 调用。若已有可靠结构，用 \code{structure} 输入作为初始模型，仍执行共同观测拟合和预留评价。完全缺少可用初始化证据时，流程说明缺少什么，不制造相位测量。
+
+\section{对真实 MOF 的下一步}
+预先固定组成和候选化学模型；在独立扫描块上比较预测似然，检查比例、缺陷参数的零空间及先验敏感性。几何、轮廓和吸收须在外层划分后重新标定，才能验证原始图像全流程。每个观测区域只计入目标一次；理想结构以候选或限制形式进入。
+\backmatter
+\input{references}
+\end{document}

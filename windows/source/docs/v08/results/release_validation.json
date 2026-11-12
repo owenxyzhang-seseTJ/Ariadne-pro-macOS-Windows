@@ -1,0 +1,2277 @@
+{
+  "schema": "ariadne.complete-release-validation/1",
+  "version": "0.8.0",
+  "generated_utc": "2026-11-08T14:54:53.750071+00:00",
+  "baseline_reduction_commit": "60a3cfb166dab5580c1afdcde248357c4b7e9315",
+  "baseline_native": "preserved Ariadne-Xtal 0.1.0 source",
+  "distribution": "complete local source release; no remote Git tag asserted",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "dependencies": {
+      "numpy": "2.3.5",
+      "scipy": "1.17.0",
+      "gemmi": "0.7.5",
+      "matplotlib": "3.10.8",
+      "mcp": "1.30.0",
+      "pytest": "9.2.0",
+      "threadpoolctl": "3.6.0"
+    }
+  },
+  "tests": [
+    {
+      "command": "python -m pytest tests tests_rebuild -q",
+      "ordinary_tests_passed": 366,
+      "subtests_passed": 136,
+      "junit_counts_including_subtests": {
+        "tests": 513,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 11
+      },
+      "skipped_cases": [
+        {
+          "test": "tests.test_indexing_optimization",
+          "reason": "collection skipped"
+        },
+        {
+          "test": "test_cli_output_composite_exclusion_and_holdout_comparison",
+          "reason": "Requires native DIALS environment"
+        },
+        {
+          "test": "test_native_prediction_whitening_joint_refinement",
+          "reason": "Requires native DIALS environment"
+        },
+        {
+          "test": "test_analytic_jacobian_matches_native_central_differences",
+          "reason": "Requires native DIALS environment"
+        },
+        {
+          "test": "test_nontriclinic_parameter_blocks_and_multiple_panels",
+          "reason": "Requires native DIALS environment"
+        },
+        {
+          "test": "test_prediction_cache_is_defensive_and_tracks_instrument_changes",
+          "reason": "Requires native DIALS environment"
+        },
+        {
+          "test": "test_native_geometry_identity_and_lp",
+          "reason": "Requires cctbx symmetry operations"
+        },
+        {
+          "test": "test_provenance_and_identity_validation",
+          "reason": "Requires cctbx symmetry operations"
+        },
+        {
+          "test": "test_same_data_cross_covariance_and_export",
+          "reason": "Requires cctbx symmetry operations"
+        },
+        {
+          "test": "test_symmetry_keeps_anomalous_pairs_when_declared",
+          "reason": "Requires cctbx symmetry operations"
+        },
+        {
+          "test": "test_native_raw_frames_gaussian_flux_and_empirical_derivative_provenance",
+          "reason": "Requires native DIALS/dxtbx raw-image readers"
+        }
+      ],
+      "junit": {
+        "path": "docs/v08/results/reduction_tests.xml",
+        "bytes": 53788,
+        "sha256": "e9ec7b223ed810e9142bdebf1478641911955dfceac12c1f52862164438aeedc"
+      },
+      "stdout": {
+        "path": "docs/v08/results/reduction_tests.log",
+        "bytes": 542,
+        "sha256": "a8674b70064736fc426287908695678e29ad295ecbdf21b923473088eb3cf9b3"
+      }
+    },
+    {
+      "command": "ARIADNE_MCP_STDIO_TEST=1 python -m pytest native/tests -q",
+      "ordinary_tests_passed": 206,
+      "subtests_passed": 0,
+      "junit_counts_including_subtests": {
+        "tests": 206,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0
+      },
+      "skipped_cases": [],
+      "junit": {
+        "path": "docs/v08/results/native_tests.xml",
+        "bytes": 26165,
+        "sha256": "9db374759ff8b68cb637f0155c760c4ae6842581902c0e44772a541d3078e901"
+      },
+      "stdout": {
+        "path": "docs/v08/results/native_tests.log",
+        "bytes": 261,
+        "sha256": "318ff61eb3fa42adbadd0af577564e00251a243f71015fd1a1ab21e6b67272ca"
+      }
+    }
+  ],
+  "totals": {
+    "ordinary_tests_passed": 572,
+    "subtests_passed": 136,
+    "skipped": 11,
+    "failures": 0,
+    "errors": 0
+  },
+  "gaussian_likelihood_maximum_relative_error": 1.7370213889612508e-15,
+  "poisson_joint_background_interval": {
+    "contrast": [
+      1.0
+    ],
+    "confidence_level": 0.95,
+    "threshold": 3.841458820694124,
+    "lower": 0.0,
+    "upper": 12.419279778766823,
+    "scope": "profiles, calibration and known offset fixed; other intensities and background reoptimized",
+    "calibration": "chi-square(1) asymptotic LR; no exact sparse-count or boundary coverage claim",
+    "estimate": 4.999999999881544,
+    "status": "ok",
+    "profile_evaluations": 12
+  },
+  "gaussian_streaming_workspace": {
+    "pixels": 250000,
+    "signal_columns": 4,
+    "background_columns": 2,
+    "chunk_rows": 1024,
+    "streamed_complete_compression": {
+      "seconds": 0.059494844000028024,
+      "peak_traced_bytes": 515850
+    },
+    "dense_augmented_qr_only": {
+      "seconds": 0.02148979599996892,
+      "peak_traced_bytes": 43818012
+    },
+    "peak_traced_memory_ratio_dense_over_streamed": 84.94332073277116,
+    "note": "single measured run; dense baseline performs QR only, streamed path additionally profiles background and computes SVD diagnostics; tracemalloc peak excludes preallocated input arrays and is not process RSS",
+    "output_rank": 4,
+    "dense_factor_shape": [
+      7,
+      7
+    ]
+  },
+  "analytic_vs_finite_difference": {
+    "kind": "synthetic_local_refinement",
+    "observation_generator": "Gemmi independent SF calculator",
+    "n_atoms": 18,
+    "n_reflections": 1098,
+    "n_parameters": 70,
+    "median_wall_speed_ratio": 22.864122136064182,
+    "prediction_difference_sigma_rms": 5.323701752779225e-10,
+    "summary": {
+      "analytic": {
+        "median_wall_seconds": 0.11728958300000158,
+        "median_cpu_seconds": 0.11717811400000011,
+        "diffraction_evaluations": 7
+      },
+      "finite_difference": {
+        "median_wall_seconds": 2.6817233510000733,
+        "median_cpu_seconds": 2.680978889,
+        "diffraction_evaluations": 988
+      }
+    },
+    "runs": [
+      {
+        "method": "analytic",
+        "repeat": 1,
+        "wall_seconds": 0.12112431600007767,
+        "cpu_seconds": 0.121123443,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3951728969362,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 1,
+        "wall_seconds": 2.6817233510000733,
+        "cpu_seconds": 2.680978889,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3951728969371,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "analytic",
+        "repeat": 2,
+        "wall_seconds": 0.11728958300000158,
+        "cpu_seconds": 0.11717811400000011,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3951728969362,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 2,
+        "wall_seconds": 2.6691980750001676,
+        "cpu_seconds": 2.667699702,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3951728969371,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "analytic",
+        "repeat": 3,
+        "wall_seconds": 0.1128574600002139,
+        "cpu_seconds": 0.11285887099999936,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 7,
+        "objective_evaluations": 7,
+        "chi_squared": 1009.3951728969362,
+        "success": true,
+        "negative_intensities": 18
+      },
+      {
+        "method": "finite_difference",
+        "repeat": 3,
+        "wall_seconds": 2.731444347999968,
+        "cpu_seconds": 2.730515211,
+        "numeric_backend": "python",
+        "diffraction_evaluations": 988,
+        "objective_evaluations": 987,
+        "chi_squared": 1009.3951728969371,
+        "success": true,
+        "negative_intensities": 18
+      }
+    ],
+    "interpretation": "Local timing in one environment, not a performance guarantee or SHELXL comparison"
+  },
+  "cpp_kernel": {
+    "environment": {
+      "python": "3.12.14",
+      "numpy": "2.3.5",
+      "scipy": "1.17.0",
+      "gemmi": "0.7.5",
+      "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+      "machine": "x86_64",
+      "blas_threads": 1,
+      "kernel": {
+        "requested": "cpp",
+        "resolved": "cpp",
+        "compiled_available": true,
+        "build": {
+          "kernel_version": 1,
+          "binding": "CPython checked native buffers",
+          "compiler": "13.3.0",
+          "architecture": "x86_64",
+          "internal_threads": 1,
+          "releases_gil": true,
+          "openmp": false,
+          "fast_math": false
+        },
+        "fallback_reason": null,
+        "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+        "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+      }
+    },
+    "predictor": [
+      {
+        "case": "three_atoms_three_domains",
+        "n_atoms": 3,
+        "n_domains": 3,
+        "n_reflections": 7280,
+        "n_parameters": 17,
+        "block_size": 1024,
+        "evaluations_per_run": 8,
+        "summary": {
+          "python": {
+            "median_wall_seconds": 0.2301672079997843,
+            "median_cpu_seconds": 0.23013012700000002
+          },
+          "cpp": {
+            "median_wall_seconds": 0.06288078899979155,
+            "median_cpu_seconds": 0.06288438900000015
+          }
+        },
+        "runs": [
+          {
+            "backend": "python",
+            "repeat": 1,
+            "wall_seconds": 0.20391765500016845,
+            "cpu_seconds": 0.203911034
+          },
+          {
+            "backend": "cpp",
+            "repeat": 1,
+            "wall_seconds": 0.060364935000052355,
+            "cpu_seconds": 0.06031122
+          },
+          {
+            "backend": "cpp",
+            "repeat": 2,
+            "wall_seconds": 0.05883009999979549,
+            "cpu_seconds": 0.05883457500000011
+          },
+          {
+            "backend": "python",
+            "repeat": 2,
+            "wall_seconds": 0.2058889130003081,
+            "cpu_seconds": 0.205890688
+          },
+          {
+            "backend": "python",
+            "repeat": 3,
+            "wall_seconds": 0.2632489410002563,
+            "cpu_seconds": 0.26204605400000003
+          },
+          {
+            "backend": "cpp",
+            "repeat": 3,
+            "wall_seconds": 0.06288078899979155,
+            "cpu_seconds": 0.06288438900000015
+          },
+          {
+            "backend": "cpp",
+            "repeat": 4,
+            "wall_seconds": 0.06406457100001717,
+            "cpu_seconds": 0.06407037400000015
+          },
+          {
+            "backend": "python",
+            "repeat": 4,
+            "wall_seconds": 0.2301672079997843,
+            "cpu_seconds": 0.23013012700000002
+          },
+          {
+            "backend": "python",
+            "repeat": 5,
+            "wall_seconds": 0.23651604699989548,
+            "cpu_seconds": 0.23650702600000018
+          },
+          {
+            "backend": "cpp",
+            "repeat": 5,
+            "wall_seconds": 0.06415699199988012,
+            "cpu_seconds": 0.06416171300000029
+          }
+        ],
+        "median_wall_speedup": 3.6603740452516793,
+        "maximum_intensity_absolute_difference": 1.0231815394945443e-12,
+        "maximum_scaled_jacobian_difference": 2.075325122869176e-15,
+        "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+      },
+      {
+        "case": "thirty_two_atoms",
+        "n_atoms": 32,
+        "n_domains": 1,
+        "n_reflections": 4096,
+        "n_parameters": 126,
+        "block_size": 1024,
+        "evaluations_per_run": 8,
+        "summary": {
+          "python": {
+            "median_wall_seconds": 0.3578807079998114,
+            "median_cpu_seconds": 0.35785935199999974
+          },
+          "cpp": {
+            "median_wall_seconds": 0.11636929299993426,
+            "median_cpu_seconds": 0.116371891
+          }
+        },
+        "runs": [
+          {
+            "backend": "python",
+            "repeat": 1,
+            "wall_seconds": 0.4044782529999793,
+            "cpu_seconds": 0.4044688540000001
+          },
+          {
+            "backend": "cpp",
+            "repeat": 1,
+            "wall_seconds": 0.12044122999986939,
+            "cpu_seconds": 0.12044453700000002
+          },
+          {
+            "backend": "cpp",
+            "repeat": 2,
+            "wall_seconds": 0.11825878799982092,
+            "cpu_seconds": 0.11824941400000011
+          },
+          {
+            "backend": "python",
+            "repeat": 2,
+            "wall_seconds": 0.35747785700004897,
+            "cpu_seconds": 0.35742688199999995
+          },
+          {
+            "backend": "python",
+            "repeat": 3,
+            "wall_seconds": 0.35184129800018127,
+            "cpu_seconds": 0.35182045399999984
+          },
+          {
+            "backend": "cpp",
+            "repeat": 3,
+            "wall_seconds": 0.11429764099966633,
+            "cpu_seconds": 0.11430147700000015
+          },
+          {
+            "backend": "cpp",
+            "repeat": 4,
+            "wall_seconds": 0.11050516500017693,
+            "cpu_seconds": 0.11045413100000001
+          },
+          {
+            "backend": "python",
+            "repeat": 4,
+            "wall_seconds": 0.3578807079998114,
+            "cpu_seconds": 0.35785935199999974
+          },
+          {
+            "backend": "python",
+            "repeat": 5,
+            "wall_seconds": 0.3668775999999525,
+            "cpu_seconds": 0.3668510600000001
+          },
+          {
+            "backend": "cpp",
+            "repeat": 5,
+            "wall_seconds": 0.11636929299993426,
+            "cpu_seconds": 0.116371891
+          }
+        ],
+        "median_wall_speedup": 3.0753878344866594,
+        "maximum_intensity_absolute_difference": 6.548361852765083e-11,
+        "maximum_scaled_jacobian_difference": 1.8957339695783366e-14,
+        "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+      }
+    ],
+    "refinement": {
+      "kind": "synthetic_local_refinement",
+      "observation_generator": "Gemmi independent SF calculator",
+      "n_atoms": 18,
+      "n_reflections": 1098,
+      "n_parameters": 70,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.11349574599989865,
+          "median_cpu_seconds": 0.11350094099999986
+        },
+        "cpp": {
+          "median_wall_seconds": 0.06142340799988233,
+          "median_cpu_seconds": 0.061427472000000094
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "actual_backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.11349574599989865,
+          "cpu_seconds": 0.11350094099999986,
+          "success": true,
+          "chi_squared": 1009.3951728969362,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "cpp",
+          "actual_backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.06254579800042848,
+          "cpu_seconds": 0.06253563299999954,
+          "success": true,
+          "chi_squared": 1009.395172896943,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "cpp",
+          "actual_backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.06142340799988233,
+          "cpu_seconds": 0.061427472000000094,
+          "success": true,
+          "chi_squared": 1009.395172896943,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "python",
+          "actual_backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.10528318199976638,
+          "cpu_seconds": 0.10527499700000043,
+          "success": true,
+          "chi_squared": 1009.3951728969362,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "python",
+          "actual_backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.11386482499983686,
+          "cpu_seconds": 0.11383034799999958,
+          "success": true,
+          "chi_squared": 1009.3951728969362,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "cpp",
+          "actual_backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.06124114600015673,
+          "cpu_seconds": 0.06124508299999931,
+          "success": true,
+          "chi_squared": 1009.395172896943,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        }
+      ],
+      "median_wall_speedup": 1.847760482455094,
+      "prediction_difference_sigma_rms": 4.523860156233575e-11,
+      "chi_squared_difference": 6.821210263296962e-12,
+      "timing_scope": "Entire refine call, including initialization, analytic least squares, restraints, rank and covariance; same starting model, no ab initio or external-software comparison"
+    },
+    "memory": [
+      {
+        "backend": "python",
+        "block_size": 1024,
+        "n_atoms": 80,
+        "n_reflections": 8192,
+        "n_parameters": 318,
+        "baseline_peak_rss_kib": 87996,
+        "peak_process_rss_kib": 105736,
+        "increase_over_baseline_peak_kib": 17740,
+        "returned_jacobian_bytes": 20840448,
+        "numpy_complex_derivative_block_bytes": 5210112,
+        "checksum": 102578858.34100093
+      },
+      {
+        "backend": "cpp",
+        "block_size": 1024,
+        "n_atoms": 80,
+        "n_reflections": 8192,
+        "n_parameters": 318,
+        "baseline_peak_rss_kib": 87996,
+        "peak_process_rss_kib": 95260,
+        "increase_over_baseline_peak_kib": 7264,
+        "returned_jacobian_bytes": 20840448,
+        "numpy_complex_derivative_block_bytes": 5210112,
+        "checksum": 102578858.34100103
+      },
+      {
+        "backend": "python",
+        "block_size": 8192,
+        "n_atoms": 80,
+        "n_reflections": 8192,
+        "n_parameters": 318,
+        "baseline_peak_rss_kib": 87996,
+        "peak_process_rss_kib": 172024,
+        "increase_over_baseline_peak_kib": 84028,
+        "returned_jacobian_bytes": 20840448,
+        "numpy_complex_derivative_block_bytes": 41680896,
+        "checksum": 102578858.34100093
+      },
+      {
+        "backend": "cpp",
+        "block_size": 8192,
+        "n_atoms": 80,
+        "n_reflections": 8192,
+        "n_parameters": 318,
+        "baseline_peak_rss_kib": 87996,
+        "peak_process_rss_kib": 113168,
+        "increase_over_baseline_peak_kib": 25172,
+        "returned_jacobian_bytes": 20840448,
+        "numpy_complex_derivative_block_bytes": 41680896,
+        "checksum": 102578858.34100103
+      }
+    ],
+    "memory_interpretation": "Separate Linux processes, one predictor evaluation after geometry/form-factor cache construction. Peak RSS includes interpreter, libraries, inputs, global real N x P Jacobian and temporary arrays. The baseline-peak difference is an observed RSS increment, not allocator-level scratch accounting. C++ removes the complex B x P derivative and complex contraction temporary; real block buffers and dense J remain.",
+    "cancellation": {
+      "arithmetic_stress": {
+        "decimal_precision": 80,
+        "amplitudes": [
+          1e+16,
+          1.0,
+          -1e+16,
+          1.0
+        ],
+        "expected_intensity": 4.0,
+        "cpp_intensity": 4.0,
+        "cpp_shared_occupancy_derivative": 8.0,
+        "naive_numpy_sum": 1.0,
+        "scope": "Artificial cancellation stress at zero phase, not a model of experimental scattering powers"
+      },
+      "physical_absences": {
+        "spacegroup": "P 21 21 21",
+        "hkl": [
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            0,
+            5
+          ],
+          [
+            2,
+            0,
+            0
+          ],
+          [
+            2,
+            3,
+            1
+          ]
+        ],
+        "cpp_intensities": [
+          2.0510383535746307e-29,
+          4.641491165973238e-28,
+          4.445674935179588e-27,
+          11.307132901112267,
+          630.5102135659301
+        ],
+        "gemmi_intensities": [
+          1.591047667362308e-29,
+          1.2260353171921998e-28,
+          4.8523095693833965e-27,
+          11.30712929915063,
+          630.5102239445125
+        ],
+        "maximum_forbidden_intensity": 4.445674935179588e-27
+      }
+    },
+    "interpretation": "Local CPU measurements on two synthetic predictor shapes and one known-start local-refinement problem. All use the same analytic physical model; no universal speedup or replacement of BLAS/FFT is claimed."
+  },
+  "blind_phase_recovery": [
+    {
+      "observations": 4540,
+      "negative_intensities": 397,
+      "elements": [
+        "C",
+        "C",
+        "C",
+        "C"
+      ],
+      "true_coordinates_supplied_to_solver": false,
+      "candidates": [
+        {
+          "trial": 1,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.01897327323063212,
+          "rms_after_angstrom": 0.0010638516416211084,
+          "sigma_rmse": 0.9995565342927653,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 3,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.019943658701949616,
+          "rms_after_angstrom": 0.0010638516978704383,
+          "sigma_rmse": 0.9995565342927651,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 2,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.02095694475741447,
+          "rms_after_angstrom": 0.0010638515852119074,
+          "sigma_rmse": 0.9995565342927654,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 0,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.021450496363892593,
+          "rms_after_angstrom": 0.0010638515819761944,
+          "sigma_rmse": 0.9995565342927655,
+          "converged": true,
+          "identifiable": true
+        }
+      ]
+    },
+    {
+      "observations": 4540,
+      "negative_intensities": 868,
+      "elements": [
+        "C",
+        "C",
+        "C",
+        "C"
+      ],
+      "true_coordinates_supplied_to_solver": false,
+      "candidates": [
+        {
+          "trial": 3,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.02370429921599313,
+          "rms_after_angstrom": 0.0025377949256221383,
+          "sigma_rmse": 0.9850580606334455,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 1,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.023465915068877692,
+          "rms_after_angstrom": 0.0025377940234837266,
+          "sigma_rmse": 0.985058060633488,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 2,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.022708491867833004,
+          "rms_after_angstrom": 0.0025378011986634036,
+          "sigma_rmse": 0.9850580606336372,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 0,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.025433217797193156,
+          "rms_after_angstrom": 0.002537795579580736,
+          "sigma_rmse": 0.9850580606334692,
+          "converged": true,
+          "identifiable": true
+        }
+      ]
+    },
+    {
+      "observations": 4540,
+      "negative_intensities": 1298,
+      "elements": [
+        "C",
+        "C",
+        "C",
+        "C"
+      ],
+      "true_coordinates_supplied_to_solver": false,
+      "candidates": [
+        {
+          "trial": 2,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.03342027012116255,
+          "rms_after_angstrom": 0.008433388156721962,
+          "sigma_rmse": 0.9872385295513207,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 1,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.030822547007064497,
+          "rms_after_angstrom": 0.008433420441341679,
+          "sigma_rmse": 0.9872385295519781,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 3,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.029949588985346054,
+          "rms_after_angstrom": 0.008433416211051266,
+          "sigma_rmse": 0.9872385295516483,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 0,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.03106710808620865,
+          "rms_after_angstrom": 0.008433341369434298,
+          "sigma_rmse": 0.9872385295532947,
+          "converged": true,
+          "identifiable": true
+        }
+      ]
+    },
+    {
+      "observations": 4590,
+      "negative_intensities": 125,
+      "elements": [
+        "O",
+        "O",
+        "N",
+        "N",
+        "C",
+        "C",
+        "C",
+        "C"
+      ],
+      "true_coordinates_supplied_to_solver": false,
+      "candidates": [
+        {
+          "trial": 3,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.019837297582956104,
+          "rms_after_angstrom": 0.0009971171827606285,
+          "sigma_rmse": 1.0042150635169178,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 0,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.02196234023325056,
+          "rms_after_angstrom": 0.0009971171756445493,
+          "sigma_rmse": 1.0042150635169178,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 2,
+          "initialization": "random_real_density",
+          "rms_before_angstrom": 0.028092800927249122,
+          "rms_after_angstrom": 0.0009971174369961882,
+          "sigma_rmse": 1.0042150635169198,
+          "converged": true,
+          "identifiable": true
+        },
+        {
+          "trial": 1,
+          "initialization": "patterson_minimum_superposition",
+          "rms_before_angstrom": 0.02913828773909858,
+          "rms_after_angstrom": 0.0009971174035902765,
+          "sigma_rmse": 1.0042150635169234,
+          "converged": true,
+          "identifiable": true
+        }
+      ]
+    }
+  ],
+  "autonomous_workflows": {
+    "reflection_autonomy": {
+      "status": "completed",
+      "selected_candidate": 1,
+      "coordinate_rms_angstrom": 0.0009790785089410343,
+      "audit_evaluations": 1,
+      "audit": {
+        "n": 454,
+        "chi_squared": 423.05048431488245,
+        "sigma_rmse": 0.9653130376232717,
+        "negative_intensities": 29,
+        "used_for_candidate_generation": false,
+        "used_for_candidate_selection": false,
+        "calibration": "conditional on the input sigma values and observation model"
+      },
+      "partition_counts": {
+        "work": 3406,
+        "selection": 680,
+        "audit": 454
+      }
+    },
+    "overlap_autonomy": {
+      "status": "completed",
+      "selected_candidate": 2,
+      "coordinate_rms_angstrom": 0.002202520713874826,
+      "audit_evaluations": 1,
+      "audit": {
+        "groups": 255,
+        "compressed_modes": 282,
+        "chi_squared": 295.55532637150543,
+        "mode_chi_squared": 295.55532637150543,
+        "residual_constant": 0.0,
+        "mode_sigma_rmse": 1.0237521835055048,
+        "profiled_data_dimension": 282,
+        "profiled_data_sigma_rmse": 1.0237521835055048,
+        "calibration": "conditional on fixed profile geometry, calibration, background basis and Gaussian variances",
+        "used_for_candidate_generation": false,
+        "used_for_candidate_selection": false
+      },
+      "partition_counts": {
+        "work": 1861,
+        "selection": 381,
+        "audit": 255
+      },
+      "domain_fraction_estimates": [
+        0.6323680699408613,
+        0.36763193005913863
+      ],
+      "true_domain_fractions": [
+        0.63,
+        0.37
+      ],
+      "component_intensities_were_detwinned": false,
+      "numeric_backend": "cpp"
+    }
+  },
+  "joint_structure_cases": [
+    {
+      "name": "mixed_overlap_exact",
+      "success": true,
+      "wall_seconds": 0.1728307510002196,
+      "n_atoms": 3,
+      "n_regions": 171,
+      "n_pixels": 7011,
+      "rank_one_regions": 57,
+      "rank_two_regions": 114,
+      "n_parameters": 11,
+      "jacobian_rank": 11,
+      "identifiable": true,
+      "has_covariance": true,
+      "true_domain_fractions": [
+        0.73,
+        0.27
+      ],
+      "fitted_domain_fractions": [
+        0.7300000000000001,
+        0.27
+      ],
+      "domain_fraction_estimates": [
+        0.7300000000000001,
+        0.27
+      ],
+      "domain_fraction_status": [
+        "estimable",
+        "estimable"
+      ],
+      "domain_fraction_standard_uncertainties": [
+        0.0006307167291705538,
+        0.0006307167291705537
+      ],
+      "fitted_intensity_scale": 1.6,
+      "true_intensity_scale": 1.6,
+      "maximum_coordinate_error_angstrom": 7.19592404467786e-16,
+      "maximum_Uiso_error_angstrom_squared": 2.1163626406917047e-16,
+      "initial_objective": 87713.87627620327,
+      "final_compressed_objective": 1.6510452049864258e-24,
+      "final_raw_profiled_pixel_objective": 8.44888962153429e-25,
+      "objective_difference": 8.061562428329968e-25,
+      "diffraction_evaluations": 8,
+      "component_intensities_were_detwinned": false
+    },
+    {
+      "name": "complete_overlap_exact",
+      "success": true,
+      "wall_seconds": 0.09836055400000987,
+      "n_atoms": 3,
+      "n_regions": 171,
+      "n_pixels": 7011,
+      "rank_one_regions": 171,
+      "rank_two_regions": 0,
+      "n_parameters": 11,
+      "jacobian_rank": 11,
+      "identifiable": true,
+      "has_covariance": true,
+      "true_domain_fractions": [
+        0.73,
+        0.27
+      ],
+      "fitted_domain_fractions": [
+        0.7300000000000004,
+        0.2699999999999995
+      ],
+      "domain_fraction_estimates": [
+        0.7300000000000004,
+        0.2699999999999995
+      ],
+      "domain_fraction_status": [
+        "estimable",
+        "estimable"
+      ],
+      "domain_fraction_standard_uncertainties": [
+        0.004907787950463801,
+        0.004907787950463801
+      ],
+      "fitted_intensity_scale": 1.5999999999999999,
+      "true_intensity_scale": 1.6,
+      "maximum_coordinate_error_angstrom": 4.440892098500626e-16,
+      "maximum_Uiso_error_angstrom_squared": 1.5265566588595902e-16,
+      "initial_objective": 5030.831178088167,
+      "final_compressed_objective": 2.162068659507496e-24,
+      "final_raw_profiled_pixel_objective": 6.217301591093815e-25,
+      "objective_difference": 1.5403385003981147e-24,
+      "diffraction_evaluations": 8,
+      "component_intensities_were_detwinned": false
+    },
+    {
+      "name": "inversion_without_anomalous",
+      "success": true,
+      "wall_seconds": 0.10619718699990699,
+      "n_atoms": 3,
+      "n_regions": 171,
+      "n_pixels": 7011,
+      "rank_one_regions": 171,
+      "rank_two_regions": 0,
+      "n_parameters": 11,
+      "jacobian_rank": 10,
+      "identifiable": false,
+      "has_covariance": false,
+      "true_domain_fractions": [
+        0.73,
+        0.27
+      ],
+      "fitted_domain_fractions": [
+        0.81817770369359,
+        0.18182229630640998
+      ],
+      "domain_fraction_estimates": [
+        null,
+        null
+      ],
+      "domain_fraction_status": [
+        "unidentifiable",
+        "unidentifiable"
+      ],
+      "domain_fraction_standard_uncertainties": [
+        null,
+        null
+      ],
+      "fitted_intensity_scale": 1.6,
+      "true_intensity_scale": 1.6,
+      "maximum_coordinate_error_angstrom": 4.440892098500626e-16,
+      "maximum_Uiso_error_angstrom_squared": 8.673617379884035e-17,
+      "initial_objective": 6439.696382004233,
+      "final_compressed_objective": 1.9237898988205453e-24,
+      "final_raw_profiled_pixel_objective": 3.520305101576541e-25,
+      "objective_difference": 1.5717593886628912e-24,
+      "diffraction_evaluations": 8,
+      "component_intensities_were_detwinned": false,
+      "fraction_interpretation": "No anomalous scattering and identical profiles: fraction is unobservable. The numerical fraction is an arbitrary representative, not a measurement."
+    },
+    {
+      "name": "mixed_overlap_noisy",
+      "success": true,
+      "wall_seconds": 0.12344959699976243,
+      "n_atoms": 3,
+      "n_regions": 171,
+      "n_pixels": 7011,
+      "rank_one_regions": 57,
+      "rank_two_regions": 114,
+      "n_parameters": 11,
+      "jacobian_rank": 11,
+      "identifiable": true,
+      "has_covariance": true,
+      "true_domain_fractions": [
+        0.73,
+        0.27
+      ],
+      "fitted_domain_fractions": [
+        0.7301858176259391,
+        0.2698141823740609
+      ],
+      "domain_fraction_estimates": [
+        0.7301858176259391,
+        0.2698141823740609
+      ],
+      "domain_fraction_status": [
+        "estimable",
+        "estimable"
+      ],
+      "domain_fraction_standard_uncertainties": [
+        0.0006302044781742294,
+        0.0006302044781742291
+      ],
+      "fitted_intensity_scale": 1.6030762296919205,
+      "true_intensity_scale": 1.6,
+      "maximum_coordinate_error_angstrom": 0.003364500896339319,
+      "maximum_Uiso_error_angstrom_squared": 0.0013845646544184131,
+      "initial_objective": 94666.3573768627,
+      "final_compressed_objective": 6720.0891027195685,
+      "final_raw_profiled_pixel_objective": 6720.089102719569,
+      "objective_difference": -9.094947017729282e-13,
+      "diffraction_evaluations": 7,
+      "component_intensities_were_detwinned": false
+    }
+  ],
+  "experimental_known_model_regression": {
+    "doi": "10.1107/S2056989018012161",
+    "observations": {
+      "count": 71,
+      "kind": "published merged measured F_squared_meas and F_squared_sigma",
+      "computed_structure_factors_used_as_observations": false,
+      "raw_detector_images_used": false,
+      "holdout": false
+    },
+    "metrics": {
+      "n": 71,
+      "n_gt": 70,
+      "r1_all": 0.0412682195359424,
+      "r1_gt": 0.04031574937087205,
+      "wr2": 0.08148047291324201,
+      "chi_squared": 85.41565652971893,
+      "sigma_rmse": 4.965162464502118,
+      "negative_intensities": 0,
+      "n_work": 71,
+      "n_free": 0,
+      "n_parameters": 10,
+      "jacobian_rank": 10,
+      "diffraction_jacobian_rank": 10,
+      "identifiable": true,
+      "jacobian_condition": 129.52903868824234,
+      "normal_condition": 16777.77186350018,
+      "degrees_of_freedom": 61,
+      "gof": 1.183324412163301,
+      "restraint_residual_count": 0,
+      "restraint_sum_squares": 0.0,
+      "free": {
+        "n": 0,
+        "r1_all": null,
+        "r1_gt": null,
+        "wr2": null,
+        "chi_squared": null,
+        "sigma_rmse": null,
+        "negative_intensities": 0
+      },
+      "objective_evaluations_total": 17,
+      "diffraction_evaluations": 12,
+      "analytic_jacobian_evaluations": 12,
+      "restraint_parameter_evaluations": 0,
+      "diffraction_derivative_method": "analytic",
+      "numeric_backend": "cpp",
+      "numeric_backend_requested": "cpp",
+      "restraint_derivative_method": "none",
+      "reflection_block_size": 1024,
+      "rank_method": "streaming_QR_then_small_SVD",
+      "weighting": "frozen_weight_IRLS",
+      "covariance_scaling": "reduced_chi2",
+      "final_weight_relative_change": 1.733728716146743e-10
+    },
+    "published_reference": {
+      "r1_gt": 0.0403,
+      "r1_all": 0.0413,
+      "wr2": 0.0815,
+      "gof": 1.183,
+      "parameters": 10
+    },
+    "interpretation": "A measured-data regression for one known structure. It does not measure ab-initio success rates, compare execution speed to SHELXL, or demonstrate full instruction compatibility."
+  },
+  "scheduler": {
+    "measured_workflow": {
+      "actions_used": 4,
+      "all_nodes_succeeded": true,
+      "cumulative_action_seconds": 2.5455832819993702,
+      "cumulative_action_seconds_semantics": "sum of action wall durations, not measured CPU usage",
+      "event_hash_chain_verified": true,
+      "event_timeline": "scheduler_event_timeline.json",
+      "experiment": "Two initial-model refinements against 71 published measured FeN4 intensities",
+      "graph": [
+        {
+          "depends_on": [],
+          "id": "refine_a",
+          "tool": "native.run"
+        },
+        {
+          "depends_on": [],
+          "id": "refine_b",
+          "tool": "native.run"
+        },
+        {
+          "depends_on": [
+            "refine_a",
+            "refine_b"
+          ],
+          "id": "review",
+          "tool": "review"
+        },
+        {
+          "depends_on": [
+            "review"
+          ],
+          "id": "package",
+          "tool": "package"
+        }
+      ],
+      "independent_fits_overlapped": true,
+      "numeric_backend": "python",
+      "outcomes": {
+        "refine_a": {
+          "file": "scheduler_refine_a.json",
+          "metrics": {
+            "analytic_jacobian_evaluations": 12,
+            "chi_squared": 85.41565652971894,
+            "covariance_scaling": "reduced_chi2",
+            "degrees_of_freedom": 61,
+            "diffraction_derivative_method": "analytic",
+            "diffraction_evaluations": 12,
+            "diffraction_jacobian_rank": 10,
+            "final_weight_relative_change": 1.7337309365927922e-10,
+            "free": {
+              "chi_squared": null,
+              "n": 0,
+              "negative_intensities": 0,
+              "r1_all": null,
+              "r1_gt": null,
+              "sigma_rmse": null,
+              "wr2": null
+            },
+            "gof": 1.183324412163301,
+            "identifiable": true,
+            "jacobian_condition": 129.52903868824225,
+            "jacobian_rank": 10,
+            "n": 71,
+            "n_free": 0,
+            "n_gt": 70,
+            "n_parameters": 10,
+            "n_work": 71,
+            "negative_intensities": 0,
+            "normal_condition": 16777.77186350016,
+            "numeric_backend": "python",
+            "numeric_backend_requested": "python",
+            "objective_evaluations_total": 17,
+            "r1_all": 0.04126821953594241,
+            "r1_gt": 0.04031574937087204,
+            "rank_method": "streaming_QR_then_small_SVD",
+            "reflection_block_size": 1024,
+            "restraint_derivative_method": "none",
+            "restraint_parameter_evaluations": 0,
+            "restraint_residual_count": 0,
+            "restraint_sum_squares": 0.0,
+            "sigma_rmse": 4.965162464502117,
+            "weighting": "frozen_weight_IRLS",
+            "wr2": 0.08148047291324202
+          },
+          "scale": 1.0000162232300478,
+          "sha256": "089f59cf268458d61d600e56c0801482cd7405575246f08d6ef1aa4bc251ce24",
+          "success": true,
+          "warnings": []
+        },
+        "refine_b": {
+          "file": "scheduler_refine_b.json",
+          "metrics": {
+            "analytic_jacobian_evaluations": 21,
+            "chi_squared": 85.41565653645667,
+            "covariance_scaling": "reduced_chi2",
+            "degrees_of_freedom": 61,
+            "diffraction_derivative_method": "analytic",
+            "diffraction_evaluations": 21,
+            "diffraction_jacobian_rank": 10,
+            "final_weight_relative_change": 6.661338147750939e-16,
+            "free": {
+              "chi_squared": null,
+              "n": 0,
+              "negative_intensities": 0,
+              "r1_all": null,
+              "r1_gt": null,
+              "sigma_rmse": null,
+              "wr2": null
+            },
+            "gof": 1.1833244122099722,
+            "identifiable": true,
+            "jacobian_condition": 129.52903881809613,
+            "jacobian_rank": 10,
+            "n": 71,
+            "n_free": 0,
+            "n_gt": 70,
+            "n_parameters": 10,
+            "n_work": 71,
+            "negative_intensities": 0,
+            "normal_condition": 16777.771897139854,
+            "numeric_backend": "python",
+            "numeric_backend_requested": "python",
+            "objective_evaluations_total": 26,
+            "r1_all": 0.041268219542770684,
+            "r1_gt": 0.0403157493820669,
+            "rank_method": "streaming_QR_then_small_SVD",
+            "reflection_block_size": 1024,
+            "restraint_derivative_method": "none",
+            "restraint_parameter_evaluations": 0,
+            "restraint_residual_count": 0,
+            "restraint_sum_squares": 0.0,
+            "sigma_rmse": 4.965162457166432,
+            "weighting": "frozen_weight_IRLS",
+            "wr2": 0.08148047291723069
+          },
+          "scale": 1.0000162232329262,
+          "sha256": "b9a2430ddc824a642047ca1e5c496ed72767ff98017a91da6b4567bab835029a",
+          "success": true,
+          "warnings": []
+        }
+      },
+      "peak_reserved_resources": {
+        "cpu_threads": 2,
+        "memory_mb": 512,
+        "workers": 2
+      },
+      "request": "examples/v08/parallel_native.json",
+      "request_sha256": "70f42e50a4c176d5b9d9c6885f7a7152b67cb018eea425a8ee636fc37b8b556d",
+      "resource_reservations": [
+        {
+          "at": "2026-11-08T14:41:55.292248+00:00",
+          "cpu_threads": 1,
+          "event_sequence": 8,
+          "memory_mb": 256,
+          "seconds": 0.0031061172485351562,
+          "workers": 1
+        },
+        {
+          "at": "2026-11-08T14:41:55.317723+00:00",
+          "cpu_threads": 2,
+          "event_sequence": 11,
+          "memory_mb": 512,
+          "seconds": 0.02858114242553711,
+          "workers": 2
+        },
+        {
+          "at": "2026-11-08T14:41:56.119607+00:00",
+          "cpu_threads": 1,
+          "event_sequence": 12,
+          "memory_mb": 256,
+          "seconds": 0.8304650783538818,
+          "workers": 1
+        },
+        {
+          "at": "2026-11-08T14:41:56.245965+00:00",
+          "cpu_threads": 0,
+          "event_sequence": 13,
+          "memory_mb": 0,
+          "seconds": 0.9568231105804443,
+          "workers": 0
+        },
+        {
+          "at": "2026-11-08T14:41:56.272493+00:00",
+          "cpu_threads": 1,
+          "event_sequence": 16,
+          "memory_mb": 256,
+          "seconds": 0.9833509922027588,
+          "workers": 1
+        },
+        {
+          "at": "2026-11-08T14:41:56.647159+00:00",
+          "cpu_threads": 0,
+          "event_sequence": 17,
+          "memory_mb": 0,
+          "seconds": 1.3580172061920166,
+          "workers": 0
+        },
+        {
+          "at": "2026-11-08T14:41:56.678713+00:00",
+          "cpu_threads": 1,
+          "event_sequence": 20,
+          "memory_mb": 256,
+          "seconds": 1.389571189880371,
+          "workers": 1
+        },
+        {
+          "at": "2026-11-08T14:41:57.086880+00:00",
+          "cpu_threads": 0,
+          "event_sequence": 21,
+          "memory_mb": 0,
+          "seconds": 1.7977380752563477,
+          "workers": 0
+        }
+      ],
+      "resume_reexecuted_completed_nodes": false,
+      "scheduler": {
+        "cpu_threads": 2,
+        "default_task_memory_mb": 256,
+        "isolate_actions": true,
+        "max_workers": 2,
+        "memory_mb": 512
+      },
+      "timeline": [
+        {
+          "directory": "attempts/refine_a/001",
+          "finish_seconds": 0.8301801681518555,
+          "finished": "2026-11-08T14:41:56.119322+00:00",
+          "node": "refine_a",
+          "number": 1,
+          "pid": 199,
+          "start_seconds": 0.0,
+          "started": "2026-11-08T14:41:55.289142+00:00",
+          "status": "succeeded",
+          "worker_pid": 194
+        },
+        {
+          "directory": "attempts/refine_b/001",
+          "finish_seconds": 0.9565191268920898,
+          "finished": "2026-11-08T14:41:56.245661+00:00",
+          "node": "refine_b",
+          "number": 1,
+          "pid": 200,
+          "start_seconds": 0.0259401798248291,
+          "started": "2026-11-08T14:41:55.315082+00:00",
+          "status": "succeeded",
+          "worker_pid": 197
+        },
+        {
+          "directory": "attempts/review/001",
+          "finish_seconds": 1.357452154159546,
+          "finished": "2026-11-08T14:41:56.646594+00:00",
+          "node": "review",
+          "number": 1,
+          "pid": null,
+          "start_seconds": 0.9803500175476074,
+          "started": "2026-11-08T14:41:56.269492+00:00",
+          "status": "succeeded",
+          "worker_pid": 202
+        },
+        {
+          "directory": "attempts/package/001",
+          "finish_seconds": 1.797654151916504,
+          "finished": "2026-11-08T14:41:57.086796+00:00",
+          "node": "package",
+          "number": 1,
+          "pid": null,
+          "start_seconds": 1.3862230777740479,
+          "started": "2026-11-08T14:41:56.675365+00:00",
+          "status": "succeeded",
+          "worker_pid": 205
+        }
+      ],
+      "timeline_clock_basis": "Recorded UTC event stamps; active deadlines use monotonic clocks",
+      "wall_elapsed_seconds": 1.8250505580003846
+    },
+    "memory_semantics": "Declared reservations; no measured RSS claim or OS quota",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "schema": "ariadne.scheduler-validation/1",
+    "scope": "Local POSIX subprocess groups; tested on Linux",
+    "tests": {
+      "actual_argv": [
+        "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+        "-m",
+        "pytest",
+        "tests_rebuild/test_agent.py",
+        "tests_rebuild/test_native_protocol.py",
+        "tests_rebuild/test_review_regressions.py",
+        "tests_rebuild/test_native_backend_v08.py",
+        "tests_rebuild/test_scheduler_v08.py",
+        "-q",
+        "--junitxml=/workspace/scratch/4f12e5e7e14c/Ariadne/docs/v08/results/scheduler_tests.xml"
+      ],
+      "command": "python -m pytest tests_rebuild/test_agent.py tests_rebuild/test_native_protocol.py tests_rebuild/test_review_regressions.py tests_rebuild/test_native_backend_v08.py tests_rebuild/test_scheduler_v08.py -q",
+      "errors": 0,
+      "exit_code": 0,
+      "failures": 0,
+      "junit_xml": "scheduler_tests.xml",
+      "skipped": 0,
+      "stdout": "scheduler_tests.txt",
+      "tests": 86
+    },
+    "thread_semantics": "Limits cooperating BLAS/OpenMP libraries, not arbitrary subprocess counts",
+    "versions": {
+      "gemmi": "0.7.5",
+      "numpy": "2.3.5",
+      "pytest": "9.2.0",
+      "scipy": "1.17.0",
+      "threadpoolctl": "3.6.0"
+    }
+  },
+  "native_examples": {
+    "example_autosolve_cli": {
+      "ok": true,
+      "run_id": "autosolve_mroosae8",
+      "manifest": "runs/autosolve_mroosae8/manifest.json",
+      "result": "runs/autosolve_mroosae8/result.json",
+      "summary": {
+        "status": "completed",
+        "selected_candidate": 2,
+        "audit": {
+          "n": 454,
+          "chi_squared": 444.48352022360854,
+          "sigma_rmse": 0.9894637895349682,
+          "negative_intensities": 62,
+          "used_for_candidate_generation": false,
+          "used_for_candidate_selection": false,
+          "calibration": "conditional on the input sigma values and observation model"
+        },
+        "candidate_count": 4,
+        "audit_evaluations": 1
+      }
+    },
+    "example_overlap_cli": {
+      "ok": true,
+      "run_id": "solve-observations_35ilx1pf",
+      "manifest": "runs/solve-observations_35ilx1pf/manifest.json",
+      "result": "runs/solve-observations_35ilx1pf/result.json",
+      "summary": {
+        "status": "completed",
+        "selected_candidate": 2,
+        "audit": {
+          "groups": 255,
+          "compressed_modes": 282,
+          "chi_squared": 295.55532637150606,
+          "mode_chi_squared": 295.55532637150606,
+          "residual_constant": 0.0,
+          "mode_sigma_rmse": 1.023752183505506,
+          "profiled_data_dimension": 282,
+          "profiled_data_sigma_rmse": 1.023752183505506,
+          "calibration": "conditional on fixed profile geometry, calibration, background basis and Gaussian variances",
+          "used_for_candidate_generation": false,
+          "used_for_candidate_selection": false
+        },
+        "candidate_count": 4,
+        "audit_evaluations": 1
+      }
+    }
+  },
+  "wheel_integration": {
+    "schema": "ariadne.wheel-integration/1",
+    "ok": true,
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "scope": "Fresh --target installation of both wheels; third-party dependencies reused from the validation environment",
+    "not_tested_here": "Clean-machine dependency bootstrap, Windows execution or full DIALS image processing",
+    "wheels": [
+      {
+        "file": "ariadne-0.8.0-py3-none-any.whl",
+        "sha256": "3952516a693d3cf9acfa8f91f58800d35729ebc590d10a3910578d20444f4db7",
+        "bytes": 90350
+      },
+      {
+        "file": "ariadne_xtal-0.8.0-cp312-cp312-linux_x86_64.whl",
+        "sha256": "abf14065f7b5af099d6816e7ceb6b96cbacab525d73d6ddad0f99a6ad6c47c4e",
+        "bytes": 178982
+      }
+    ],
+    "commands": [
+      {
+        "argv": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "-m",
+          "pip",
+          "install",
+          "--no-deps",
+          "--no-index",
+          "--target",
+          "/tmp/ariadne-dual-wheel-z9b538w8/target",
+          "/workspace/scratch/4f12e5e7e14c/Ariadne/dist/v0.8/ariadne-0.8.0-py3-none-any.whl",
+          "/workspace/scratch/4f12e5e7e14c/Ariadne/dist/v0.8/ariadne_xtal-0.8.0-cp312-cp312-linux_x86_64.whl"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 0.4788197949997084,
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "-c",
+          "\nimport importlib\nimport importlib.metadata as metadata\nimport json\nfrom pathlib import Path\nimport platform\nimport sys\nfrom packaging.requirements import Requirement\nfrom packaging.specifiers import SpecifierSet\nfrom packaging.utils import canonicalize_name\n\ntarget = Path(sys.argv[1]).resolve()\nsource = Path(sys.argv[2]).resolve()\nassert not Path.cwd().resolve().is_relative_to(source), 'Probe is inside source checkout'\nnames = ['ariadne', 'ariadne.agent.engine', 'ariadne.agent.scheduler',\n         'ariadne.agent.action_worker', 'ariadne_xtal', 'ariadne_xtal.agent',\n         'ariadne_xtal.refinement', 'ariadne_xtal.kernels']\nmodules = {}\nfor name in names:\n    module = importlib.import_module(name)\n    path = Path(module.__file__).resolve()\n    assert path.is_relative_to(target), f'{name} was shadowed by {path}'\n    modules[name] = str(path)\nfrom ariadne_xtal.kernels import kernel_status\nkernel = kernel_status()\nif kernel['compiled_available']:\n    native = importlib.import_module('ariadne_xtal._intensity_cpp')\n    path = Path(native.__file__).resolve()\n    assert path.is_relative_to(target), f'C++ extension came from {path}'\n    modules['ariadne_xtal._intensity_cpp'] = str(path)\n\ndistributions = {}\nfor distribution in metadata.distributions(path=[str(target)]):\n    name = canonicalize_name(distribution.metadata['Name'])\n    if name not in {'ariadne', 'ariadne-xtal'}:\n        continue\n    assert distribution.version == '0.8.0', (name, distribution.version)\n    python_requirement = distribution.metadata.get('Requires-Python')\n    assert not python_requirement or platform.python_version() in SpecifierSet(python_requirement)\n    requirements = []\n    for text in distribution.requires or []:\n        requirement = Requirement(text)\n        if requirement.marker is not None and not requirement.marker.evaluate({'extra': ''}):\n            continue\n        installed = metadata.version(requirement.name)\n        assert installed in requirement.specifier, (text, installed)\n        requirements.append({'requirement': text, 'installed': installed, 'satisfied': True})\n    distributions[name] = {'version': distribution.version, 'requires_python': python_requirement,\n                           'requirements': requirements}\nassert set(distributions) == {'ariadne', 'ariadne-xtal'}, distributions\nfrom ariadne.agent.backends import plugin_root\nassert plugin_root() == source\nprint(json.dumps({'working_directory': str(Path.cwd()), 'target': str(target),\n                  'module_files': modules, 'distributions': distributions,\n                  'all_ariadne_modules_from_target': True, 'kernel': kernel,\n                  'legacy_resource_root': str(plugin_root())}, indent=2))\n",
+          "/tmp/ariadne-dual-wheel-z9b538w8/target",
+          "/workspace/scratch/4f12e5e7e14c/Ariadne"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 0.5036265130001993,
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-xtal",
+          "run",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/inputs/refine_fen4.json",
+          "--root",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/inputs"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 0.5282651070001521,
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-agent",
+          "init",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/inputs/parallel_native.json",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/persistent-session"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 0.47090673099955893,
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-agent",
+          "run",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/persistent-session",
+          "--steps",
+          "2"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 1.58698088500023,
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-agent",
+          "run",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/persistent-session"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 1.378106666000349,
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-agent",
+          "run",
+          "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout/persistent-session"
+        ],
+        "cwd": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+        "returncode": 0,
+        "seconds": 0.4488183900002696,
+        "stderr": ""
+      }
+    ],
+    "pip_stdout": "Processing /workspace/scratch/4f12e5e7e14c/Ariadne/dist/v0.8/ariadne-0.8.0-py3-none-any.whl\nProcessing /workspace/scratch/4f12e5e7e14c/Ariadne/dist/v0.8/ariadne_xtal-0.8.0-cp312-cp312-linux_x86_64.whl\nInstalling collected packages: ariadne-xtal, ariadne\nSuccessfully installed ariadne-0.8.0 ariadne-xtal-0.8.0\n",
+    "probe": {
+      "working_directory": "/tmp/ariadne-dual-wheel-z9b538w8/outside-checkout",
+      "target": "/tmp/ariadne-dual-wheel-z9b538w8/target",
+      "module_files": {
+        "ariadne": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne/__init__.py",
+        "ariadne.agent.engine": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne/agent/engine.py",
+        "ariadne.agent.scheduler": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne/agent/scheduler.py",
+        "ariadne.agent.action_worker": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne/agent/action_worker.py",
+        "ariadne_xtal": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne_xtal/__init__.py",
+        "ariadne_xtal.agent": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne_xtal/agent.py",
+        "ariadne_xtal.refinement": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne_xtal/refinement.py",
+        "ariadne_xtal.kernels": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne_xtal/kernels.py",
+        "ariadne_xtal._intensity_cpp": "/tmp/ariadne-dual-wheel-z9b538w8/target/ariadne_xtal/_intensity_cpp.cpython-312-x86_64-linux-gnu.so"
+      },
+      "distributions": {
+        "ariadne": {
+          "version": "0.8.0",
+          "requires_python": ">=3.12",
+          "requirements": [
+            {
+              "requirement": "numpy>=1.26",
+              "installed": "2.3.5",
+              "satisfied": true
+            },
+            {
+              "requirement": "scipy>=1.11",
+              "installed": "1.17.0",
+              "satisfied": true
+            },
+            {
+              "requirement": "gemmi<0.8,>=0.7.4",
+              "installed": "0.7.5",
+              "satisfied": true
+            },
+            {
+              "requirement": "mcp<2,>=1.12",
+              "installed": "1.30.0",
+              "satisfied": true
+            },
+            {
+              "requirement": "threadpoolctl<4,>=3.2",
+              "installed": "3.6.0",
+              "satisfied": true
+            }
+          ]
+        },
+        "ariadne-xtal": {
+          "version": "0.8.0",
+          "requires_python": ">=3.10",
+          "requirements": [
+            {
+              "requirement": "numpy<3,>=1.24",
+              "installed": "2.3.5",
+              "satisfied": true
+            },
+            {
+              "requirement": "scipy<2,>=1.10",
+              "installed": "1.17.0",
+              "satisfied": true
+            },
+            {
+              "requirement": "gemmi<0.8,>=0.7.0",
+              "installed": "0.7.5",
+              "satisfied": true
+            },
+            {
+              "requirement": "matplotlib<4,>=3.7",
+              "installed": "3.10.8",
+              "satisfied": true
+            },
+            {
+              "requirement": "plotly<8,>=5.20",
+              "installed": "7.1.0",
+              "satisfied": true
+            },
+            {
+              "requirement": "scikit-image<1,>=0.22",
+              "installed": "0.26.0",
+              "satisfied": true
+            }
+          ]
+        }
+      },
+      "all_ariadne_modules_from_target": true,
+      "kernel": {
+        "requested": "auto",
+        "resolved": "cpp",
+        "compiled_available": true,
+        "build": {
+          "kernel_version": 1,
+          "binding": "CPython checked native buffers",
+          "compiler": "13.3.0",
+          "architecture": "x86_64",
+          "internal_threads": 1,
+          "releases_gil": true,
+          "openmp": false,
+          "fast_math": false
+        },
+        "fallback_reason": null,
+        "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+        "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+      },
+      "legacy_resource_root": "/workspace/scratch/4f12e5e7e14c/Ariadne"
+    },
+    "input_sha256": {
+      "fen4_start.json": "362c5800c65e0a5b82773430e70cc0fe253e2e2c1c1462c0148771cecb42cd4a",
+      "fen4_alternative_start.json": "1f55d529eb370353c5606fd3ef82385a510b1be8fbf58eda17e085f228a97ba2",
+      "fen4_measured.json": "88cb053168dd196b3bef44ef336daae17ad152fc0c533410ee208c18b310b175",
+      "refine_fen4.json": "97260b4a33b4a38bae44ff0e13564a9df5d05cace461d5e424eb96e47cfbcff8",
+      "parallel_native.json": "70f42e50a4c176d5b9d9c6885f7a7152b67cb018eea425a8ee636fc37b8b556d"
+    },
+    "entry_points": {
+      "ariadne-agent": {
+        "path": "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-agent",
+        "sha256": "df5e019083a872bb8ffb211c3266eeda1ffac060b6a29a0adda07bc6d2922a20"
+      },
+      "ariadne-xtal": {
+        "path": "/tmp/ariadne-dual-wheel-z9b538w8/target/bin/ariadne-xtal",
+        "sha256": "dff69c800ed65fd0eba8a59b622a8dd89fb8f983c2ae842825b83f9948023c21"
+      }
+    },
+    "native_cli_refinement": {
+      "success": true,
+      "metrics": {
+        "n": 71,
+        "n_gt": 70,
+        "r1_all": 0.0412682195359424,
+        "r1_gt": 0.04031574937087205,
+        "wr2": 0.08148047291324201,
+        "chi_squared": 85.41565652971893,
+        "sigma_rmse": 4.965162464502118,
+        "negative_intensities": 0,
+        "n_work": 71,
+        "n_free": 0,
+        "n_parameters": 10,
+        "jacobian_rank": 10,
+        "diffraction_jacobian_rank": 10,
+        "identifiable": true,
+        "jacobian_condition": 129.52903868824234,
+        "normal_condition": 16777.77186350018,
+        "degrees_of_freedom": 61,
+        "gof": 1.183324412163301,
+        "restraint_residual_count": 0,
+        "restraint_sum_squares": 0.0,
+        "free": {
+          "n": 0,
+          "r1_all": null,
+          "r1_gt": null,
+          "wr2": null,
+          "chi_squared": null,
+          "sigma_rmse": null,
+          "negative_intensities": 0
+        },
+        "objective_evaluations_total": 17,
+        "diffraction_evaluations": 12,
+        "analytic_jacobian_evaluations": 12,
+        "restraint_parameter_evaluations": 0,
+        "diffraction_derivative_method": "analytic",
+        "numeric_backend": "cpp",
+        "numeric_backend_requested": "auto",
+        "restraint_derivative_method": "none",
+        "reflection_block_size": 1024,
+        "rank_method": "streaming_QR_then_small_SVD",
+        "weighting": "frozen_weight_IRLS",
+        "covariance_scaling": "reduced_chi2",
+        "final_weight_relative_change": 1.733728716146743e-10
+      },
+      "result_sha256": "6f548d949199a25447305ca7078701346fe9049cc2cec7507907b60b7430be7d",
+      "summary": {
+        "success": true,
+        "metrics": {
+          "n": 71,
+          "n_gt": 70,
+          "r1_all": 0.0412682195359424,
+          "r1_gt": 0.04031574937087205,
+          "wr2": 0.08148047291324201,
+          "chi_squared": 85.41565652971893,
+          "sigma_rmse": 4.965162464502118,
+          "negative_intensities": 0,
+          "n_work": 71,
+          "n_free": 0,
+          "n_parameters": 10,
+          "jacobian_rank": 10,
+          "diffraction_jacobian_rank": 10,
+          "identifiable": true,
+          "jacobian_condition": 129.52903868824234,
+          "normal_condition": 16777.77186350018,
+          "degrees_of_freedom": 61,
+          "gof": 1.183324412163301,
+          "restraint_residual_count": 0,
+          "restraint_sum_squares": 0.0,
+          "free": {
+            "n": 0,
+            "r1_all": null,
+            "r1_gt": null,
+            "wr2": null,
+            "chi_squared": null,
+            "sigma_rmse": null,
+            "negative_intensities": 0
+          },
+          "objective_evaluations_total": 17,
+          "diffraction_evaluations": 12,
+          "analytic_jacobian_evaluations": 12,
+          "restraint_parameter_evaluations": 0,
+          "diffraction_derivative_method": "analytic",
+          "numeric_backend": "cpp",
+          "numeric_backend_requested": "auto",
+          "restraint_derivative_method": "none",
+          "reflection_block_size": 1024,
+          "rank_method": "streaming_QR_then_small_SVD",
+          "weighting": "frozen_weight_IRLS",
+          "covariance_scaling": "reduced_chi2",
+          "final_weight_relative_change": 1.733728716146743e-10
+        }
+      }
+    },
+    "persistent_agent": {
+      "checkpoint_actions": 2,
+      "checkpoint_statuses": {
+        "refine_a": "succeeded",
+        "refine_b": "succeeded",
+        "review": "pending",
+        "package": "pending"
+      },
+      "final_actions": 4,
+      "all_nodes_succeeded": true,
+      "ready_native_tasks_overlapped": true,
+      "resume_reexecuted_completed_nodes": false,
+      "all_attempt_counts": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "wall_elapsed_seconds": 1.9149565729999267,
+      "cumulative_action_seconds": 2.7555527180002173,
+      "attempts": [
+        {
+          "node": "refine_a",
+          "number": 1,
+          "started": "2026-11-08T14:46:19.006216+00:00",
+          "finished": "2026-11-08T14:46:19.961788+00:00",
+          "status": "succeeded",
+          "directory": "attempts/refine_a/001",
+          "pid": 114,
+          "worker_pid": 109
+        },
+        {
+          "node": "refine_b",
+          "number": 1,
+          "started": "2026-11-08T14:46:19.034482+00:00",
+          "finished": "2026-11-08T14:46:20.008156+00:00",
+          "status": "succeeded",
+          "directory": "attempts/refine_b/001",
+          "pid": 115,
+          "worker_pid": 111
+        },
+        {
+          "node": "review",
+          "number": 1,
+          "started": "2026-11-08T14:46:20.530725+00:00",
+          "finished": "2026-11-08T14:46:20.949988+00:00",
+          "status": "succeeded",
+          "directory": "attempts/review/001",
+          "pid": null,
+          "worker_pid": 134
+        },
+        {
+          "node": "package",
+          "number": 1,
+          "started": "2026-11-08T14:46:20.974146+00:00",
+          "finished": "2026-11-08T14:46:21.385802+00:00",
+          "status": "succeeded",
+          "directory": "attempts/package/001",
+          "pid": null,
+          "worker_pid": 137
+        }
+      ],
+      "outcomes": {
+        "refine_a": {
+          "success": true,
+          "metrics": {
+            "analytic_jacobian_evaluations": 12,
+            "chi_squared": 85.41565652971893,
+            "covariance_scaling": "reduced_chi2",
+            "degrees_of_freedom": 61,
+            "diffraction_derivative_method": "analytic",
+            "diffraction_evaluations": 12,
+            "diffraction_jacobian_rank": 10,
+            "final_weight_relative_change": 1.733728716146743e-10,
+            "free": {
+              "chi_squared": null,
+              "n": 0,
+              "negative_intensities": 0,
+              "r1_all": null,
+              "r1_gt": null,
+              "sigma_rmse": null,
+              "wr2": null
+            },
+            "gof": 1.183324412163301,
+            "identifiable": true,
+            "jacobian_condition": 129.52903868824234,
+            "jacobian_rank": 10,
+            "n": 71,
+            "n_free": 0,
+            "n_gt": 70,
+            "n_parameters": 10,
+            "n_work": 71,
+            "negative_intensities": 0,
+            "normal_condition": 16777.77186350018,
+            "numeric_backend": "cpp",
+            "numeric_backend_requested": "auto",
+            "objective_evaluations_total": 17,
+            "r1_all": 0.0412682195359424,
+            "r1_gt": 0.04031574937087205,
+            "rank_method": "streaming_QR_then_small_SVD",
+            "reflection_block_size": 1024,
+            "restraint_derivative_method": "none",
+            "restraint_parameter_evaluations": 0,
+            "restraint_residual_count": 0,
+            "restraint_sum_squares": 0.0,
+            "sigma_rmse": 4.965162464502118,
+            "weighting": "frozen_weight_IRLS",
+            "wr2": 0.08148047291324201
+          },
+          "native_result_sha256": "6f548d949199a25447305ca7078701346fe9049cc2cec7507907b60b7430be7d"
+        },
+        "refine_b": {
+          "success": true,
+          "metrics": {
+            "analytic_jacobian_evaluations": 21,
+            "chi_squared": 85.4156565364566,
+            "covariance_scaling": "reduced_chi2",
+            "degrees_of_freedom": 61,
+            "diffraction_derivative_method": "analytic",
+            "diffraction_evaluations": 21,
+            "diffraction_jacobian_rank": 10,
+            "final_weight_relative_change": 8.881784197001252e-16,
+            "free": {
+              "chi_squared": null,
+              "n": 0,
+              "negative_intensities": 0,
+              "r1_all": null,
+              "r1_gt": null,
+              "sigma_rmse": null,
+              "wr2": null
+            },
+            "gof": 1.1833244122099718,
+            "identifiable": true,
+            "jacobian_condition": 129.52903881809627,
+            "jacobian_rank": 10,
+            "n": 71,
+            "n_free": 0,
+            "n_gt": 70,
+            "n_parameters": 10,
+            "n_work": 71,
+            "negative_intensities": 0,
+            "normal_condition": 16777.77189713989,
+            "numeric_backend": "cpp",
+            "numeric_backend_requested": "auto",
+            "objective_evaluations_total": 26,
+            "r1_all": 0.04126821954277066,
+            "r1_gt": 0.04031574938206687,
+            "rank_method": "streaming_QR_then_small_SVD",
+            "reflection_block_size": 1024,
+            "restraint_derivative_method": "none",
+            "restraint_parameter_evaluations": 0,
+            "restraint_residual_count": 0,
+            "restraint_sum_squares": 0.0,
+            "sigma_rmse": 4.965162457166425,
+            "weighting": "frozen_weight_IRLS",
+            "wr2": 0.08148047291723065
+          },
+          "native_result_sha256": "11752f79aecad6478d25905e1fede1bb7e1e900473e8c5289c38ccbf77e1a17b"
+        }
+      },
+      "package_zip_and_hash_verified": true
+    }
+  },
+  "optional_kernel_build": {
+    "schema": "ariadne_xtal.v08_kernel_packaging/1",
+    "builds": [
+      {
+        "command": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "-m",
+          "build",
+          "--no-isolation",
+          "--wheel",
+          "--outdir",
+          "/tmp/ariadne-kernel-build-rxtwmdm7/python"
+        ],
+        "returncode": 0,
+        "log": "validation/kernel_build_logs/wheel_python.log"
+      },
+      {
+        "command": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "-m",
+          "build",
+          "--no-isolation",
+          "--wheel",
+          "--outdir",
+          "/tmp/ariadne-kernel-build-rxtwmdm7/cpp"
+        ],
+        "returncode": 0,
+        "log": "validation/kernel_build_logs/wheel_cpp.log"
+      },
+      {
+        "command": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "setup.py",
+          "build_ext",
+          "--force",
+          "--build-lib",
+          "/tmp/ariadne-kernel-build-rxtwmdm7/missing_auto",
+          "--build-temp",
+          "/tmp/ariadne-kernel-build-rxtwmdm7/objects_auto"
+        ],
+        "returncode": 0,
+        "log": "validation/kernel_build_logs/missing_compiler_auto.log"
+      },
+      {
+        "command": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "setup.py",
+          "build_ext",
+          "--force",
+          "--build-lib",
+          "/tmp/ariadne-kernel-build-rxtwmdm7/missing_1",
+          "--build-temp",
+          "/tmp/ariadne-kernel-build-rxtwmdm7/objects_1"
+        ],
+        "returncode": 1,
+        "log": "validation/kernel_build_logs/missing_compiler_1.log"
+      },
+      {
+        "command": [
+          "/workspace/scratch/4f12e5e7e14c/venv/bin/python",
+          "-m",
+          "build",
+          "--no-isolation",
+          "--sdist",
+          "--outdir",
+          "/workspace/scratch/4f12e5e7e14c/Ariadne/dist/v0.8"
+        ],
+        "returncode": 0,
+        "log": "validation/kernel_build_logs/source_archive.log"
+      }
+    ],
+    "wheels": [
+      {
+        "filename": "ariadne_xtal-0.8.0-py3-none-any.whl",
+        "bytes": 130813,
+        "sha256": "a2c4ff41a342db7e5f6486ef8bbc0aaa5ddf120a06068a9dcabe0f4b6822ff7f",
+        "compiled_members": [],
+        "smoke": {
+          "status": {
+            "requested": "auto",
+            "resolved": "python",
+            "compiled_available": false,
+            "build": null,
+            "fallback_reason": "cannot import name '_intensity_cpp' from 'ariadne_xtal' (/tmp/ariadne-kernel-build-rxtwmdm7/python_unpacked/ariadne_xtal/__init__.py)",
+            "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+            "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+          },
+          "intensity": [
+            31.069299960889808,
+            10.521329812160785
+          ],
+          "jacobian_shape": [
+            2,
+            2
+          ],
+          "module_from_extracted_wheel": true,
+          "explicit_cpp_failure": "C++ numeric backend is unavailable; build with python tools/build_optional_kernel.py --inplace or select python/auto"
+        }
+      },
+      {
+        "filename": "ariadne_xtal-0.8.0-cp312-cp312-linux_x86_64.whl",
+        "bytes": 178982,
+        "sha256": "abf14065f7b5af099d6816e7ceb6b96cbacab525d73d6ddad0f99a6ad6c47c4e",
+        "compiled_members": [
+          "ariadne_xtal/_intensity_cpp.cpython-312-x86_64-linux-gnu.so"
+        ],
+        "smoke": {
+          "status": {
+            "requested": "auto",
+            "resolved": "cpp",
+            "compiled_available": true,
+            "build": {
+              "kernel_version": 1,
+              "binding": "CPython checked native buffers",
+              "compiler": "13.3.0",
+              "architecture": "x86_64",
+              "internal_threads": 1,
+              "releases_gil": true,
+              "openmp": false,
+              "fast_math": false
+            },
+            "fallback_reason": null,
+            "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+            "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+          },
+          "intensity": [
+            31.069299960889808,
+            10.521329812160788
+          ],
+          "jacobian_shape": [
+            2,
+            2
+          ],
+          "module_from_extracted_wheel": true,
+          "explicit_cpp_failure": null
+        }
+      }
+    ],
+    "sdist": {
+      "filename": "ariadne_xtal-0.8.0.tar.gz",
+      "bytes": 2156035,
+      "sha256": "965ae53af52f4d5d3d30d684aca26db45980e30b671b3190d3e762f5ea46b39d",
+      "required_source_members_verified": [
+        "src/ariadne_xtal/cpp/intensity_kernel.cpp",
+        "src/ariadne_xtal/kernels.py",
+        "tools/build_optional_kernel.py",
+        "setup.py",
+        "tests/test_kernels_v08.py"
+      ]
+    },
+    "source_sha256": {
+      "setup.py": "0ad85a315f157eef27403103b07308064f8fa9603eee56c60686d933ca3b41ec",
+      "pyproject.toml": "c0efea79cd91529d3b4f19a6ca70887b9ab08d7cfc55bcb1f74dbb1bfc524ce4",
+      "MANIFEST.in": "bb58daad48bd1af0d4108ce0e3fad49d2251d3b19618f16a871d241c69756cb7",
+      "tools/build_optional_kernel.py": "377df3ecc14c323b41f74bf9cc6c98b7f6a8880127dd6a6e1a39c954bfad1b22",
+      "src/ariadne_xtal/cpp/intensity_kernel.cpp": "e345338e8545d62222668f36aa0bed8541408a056807e2b2d06817d644388b82",
+      "validation/check_v08_kernel_build.py": "3372317d24d2701e4348bc58ab996999c56e773918960647ae521ddb71da8d78"
+    },
+    "interpretation": "Both wheels were imported from separate extracted directories, excluding the editable native source path. The compiled wheel is specific to this Python ABI/platform; the pure wheel is portable Python. No dependency installation or compiler download occurred. Source archive contains buildable C++ source."
+  },
+  "report_bundle_check": {
+    "status": "passed",
+    "archive": "Ariadne_0_8_0_LaTeX_Source.zip",
+    "archive_sha256": "485b17354cbf0379f2ec1313ac28ffaea0499258052e13b912e9a15bf9cc5c2f",
+    "manifest_files_checked": 49,
+    "compiled_from_independent_extraction": true,
+    "source_tree_access_needed_for_compilation": false,
+    "notes": "System XeLaTeX and standard TeX packages were reused; bundled fonts and figures were loaded from the extracted archive."
+  },
+  "pdf_visual_review": {
+    "version": "0.8.0",
+    "main_report_pages": 45,
+    "loop_report_pages": 8,
+    "compile": "Three XeLaTeX passes per report; no missing glyphs, undefined references or overfull hboxes.",
+    "visual_review": "All textbook pages rendered and inspected in contact sheets; loop report pages reviewed and diagrams enlarged. Final changed loop pages checked separately.",
+    "fixed_layout_issues": [
+      "TOC orphan entry",
+      "Loop final paragraph orphan page",
+      "Last reference orphan page",
+      "Scheduler diagram overflow",
+      "Missing font glyphs"
+    ],
+    "status": "passed"
+  },
+  "reports": [
+    {
+      "file": "docs/v08/Ariadne_0_8_0_Textbook.pdf",
+      "pages": 45,
+      "build_bytes": 665454
+    },
+    {
+      "file": "docs/v08/Ariadne_0_8_0_Loop.pdf",
+      "pages": 8,
+      "build_bytes": 233830
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "benchmarks/v08_reduction_results.json",
+      "bytes": 12480,
+      "sha256": "ff47516c3ef7c3c97c7184a28b9f672d7a69129a6e523f3d8cdd7d35e198e773"
+    },
+    {
+      "path": "native/validation/v08_refinement_measurements.json",
+      "bytes": 5984,
+      "sha256": "23a79b43e3b0f986ad61af948cdbdd210910a99b493e77d2854c072ec9e4d744"
+    },
+    {
+      "path": "native/validation/v08_kernel_measurements.json",
+      "bytes": 17398,
+      "sha256": "67436dc34c5ac88e462579ad207eac36eb1fea28921c8ab6d139ebc186c06e23"
+    },
+    {
+      "path": "native/validation/v08_kernel_packaging.json",
+      "bytes": 5667,
+      "sha256": "8bc814a37bf8fbcd9ac4b6fa544e683d04adbfc0182171edf1596dc7d94104be"
+    },
+    {
+      "path": "native/validation/v08_joint_measurements.json",
+      "bytes": 27237,
+      "sha256": "21ca9fa32cd8678b76fc8e53b456ca8304b6be30c787ad0cc8c74177035e7132"
+    },
+    {
+      "path": "native/validation/v08_phasing/result.json",
+      "bytes": 1497934,
+      "sha256": "181d537cb395734601d3b20727ddc34d261b09f446010af042c7fc99c62b74ad"
+    },
+    {
+      "path": "native/validation/v08_real_fen4/result.json",
+      "bytes": 20907,
+      "sha256": "b68fc5325920fcc85b58730eecb67c60392f8fa77df0fc88231226d9aa40a15c"
+    },
+    {
+      "path": "docs/v08/results/scheduler_validation.json",
+      "bytes": 7123,
+      "sha256": "ba5ebca20f1de2c4066573f3b70c5f5e90bdff7e0ed295a2aba4e963bacff1bf"
+    },
+    {
+      "path": "docs/v08/results/wheel_integration.json",
+      "bytes": 19828,
+      "sha256": "0f2611ac703c1aa4e3ecc2e8e86ec545e1551442accf7b3886c5760e86ab25db"
+    },
+    {
+      "path": "docs/v08/results/report_bundle_check.json",
+      "bytes": 428,
+      "sha256": "003308dbf4fc1d5cb02ea98f2938cfd19652461ffaf8cf689c03ab05b909c081"
+    },
+    {
+      "path": "docs/v08/results/pdf_review.json",
+      "bytes": 577,
+      "sha256": "a0a77659e334c1065adb6f45cfe2cd0512f632a33d398654b5e775bfa721dfc5"
+    }
+  ],
+  "scope": [
+    "No user raw detector frames were available for an end-to-end instrument test.",
+    "Native DIALS/cctbx/dxtbx-dependent checks are listed as skipped, not passed.",
+    "Synthetic blind recovery is not an experimental MOF success-rate estimate.",
+    "FeN4 is a measured-data, known-model refinement regression.",
+    "Timing ratios compare declared local implementations, not SHELXL.",
+    "Agent memory reservations are not OS hard RSS limits.",
+    "Complete SHELXT/SHELXL instruction/production parity is not claimed."
+  ]
+}

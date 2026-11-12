@@ -1,0 +1,261 @@
+{
+  "schema": "ariadne-pro-macos/1",
+  "product": "Ariadne pro macOS",
+  "version": "0.8.0",
+  "variant": "macos-arm64-localopt1",
+  "build": "0.8.0-source-overlay-macos-arm64-localopt1",
+  "platform": {
+    "os": "macOS 26.5",
+    "machine": "arm64",
+    "cpu": "Apple M5",
+    "memory_gib": 16
+  },
+  "python": {
+    "version": "3.12.15",
+    "implementation": "CPython",
+    "compiler": "Clang 21.1.8",
+    "base_environment": "/Users/xiaoyuzhang/CrystallographyPrograms/scxrd-open",
+    "execution_python": "/Users/xiaoyuzhang/CrystallographyPrograms/scxrd-open/bin/python"
+  },
+  "packages": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "gemmi": "0.7.5",
+    "threadpoolctl": "3.7.0",
+    "matplotlib": "3.11.2",
+    "scikit-image": "0.26.0",
+    "tifffile": "2026.9.20",
+    "mcp": "1.30.0",
+    "plotly": "7.1.0",
+    "pytest": "9.2.0"
+  },
+  "dials": {
+    "dials": "3.30.1",
+    "dxtbx": "3.30.0",
+    "cctbx-base": "2026.9",
+    "source": "/Users/xiaoyuzhang/CrystallographyPrograms/ariadne-pro/dials-source/dials-3.30.1"
+  },
+  "kernel": {
+    "requested": "cpp",
+    "resolved": "cpp",
+    "compiled_available": true,
+    "compiler": "Apple LLVM 21.0.0 (clang-2100.0.123.102)",
+    "architecture": "aarch64",
+    "internal_threads": 1,
+    "releases_gil": true,
+    "openmp": false,
+    "fast_math": false,
+    "extension": "source/native/src/ariadne_xtal/_intensity_cpp.cpython-312-darwin.so"
+  },
+  "regression": {
+    "numeric_checks_passed": 49,
+    "joint_checks_passed": 14,
+    "python_reference_checks_passed": 13,
+    "failed": 0,
+    "skipped": 0,
+    "total_executions": 76,
+    "duplicate_reference_executions": 13
+  },
+  "optimization": {
+    "report": "optimization/Ariadne pro 本机优化报告.md",
+    "comparison": "optimization/paired-comparison.json",
+    "patch": "optimization/ariadne-pro-local-speedup.patch",
+    "order": [
+      "baseline",
+      "optimized",
+      "optimized",
+      "baseline"
+    ],
+    "scope": "Site preparation, sparse C++ tangent projections, duplicate unrestrained rank analysis",
+    "paired_predictor": [
+      {
+        "case": "three_atoms_three_domains",
+        "n_atoms": 3,
+        "n_domains": 3,
+        "n_reflections": 7280,
+        "backends": {
+          "python": {
+            "baseline_median_ms": 15.623197876266204,
+            "optimized_median_ms": 11.991255250904942,
+            "speedup": 1.3028826048121334,
+            "time_reduction_percent": 23.247114029571915
+          },
+          "cpp": {
+            "baseline_median_ms": 2.885833313484909,
+            "optimized_median_ms": 2.5211172505805735,
+            "speedup": 1.1446644589101707,
+            "time_reduction_percent": 12.638154158110659
+          }
+        }
+      },
+      {
+        "case": "thirty_two_atoms",
+        "n_atoms": 32,
+        "n_domains": 1,
+        "n_reflections": 4096,
+        "backends": {
+          "python": {
+            "baseline_median_ms": 31.51645568868844,
+            "optimized_median_ms": 26.648606752132764,
+            "speedup": 1.1826680464698622,
+            "time_reduction_percent": 15.445419956606333
+          },
+          "cpp": {
+            "baseline_median_ms": 5.495882811374031,
+            "optimized_median_ms": 4.474739562283503,
+            "speedup": 1.2282017165194368,
+            "time_reduction_percent": 18.58014961631307
+          }
+        }
+      },
+      {
+        "case": "eighty_atoms_memory",
+        "n_atoms": 80,
+        "n_domains": 1,
+        "n_reflections": 8192,
+        "backends": {
+          "python": {
+            "baseline_median_ms": 145.64137500201468,
+            "optimized_median_ms": 134.5610729404143,
+            "speedup": 1.082344037688425,
+            "time_reduction_percent": 7.607935630549423
+          },
+          "cpp": {
+            "baseline_median_ms": 22.352265623339918,
+            "optimized_median_ms": 19.365479191037593,
+            "speedup": 1.154232508415522,
+            "time_reduction_percent": 13.362343140659371
+          }
+        }
+      }
+    ],
+    "refinement": {
+      "python": {
+        "timings": {
+          "baseline": {
+            "wall_seconds": [
+              0.06604804203379899,
+              0.062353125016670674,
+              0.06676129100378603,
+              0.06468883395427838,
+              0.06544416700489819,
+              0.06410049996338785
+            ],
+            "median_seconds": 0.06506650047958829,
+            "chi_squared": [
+              1009.3952271514706,
+              1009.3952271514706,
+              1009.3952271514706,
+              1009.3952271514706,
+              1009.3952271514706,
+              1009.3952271514706
+            ],
+            "jacobian_ranks": [
+              70,
+              70,
+              70,
+              70,
+              70,
+              70
+            ]
+          },
+          "optimized": {
+            "wall_seconds": [
+              0.05693287501344457,
+              0.05318495800020173,
+              0.052766375010833144,
+              0.054979207983706146,
+              0.05245445796754211,
+              0.05230133404256776
+            ],
+            "median_seconds": 0.05297566650551744,
+            "chi_squared": [
+              1009.3952271514647,
+              1009.3952271514647,
+              1009.3952271514647,
+              1009.3952271514647,
+              1009.3952271514647,
+              1009.3952271514647
+            ],
+            "jacobian_ranks": [
+              70,
+              70,
+              70,
+              70,
+              70,
+              70
+            ]
+          }
+        },
+        "speedup": 1.2282337301563082,
+        "time_reduction_percent": 18.582271806463314
+      },
+      "cpp": {
+        "timings": {
+          "baseline": {
+            "wall_seconds": [
+              0.03482516604708508,
+              0.033991542004514486,
+              0.038724166981410235,
+              0.03594495897414163,
+              0.03924291697330773,
+              0.037354375002905726
+            ],
+            "median_seconds": 0.03664966698852368,
+            "chi_squared": [
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734
+            ],
+            "jacobian_ranks": [
+              70,
+              70,
+              70,
+              70,
+              70,
+              70
+            ]
+          },
+          "optimized": {
+            "wall_seconds": [
+              0.030977666028775275,
+              0.03205449995584786,
+              0.030330832989420742,
+              0.03141920902999118,
+              0.029420332983136177,
+              0.028986499994061887
+            ],
+            "median_seconds": 0.03065424950909801,
+            "chi_squared": [
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734,
+              1009.3952271514734
+            ],
+            "jacobian_ranks": [
+              70,
+              70,
+              70,
+              70,
+              70,
+              70
+            ]
+          }
+        },
+        "speedup": 1.1955819364504834,
+        "time_reduction_percent": 16.358722935471825
+      }
+    }
+  },
+  "boundaries": {
+    "raw_detector_end_to_end_tested": false,
+    "algorithm_validation": "not_run",
+    "format_compatibility": "用户原始探测器数据未测试",
+    "posix_agent_available": true
+  }
+}

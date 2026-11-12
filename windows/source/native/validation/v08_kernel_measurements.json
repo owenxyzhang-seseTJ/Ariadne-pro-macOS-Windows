@@ -1,0 +1,569 @@
+{
+  "schema": "ariadne_xtal.v08_kernel_validation/1",
+  "generated_utc": "2026-11-08T14:41:58.721557+00:00",
+  "environment": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "gemmi": "0.7.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "blas_threads": 1,
+    "kernel": {
+      "requested": "cpp",
+      "resolved": "cpp",
+      "compiled_available": true,
+      "build": {
+        "kernel_version": 1,
+        "binding": "CPython checked native buffers",
+        "compiler": "13.3.0",
+        "architecture": "x86_64",
+        "internal_threads": 1,
+        "releases_gil": true,
+        "openmp": false,
+        "fast_math": false
+      },
+      "fallback_reason": null,
+      "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+      "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+    }
+  },
+  "profile": {
+    "backend": "python",
+    "evaluations": 12,
+    "case": "three_atoms_three_domains",
+    "total_profiled_seconds": 0.38257239900000034,
+    "structure_factor_block_cumulative_seconds": 0.33735684800000004,
+    "structure_factor_block_fraction": 0.8818117796312842,
+    "top_cumulative_functions": [
+      {
+        "file": "derivatives.py",
+        "line": 318,
+        "function": "evaluate",
+        "calls": 12,
+        "primitive_calls": 12,
+        "own_seconds": 0.017220507,
+        "cumulative_seconds": 0.38255108800000004
+      },
+      {
+        "file": "derivatives.py",
+        "line": 257,
+        "function": "intensity_block",
+        "calls": 288,
+        "primitive_calls": 288,
+        "own_seconds": 0.010564490000000001,
+        "cumulative_seconds": 0.34811181
+      },
+      {
+        "file": "derivatives.py",
+        "line": 237,
+        "function": "block",
+        "calls": 288,
+        "primitive_calls": 288,
+        "own_seconds": 0.10774402300000001,
+        "cumulative_seconds": 0.33735684800000004
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 1057,
+        "function": "einsum",
+        "calls": 1764,
+        "primitive_calls": 1764,
+        "own_seconds": 0.006979838,
+        "cumulative_seconds": 0.23229138200000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy._core._multiarray_umath.c_einsum>",
+        "calls": 1800,
+        "primitive_calls": 1800,
+        "own_seconds": 0.157916304,
+        "cumulative_seconds": 0.157916304
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 742,
+        "function": "einsum_path",
+        "calls": 900,
+        "primitive_calls": 900,
+        "own_seconds": 0.018035791000000002,
+        "cumulative_seconds": 0.064602533
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 328,
+        "function": "_greedy_path",
+        "calls": 900,
+        "primitive_calls": 900,
+        "own_seconds": 0.007289837,
+        "cumulative_seconds": 0.025974138
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 222,
+        "function": "_parse_possible_contraction",
+        "calls": 5328,
+        "primitive_calls": 5328,
+        "own_seconds": 0.003053507,
+        "cumulative_seconds": 0.013817884
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 88,
+        "function": "_find_contraction",
+        "calls": 7164,
+        "primitive_calls": 7164,
+        "own_seconds": 0.009924993,
+        "cumulative_seconds": 0.012461507
+      },
+      {
+        "file": "derivatives.py",
+        "line": 207,
+        "function": "_prepare_sites",
+        "calls": 12,
+        "primitive_calls": 12,
+        "own_seconds": 0.0009473670000000001,
+        "cumulative_seconds": 0.007975101
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 553,
+        "function": "_parse_einsum_input",
+        "calls": 900,
+        "primitive_calls": 900,
+        "own_seconds": 0.005242616,
+        "cumulative_seconds": 0.007755911000000001
+      },
+      {
+        "file": "refinement.py",
+        "line": 541,
+        "function": "unpack",
+        "calls": 12,
+        "primitive_calls": 12,
+        "own_seconds": 0.000732247,
+        "cumulative_seconds": 0.005878619000000001
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 59,
+        "function": "_compute_size_by_dict",
+        "calls": 12924,
+        "primitive_calls": 12924,
+        "own_seconds": 0.003813237,
+        "cumulative_seconds": 0.003813237
+      },
+      {
+        "file": "copy.py",
+        "line": 118,
+        "function": "deepcopy",
+        "calls": 1320,
+        "primitive_calls": 12,
+        "own_seconds": 0.0017044970000000001,
+        "cumulative_seconds": 0.003735978
+      },
+      {
+        "file": "copy.py",
+        "line": 247,
+        "function": "_reconstruct",
+        "calls": 60,
+        "primitive_calls": 12,
+        "own_seconds": 0.00019225600000000002,
+        "cumulative_seconds": 0.003249285
+      }
+    ],
+    "interpretation": "cProfile selects the hotspot; its instrumented times are not used as the reported speedup"
+  },
+  "predictor": [
+    {
+      "case": "three_atoms_three_domains",
+      "n_atoms": 3,
+      "n_domains": 3,
+      "n_reflections": 7280,
+      "n_parameters": 17,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.2301672079997843,
+          "median_cpu_seconds": 0.23013012700000002
+        },
+        "cpp": {
+          "median_wall_seconds": 0.06288078899979155,
+          "median_cpu_seconds": 0.06288438900000015
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.20391765500016845,
+          "cpu_seconds": 0.203911034
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.060364935000052355,
+          "cpu_seconds": 0.06031122
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.05883009999979549,
+          "cpu_seconds": 0.05883457500000011
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.2058889130003081,
+          "cpu_seconds": 0.205890688
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.2632489410002563,
+          "cpu_seconds": 0.26204605400000003
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.06288078899979155,
+          "cpu_seconds": 0.06288438900000015
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.06406457100001717,
+          "cpu_seconds": 0.06407037400000015
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 0.2301672079997843,
+          "cpu_seconds": 0.23013012700000002
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 0.23651604699989548,
+          "cpu_seconds": 0.23650702600000018
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.06415699199988012,
+          "cpu_seconds": 0.06416171300000029
+        }
+      ],
+      "median_wall_speedup": 3.6603740452516793,
+      "maximum_intensity_absolute_difference": 1.0231815394945443e-12,
+      "maximum_scaled_jacobian_difference": 2.075325122869176e-15,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+    },
+    {
+      "case": "thirty_two_atoms",
+      "n_atoms": 32,
+      "n_domains": 1,
+      "n_reflections": 4096,
+      "n_parameters": 126,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.3578807079998114,
+          "median_cpu_seconds": 0.35785935199999974
+        },
+        "cpp": {
+          "median_wall_seconds": 0.11636929299993426,
+          "median_cpu_seconds": 0.116371891
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.4044782529999793,
+          "cpu_seconds": 0.4044688540000001
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.12044122999986939,
+          "cpu_seconds": 0.12044453700000002
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.11825878799982092,
+          "cpu_seconds": 0.11824941400000011
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.35747785700004897,
+          "cpu_seconds": 0.35742688199999995
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.35184129800018127,
+          "cpu_seconds": 0.35182045399999984
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.11429764099966633,
+          "cpu_seconds": 0.11430147700000015
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.11050516500017693,
+          "cpu_seconds": 0.11045413100000001
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 0.3578807079998114,
+          "cpu_seconds": 0.35785935199999974
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 0.3668775999999525,
+          "cpu_seconds": 0.3668510600000001
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.11636929299993426,
+          "cpu_seconds": 0.116371891
+        }
+      ],
+      "median_wall_speedup": 3.0753878344866594,
+      "maximum_intensity_absolute_difference": 6.548361852765083e-11,
+      "maximum_scaled_jacobian_difference": 1.8957339695783366e-14,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+    }
+  ],
+  "refinement": {
+    "kind": "synthetic_local_refinement",
+    "observation_generator": "Gemmi independent SF calculator",
+    "n_atoms": 18,
+    "n_reflections": 1098,
+    "n_parameters": 70,
+    "summary": {
+      "python": {
+        "median_wall_seconds": 0.11349574599989865,
+        "median_cpu_seconds": 0.11350094099999986
+      },
+      "cpp": {
+        "median_wall_seconds": 0.06142340799988233,
+        "median_cpu_seconds": 0.061427472000000094
+      }
+    },
+    "runs": [
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 1,
+        "wall_seconds": 0.11349574599989865,
+        "cpu_seconds": 0.11350094099999986,
+        "success": true,
+        "chi_squared": 1009.3951728969362,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 1,
+        "wall_seconds": 0.06254579800042848,
+        "cpu_seconds": 0.06253563299999954,
+        "success": true,
+        "chi_squared": 1009.395172896943,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 2,
+        "wall_seconds": 0.06142340799988233,
+        "cpu_seconds": 0.061427472000000094,
+        "success": true,
+        "chi_squared": 1009.395172896943,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 2,
+        "wall_seconds": 0.10528318199976638,
+        "cpu_seconds": 0.10527499700000043,
+        "success": true,
+        "chi_squared": 1009.3951728969362,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 3,
+        "wall_seconds": 0.11386482499983686,
+        "cpu_seconds": 0.11383034799999958,
+        "success": true,
+        "chi_squared": 1009.3951728969362,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 3,
+        "wall_seconds": 0.06124114600015673,
+        "cpu_seconds": 0.06124508299999931,
+        "success": true,
+        "chi_squared": 1009.395172896943,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      }
+    ],
+    "median_wall_speedup": 1.847760482455094,
+    "prediction_difference_sigma_rms": 4.523860156233575e-11,
+    "chi_squared_difference": 6.821210263296962e-12,
+    "timing_scope": "Entire refine call, including initialization, analytic least squares, restraints, rank and covariance; same starting model, no ab initio or external-software comparison"
+  },
+  "cancellation": {
+    "arithmetic_stress": {
+      "decimal_precision": 80,
+      "amplitudes": [
+        1e+16,
+        1.0,
+        -1e+16,
+        1.0
+      ],
+      "expected_intensity": 4.0,
+      "cpp_intensity": 4.0,
+      "cpp_shared_occupancy_derivative": 8.0,
+      "naive_numpy_sum": 1.0,
+      "scope": "Artificial cancellation stress at zero phase, not a model of experimental scattering powers"
+    },
+    "physical_absences": {
+      "spacegroup": "P 21 21 21",
+      "hkl": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          0
+        ],
+        [
+          0,
+          0,
+          5
+        ],
+        [
+          2,
+          0,
+          0
+        ],
+        [
+          2,
+          3,
+          1
+        ]
+      ],
+      "cpp_intensities": [
+        2.0510383535746307e-29,
+        4.641491165973238e-28,
+        4.445674935179588e-27,
+        11.307132901112267,
+        630.5102135659301
+      ],
+      "gemmi_intensities": [
+        1.591047667362308e-29,
+        1.2260353171921998e-28,
+        4.8523095693833965e-27,
+        11.30712929915063,
+        630.5102239445125
+      ],
+      "maximum_forbidden_intensity": 4.445674935179588e-27
+    }
+  },
+  "memory": [
+    {
+      "backend": "python",
+      "block_size": 1024,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "baseline_peak_rss_kib": 87996,
+      "peak_process_rss_kib": 105736,
+      "increase_over_baseline_peak_kib": 17740,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 5210112,
+      "checksum": 102578858.34100093
+    },
+    {
+      "backend": "cpp",
+      "block_size": 1024,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "baseline_peak_rss_kib": 87996,
+      "peak_process_rss_kib": 95260,
+      "increase_over_baseline_peak_kib": 7264,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 5210112,
+      "checksum": 102578858.34100103
+    },
+    {
+      "backend": "python",
+      "block_size": 8192,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "baseline_peak_rss_kib": 87996,
+      "peak_process_rss_kib": 172024,
+      "increase_over_baseline_peak_kib": 84028,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 41680896,
+      "checksum": 102578858.34100093
+    },
+    {
+      "backend": "cpp",
+      "block_size": 8192,
+      "n_atoms": 80,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "baseline_peak_rss_kib": 87996,
+      "peak_process_rss_kib": 113168,
+      "increase_over_baseline_peak_kib": 25172,
+      "returned_jacobian_bytes": 20840448,
+      "numpy_complex_derivative_block_bytes": 41680896,
+      "checksum": 102578858.34100103
+    }
+  ],
+  "memory_interpretation": "Separate Linux processes, one predictor evaluation after geometry/form-factor cache construction. Peak RSS includes interpreter, libraries, inputs, global real N x P Jacobian and temporary arrays. The baseline-peak difference is an observed RSS increment, not allocator-level scratch accounting. C++ removes the complex B x P derivative and complex contraction temporary; real block buffers and dense J remain.",
+  "source_sha256": {
+    "src/ariadne_xtal/derivatives.py": "98fb9d63dd904442b432a7717a69b5685e8c5189e07751b26c4ae4b4e9a54068",
+    "src/ariadne_xtal/refinement.py": "72b9f6b7adfaf82375d0cfa54a05a18b14e7edffb79cd634dcccff02e260f982",
+    "src/ariadne_xtal/kernels.py": "a709f135fe189bd40f36ea2d6c7f4dde5718ebd9697d94592347bc99af13194a",
+    "src/ariadne_xtal/cpp/intensity_kernel.cpp": "e345338e8545d62222668f36aa0bed8541408a056807e2b2d06817d644388b82",
+    "setup.py": "0ad85a315f157eef27403103b07308064f8fa9603eee56c60686d933ca3b41ec",
+    "validation/run_v08_kernels.py": "8d51a72b52416c33de0f335c10293ae46c116596576f47359aeb729ae85811b5"
+  },
+  "interpretation": "Local CPU measurements on two synthetic predictor shapes and one known-start local-refinement problem. All use the same analytic physical model; no universal speedup or replacement of BLAS/FFT is claimed."
+}

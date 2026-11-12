@@ -1,0 +1,39 @@
+{
+  "synthetic": [
+    "synthetic_reflections.json",
+    "overlap_groups.json",
+    "count_pixels.json"
+  ],
+  "truth_coordinates_passed_to_solver": false,
+  "experimental": {
+    "files": [
+      "fen4_start.json",
+      "fen4_measured.json"
+    ],
+    "doi": "10.1107/S2056989018012161",
+    "meaning": "known-model re-refinement, not ab initio"
+  },
+  "note": "No actual detector images are included in these examples.",
+  "derived_initial_model": {
+    "file": "fen4_alternative_start.json",
+    "source": "fen4_start.json",
+    "nitrogen_fractional_shifts": [
+      [
+        0.025,
+        -0.018,
+        0.02
+      ],
+      [
+        -0.022,
+        0.014,
+        -0.017
+      ]
+    ],
+    "nitrogen_u_iso_multiplier": 1.2,
+    "iron_inversion_center_unchanged": true
+  },
+  "agent_examples": [
+    "persistent_native.json",
+    "parallel_native.json"
+  ]
+}

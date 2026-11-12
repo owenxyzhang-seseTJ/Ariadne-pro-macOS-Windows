@@ -1,0 +1,37 @@
+{
+  "action": "solve-observations",
+  "observations": "overlap_groups.json",
+  "cell": {
+    "a": 5.7,
+    "b": 5.7,
+    "c": 6.1,
+    "alpha": 90.0,
+    "beta": 90.0,
+    "gamma": 90.0
+  },
+  "elements": [
+    "C",
+    "C",
+    "C",
+    "C"
+  ],
+  "phasing_options": {
+    "algorithm": "hybrid",
+    "trials": 4,
+    "iterations": 600,
+    "keep": 4,
+    "seed": 1729
+  },
+  "refinement_options": {
+    "max_nfev": 180
+  },
+  "domain_fractions": [
+    0.5,
+    0.5
+  ],
+  "refine_domain_fractions": true,
+  "phase_relation": "same_phase_supported",
+  "options": {
+    "seed": 1729
+  }
+}

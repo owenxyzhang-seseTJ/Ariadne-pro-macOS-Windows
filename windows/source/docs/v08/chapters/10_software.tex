@@ -1,0 +1,79 @@
+\chapter{软件组织与可替代的工作范围}
+\label{chap:software}
+\section{一个项目，两套可独立安装的内核}
+代码包保留原 Ariadne 的 Python 包、DIALS 源码补丁、数据还原脚本和持久化 agent，加入原生 \code{ariadne-xtal} 子包。原生结构计算不要求安装 SHELXT/SHELXL；DIALS 原始图像处理需要单独的 DIALS/cctbx/dxtbx 环境。
+
+\begin{longtable}{p{0.32\textwidth}p{0.60\textwidth}}
+\toprule 目录或入口 & 职责\\\midrule
+\code{python/src/ariadne/} & 持久化工作流、旧能力与新像素似然；\code{reduction_native.py} 为新增可导入数值接口。\\
+\code{native/src/ariadne_xtal/} & 相位、对称、结构因子、解析精修、重叠结构拟合和原生自动求解。\\
+\code{skills/ariadne-reduction/} & 保留的原始帧处理方法、几何／体素／全局缩放／导出脚本。\\
+\code{patches/} & 针对指定 DIALS 基线的源码补丁；不是已编译的 DIALS 安装。\\
+\code{tests/}, \code{tests_rebuild/} & 数据还原、agent、反馈、工具契约和本次新像素接口的测试。\\
+\code{native/tests/} & 散射、相位、对称、精修、传输和新闭环测试。\\
+\code{native/validation/} & 合成盲解、已知结构再精修、性能和联合观测的复现脚本、结果。\\
+\code{docs/v08/} & 本书、独立 loop 报告、图与 LaTeX 源文件。\\
+\bottomrule
+\end{longtable}
+
+\section{安装与最小运行}
+在代码包根目录，使用 Python 3.12 创建新环境。避免把旧环境的包目录直接混入新环境；数值库应安装成一套完整版本。
+\begin{lstlisting}
+python3.12 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e './python[dev]' -e './native[dev]'
+ariadne-xtal capabilities
+ariadne-xtal run examples/v08/autosolve.json --root examples/v08
+\end{lstlisting}
+源码包内的示例生成脚本先产生带标签的合成数据；实际运行及输出目录见中文指南。低依赖路径只需要 NumPy、SciPy、Gemmi；图形展示另需 Matplotlib、Plotly 和 scikit-image，完整安装文件已声明这些依赖。
+
+结构输入支持原生 JSON、小分子 CIF 与结构性 INS/RES 导入；反射 JSON 保留精度与验证标记，传统 HKLF4 用于兼容交接。CIF/RES 的结构导出不等于执行其全部 SHELXL 精修指令。官方后端桥接仍然保留，但必须显式指定已有可执行文件，不会静默替代原生求解器。
+
+\section{给 agent 的操作语言}
+\begin{longtable}{p{0.25\textwidth}p{0.67\textwidth}}
+\toprule 操作 & 输入与输出的科学含义\\\midrule
+\code{integrate} & 给定像素、轮廓、背景基和噪声标定，生成高斯观测似然或联合计数拟合。没有仪器信息时不猜增益。\\
+\code{solve} & 已知晶胞与完整晶胞元素表，生成 P1 相位候选；不自动接受结构。\\
+\code{autosolve} & 独立强度表上的原生相位、候选精修、可选空间群投影与三角色验证。\\
+\code{symmetry} & 显式空间群列表上的原点相位检验和非对称单元投影。\\
+\code{refine} & 带符号 $F^2$、约束／限制、各向异性参数和适用的面网孪晶精修。\\
+\code{joint-refine} & 压缩像素组直接约束同相结构和晶畴比例。\\
+\code{solve-observations} & 从隔离组初始化，使用全部 work 组联合精修，选择后评价一次 audit。\\
+\code{maps}, \code{absolute} & 密度、Patterson、残差图，以及声明模型下的绝对结构诊断。\\
+\code{native.run} & 在原 Ariadne 持久化 agent 中以受预算约束的子进程执行上述操作。\\
+\bottomrule
+\end{longtable}
+
+JSON 请求中的文件路径只能引用所选工作区内的输入。输出保存为新的运行目录，包含请求、环境、输入快照、结果和图。原生 JSONL 与 MCP 都调用同一个数值分派器；主 agent 还支持任务图、超时、恢复和失败证据。
+
+\section{相对于旧代码的实质变化}
+直接法、Patterson、QR、变量投影和矩阵指数都已有成熟数学来源。本次新增的价值在于将这些原理形成可执行的组合，并修复具体的信息损失和计算浪费，不把经典恒等式重新命名为原创理论。
+
+\begin{longtable}{p{0.27\textwidth}p{0.31\textwidth}p{0.32\textwidth}}
+\toprule 问题 & 原有路径 & 本次实现\\\midrule
+弱反射相位约束 & 主要为固定振幅的电荷翻转 & 带符号强度近端更新，尺度协变、三相位阻尼与原子支撑交替。\\
+空间群衔接 & 消光与等价关系诊断 & 增加原点相位搜索、一对一原子轨道配对和精确 ASU 投影。\\
+精修导数 & 每个参数三点差分 & 缓存、分块的解析衍射 Jacobian，包含特殊位置、ADP 与比例约束。\\
+不确定度内存 & 完整左奇异向量矩阵 & 分块 QR 加小矩阵 SVD，保留秩与零空间。\\
+重叠与结构衔接 & 像素拟合后交接强度 & 将保留的观测算子直接作用于 $|F(\theta)|^2$，可共同估计同相畴比例。\\
+计数背景 & 原有计数模型与边界工具 & 新可导入接口共同估计背景，剖面区间重估背景，并给结构预测返回解析分数。\\
+自动闭环 & 独立工具与持久任务图 & 原生从头／初模流程，连通证据分组，候选选择与一次最终审计。\\
+\bottomrule
+\end{longtable}
+
+\section{与 SHELXT/SHELXL 工作的对应关系}
+\begin{longtable}{p{0.31\textwidth}p{0.60\textwidth}}
+\toprule 任务 & 0.8.0 原生状态\\\midrule
+从头相位求解 & 已实现已知组成、P1 起步的多起点混合求解；已有小规模合成盲解。\\
+空间群、原点 & 显式候选群检验和投影已实现；未覆盖 SHELXT 全部自动 Laue 群、元素分配与未知组成策略。\\
+基本结构精修 & 坐标、尺度、各向同性／各向异性位移、占有率和约束已实现。\\
+孪晶 & 原生支持面网比例精修；压缩像素接口支持有明确索引和轮廓的同相多晶畴共同精修。不是任意 HKLF5 指令流的完整解析器。\\
+无序与化学限制 & 提供原生约束和限制；完整 AFIX/HFIX、自动骑乘氢、FRAG 和全部自由变量语言尚未实现。\\
+绝对结构 & 保留显式反常散射、反演比例及 Friedel 商诊断；无信息时报告不可辨识。\\
+高级校正与报告 & 原还原侧的缩放／吸收与导出保留；完整消光、溶剂掩膜、中子散射及正式 checkCIF 全流程尚未替代。\\
+原始帧处理 & 保留 DIALS 适配与源码补丁。本次没有用户原始衍射帧，也没有在此环境执行原生 DIALS 全流程。\\
+\bottomrule
+\end{longtable}
+
+独立数值内核已经成立，成为一套独立的软件路线是合理的；是否足以替代某个实验室的生产流程，需要用该实验室的样品、仪器和交付标准验证。源码中保留官方后端适配，是为了让尚未覆盖的工作仍能继续，而非把外部结果混入原生算法成绩。

@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "run_id": "solve-observations_35ilx1pf",
+  "manifest": "runs/solve-observations_35ilx1pf/manifest.json",
+  "result": "runs/solve-observations_35ilx1pf/result.json",
+  "summary": {
+    "status": "completed",
+    "selected_candidate": 2,
+    "audit": {
+      "groups": 255,
+      "compressed_modes": 282,
+      "chi_squared": 295.55532637150606,
+      "mode_chi_squared": 295.55532637150606,
+      "residual_constant": 0.0,
+      "mode_sigma_rmse": 1.023752183505506,
+      "profiled_data_dimension": 282,
+      "profiled_data_sigma_rmse": 1.023752183505506,
+      "calibration": "conditional on fixed profile geometry, calibration, background basis and Gaussian variances",
+      "used_for_candidate_generation": false,
+      "used_for_candidate_selection": false
+    },
+    "candidate_count": 4,
+    "audit_evaluations": 1
+  }
+}

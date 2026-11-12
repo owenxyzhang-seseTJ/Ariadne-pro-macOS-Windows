@@ -1,81 +1,60 @@
-# Ariadne pro Windows
+# Ariadne pro macOS / Windows
 
-Ariadne pro 0.8.0 的 Windows x64 平行版本。独立构建标识 `win-x86_64-localopt1`，自带原生 C++ 数值内核、Windows 启动器与可选的 DIALS 3.30.1 插件层。
+Ariadne pro 0.8.0 的 macOS 与 Windows 并行版本。两个平台共用同一份 0.8.0 源码（含本机完成的局部性能优化），各自提供原生 C++ 扩展、入口脚本、固定依赖和独立验证记录。
 
-本仓库发布的是 Windows 计算版本及其验证记录，源码基于 0.8.0，并包含本机完成的局部性能优化。它与 macOS 版本、Ariadne 0.5.0 相互独立。
+| 平台 | 构建标识 | 原生扩展 | 验证 |
+|---|---|---|---|
+| macOS arm64 | `macos-arm64-localopt1` | `_intensity_cpp.cpython-312-darwin.so`（aarch64，Clang 21） | 49 + 14 + 13 项通过 |
+| Windows x64 | `win-x86_64-localopt1` | `_intensity_cpp.cp312-win_amd64.pyd`（x86_64，Clang 20.1.2） | 114 + 13 项通过 |
 
-## 状态
+两版均可执行结构因子与解析导数计算、结构精修、约束与孪晶数值计算、像素似然、P1 解相位，以及图形数值处理与离线导出。两个平台都未使用真实原始探测器图像，图像到最终结构的端到端流程未验证。
 
-- 核心回归 114 项通过；Python 参考后端复测 13 项通过；无失败、错误或跳过。
-- 原生 C++ 扩展在 Windows 上编译并启用：单内部线程、释放 GIL、严格浮点、无 OpenMP。
-- 公开 FeN4 实测强度重精修：R1(gt)=0.040316，wR2=0.081480，GoF=1.183。
-- P1 无噪声合成解相位：4 个候选全部收敛。
-- DIALS 3.30.1 运行时导入、Ariadne 选点插件注册与真实 `flex` 阈值调用均通过。
+## 快速开始
 
-Windows 内部后端实测（i7-12700H，单数值线程，5 轮中位数）：
+macOS（Apple Silicon，CPython 3.12，需已有 DIALS/cctbx 环境）：
 
-| 任务 | Python | C++ | 加速 |
-|---|---:|---:|---:|
-| 3 原子／3 畴／7280 反射 | 27.214 ms | 4.971 ms | 5.47× |
-| 32 原子／4096 反射 | 152.620 ms | 27.859 ms | 5.48× |
-| 80 原子／8192 反射 | 886.431 ms | 139.370 ms | 6.36× |
-| 完整局部精修（18 原子／70 参数） | 342.419 ms | 175.128 ms | 1.96× |
+```sh
+cd macos
+chmod +x install_macos.sh ariadne-pro-env
+ARIADNE_PRO_PYTHON=/path/to/cctbx/bin/python3.12 ./install_macos.sh
+./ariadne-pro-env -m ariadne_xtal capabilities
+```
 
-详细条件、误差与边界见 [Ariadne pro Windows 能力与性能报告.md](Ariadne%20pro%20Windows%20能力与性能报告.md)。
-
-## 安装
-
-Windows 10/11 x64，无需管理员权限。请解压到短的、可写的独立路径（例如 `C:\AriadneProWin`），不要覆盖其他产品目录。
-
-核心计算版：
+Windows 10/11 x64（无需管理员权限，安装器自行下载 Python 与依赖）：
 
 ```powershell
+cd windows
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_windows.ps1
-```
-
-安装器会下载官方 NuGet CPython 3.12.10，按 `requirements-win-tested.txt` 安装到独立 `overlay`，并使用仓库中已经测试的 `_intensity_cpp.cp312-win_amd64.pyd`。可选 `-BuildKernel` 会用独立 Zig 工具链重新编译，要求先移走已有内核以避免覆盖。
-
-可选 DIALS 运行时：
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install_dials_windows.ps1
-```
-
-使用 micromamba 2.5.0 平面缓存，默认缓存目录 `C:\apw25`；无写权限时可在本次进程中设置 `ARIADNE_DIALS_CACHE` 指向另一个短的可写目录。DIALS 安装到独立 `dials-env`，Ariadne 插件只写入 `dials-overlay`，原始 DIALS 包保持不变。精确实测环境见 `dials-conda-explicit.txt`。
-
-## 使用
-
-```powershell
 .\ariadne-pro-win.cmd capabilities
-.\ariadne-pro-win.cmd refine "model.cif" --hkl "reflections.hkl" --output "result-new"
-.\ariadne-pro-win.cmd python "my_calculation.py"
 ```
 
-`refine` 输出目录必须尚不存在；支持 `--options`、`--constraints`、`--restraints` 三个 JSON 参数。结果写入 `result.json` 与 `refined.cif`。
+Windows 可选 DIALS 运行时：`windows\install_dials_windows.ps1`，详见 [windows 报告](windows/Ariadne%20pro%20Windows%20能力与性能报告.md)。
 
-DIALS 使用它自己的解释器：
+各平台细节见 [macOS 说明](macos/README-macOS.zh-CN.md) 与 Windows 报告。
 
-```powershell
-.\ariadne-pro-dials.cmd find_spots --help
-```
+## 验证摘要
 
-选择 Ariadne 选点算法时须提供校准增益，例如 `spotfinder.threshold.algorithm=ariadne spotfinder.threshold.ariadne.gain_adu_per_photon=1`，其中数值应替换为探测器实际校准值。
+- macOS：数值回归 49 项、联合像素目标 14 项、Python 参考后端 13 项，共 76 次执行，无失败、错误或跳过；其中 13 次为重复后端验证。
+- Windows：核心回归 114 项、Python 参考后端 13 项，无失败、错误或跳过。
+- 公开 FeN4 实测强度重精修（Windows）：R1(gt)=0.040316，wR2=0.081480，GoF=1.183。
+- P1 无噪声合成解相位：4 个候选全部收敛（Windows 实测；macOS 为同一算法后端）。
+- DIALS 3.30.1 插件：Windows 上完成运行时导入、入口注册与真实 `flex` 阈值调用核验；macOS 提供对应补丁文件。
+
+性能结论均为同机对照。macOS 报告比较优化前后（C++ 结构因子计算下降 12.6%～18.6%），Windows 报告比较同版本 Python 与 C++ 后端（C++ 快 5.5～6.4 倍，完整精修 1.96 倍）。Apple M5 与 i7-12700H 是不同硬件，跨平台耗时不能归因于操作系统。
 
 ## 目录
 
 | 路径 | 内容 |
 |---|---|
-| `source/` | 0.8.0 源码与测试，含 Windows 预编译扩展 |
-| `tools/` | CLI、DIALS 入口、构建脚本、安装辅助与验收驱动 |
-| `validation/` | 部署记录、计时数据、JUnit XML、DIALS 验收结果 |
-| `install_*.ps1` | 核心与 DIALS 安装脚本 |
-| `ariadne-pro-*.cmd` | 用户命令入口 |
+| `macos/` | macOS 源码、arm64 扩展、入口脚本、优化与验证记录 |
+| `windows/` | Windows 源码、x64 扩展、启动器、安装脚本、DIALS 插件层与验证记录 |
+| `LICENSE`、`LICENSING.md`、`NOTICE.md` | 商业许可与第三方声明 |
 
 ## 支持边界
 
-Windows 原生支持数值计算入口。父层 MCP 与 POSIX 常驻 agent 依赖 `fcntl`，实测在 Windows 不可用，应在 WSL／Linux／macOS 运行；`--help` 能显示不代表执行受支持。
+Windows 原生支持数值计算入口；父层 MCP 与 POSIX 常驻 agent 依赖 `fcntl`，实测在 Windows 不可用，应在 WSL／Linux／macOS 运行。macOS 为 POSIX 平台，不受该限制，但本次未单独重跑这两项的端到端流程。
 
-DIALS 插件导入、注册与阈值调用已验证；本仓库没有真实原始探测器图像，因此从图像到最终结构的 indexing、integration、scaling 端到端流程未验证。FeN4 是已知结构对公开合并实测强度的重精修，P1 是单个无噪声合成案例，均不能推算未知结构或实际样品的总体成功率。
+两个平台都没有真实原始探测器图像，因此 indexing、integration、scaling 到最终结构的科学端到端流程未验证。FeN4 是已知结构对公开合并实测强度的重精修，P1 是单个无噪声合成案例，均不能推算未知结构或实际样品的总体成功率。
 
 ## 授权
 
@@ -84,7 +63,7 @@ DIALS 插件导入、注册与阈值调用已验证；本仓库没有真实原�
 - 许可全文见 [LICENSE](LICENSE)，条款说明见 [LICENSING.md](LICENSING.md)，第三方声明见 [NOTICE.md](NOTICE.md)。
 - 商业使用需要与版权持有人签订书面许可。潜在被许可方可在 30 天内进行非生产用途评估，不得再分发或商用。
 - 2026-10-29（commit 407d193）及更早发布的版本依 MIT 许可授权，该授权不可撤销，全文见 [LICENSE-MIT](LICENSE-MIT)。
-- DIALS 派生文件（`source/patches/` 与 `tools/dials-pro-overlay.zip` 内的 DIALS 源文件）保留 BSD-3-Clause 许可，声明见 `source/patches/DIALS-LICENSE`；商业许可不替代上游条件，分发时须保留该声明。
+- DIALS 派生文件（`macos/source/patches/`、`windows/source/patches/` 与 `windows/tools/dials-pro-overlay.zip` 内的 DIALS 源文件）保留 BSD-3-Clause 许可，声明见各自的 `patches/DIALS-LICENSE`；商业许可不替代上游条件，分发时须保留该声明。
 - 未授予商标或品牌使用权。
 
 商业许可咨询请通过 GitHub 账号 [@owenxyzhang-seseTJ](https://github.com/owenxyzhang-seseTJ) 联系版权持有人。

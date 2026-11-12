@@ -1,0 +1,5 @@
+mixed_overlap_exact rank 11/11 alpha [0.7300000000000001, 0.27] objective 1.6510452049864258e-24 raw_delta 8.061562428329968e-25
+complete_overlap_exact rank 11/11 alpha [0.7300000000000004, 0.2699999999999995] objective 2.162068659507496e-24 raw_delta 1.5403385003981147e-24
+inversion_without_anomalous rank 10/11 alpha [0.81817770369359, 0.18182229630640998] objective 1.9237898988205453e-24 raw_delta 1.5717593886628912e-24
+mixed_overlap_noisy rank 11/11 alpha [0.7301858176259391, 0.2698141823740609] objective 6720.0891027195685 raw_delta -9.094947017729282e-13
+/workspace/scratch/4f12e5e7e14c/Ariadne/native/validation/v08_joint_measurements.json

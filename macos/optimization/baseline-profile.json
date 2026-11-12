@@ -1,0 +1,806 @@
+{
+  "refinement": {
+    "measurement": {
+      "kind": "synthetic_local_refinement",
+      "observation_generator": "Gemmi independent SF calculator",
+      "n_atoms": 18,
+      "n_reflections": 1098,
+      "n_parameters": 70,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.07805445900885388,
+          "median_cpu_seconds": 0.07750799999999997
+        },
+        "cpp": {
+          "median_wall_seconds": 0.04526512505253777,
+          "median_cpu_seconds": 0.04497000000000001
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "actual_backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.08396529103629291,
+          "cpu_seconds": 0.08075300000000002,
+          "success": true,
+          "chi_squared": 1009.3952271514706,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "cpp",
+          "actual_backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.04437483404763043,
+          "cpu_seconds": 0.044209,
+          "success": true,
+          "chi_squared": 1009.3952271514734,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "cpp",
+          "actual_backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.04526512505253777,
+          "cpu_seconds": 0.04497000000000001,
+          "success": true,
+          "chi_squared": 1009.3952271514734,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "python",
+          "actual_backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.07805445900885388,
+          "cpu_seconds": 0.07750799999999997,
+          "success": true,
+          "chi_squared": 1009.3952271514706,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "python",
+          "actual_backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.07789358397712931,
+          "cpu_seconds": 0.07747599999999999,
+          "success": true,
+          "chi_squared": 1009.3952271514706,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        },
+        {
+          "backend": "cpp",
+          "actual_backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.04553070798283443,
+          "cpu_seconds": 0.045247999999999955,
+          "success": true,
+          "chi_squared": 1009.3952271514734,
+          "diffraction_evaluations": 7,
+          "jacobian_rank": 70,
+          "negative_intensities": 18
+        }
+      ],
+      "median_wall_speedup": 1.7243840355739346,
+      "prediction_difference_sigma_rms": 4.522370954283784e-11,
+      "chi_squared_difference": 2.7284841053187847e-12,
+      "timing_scope": "Entire refine call, including initialization, analytic least squares, restraints, rank and covariance; same starting model, no ab initio or external-software comparison"
+    },
+    "hotspots": [
+      {
+        "file": "run_v08_kernels.py",
+        "line": 161,
+        "function": "refinement_benchmark",
+        "calls": 1,
+        "own_seconds": 0.002060941,
+        "cumulative_seconds": 0.386200458
+      },
+      {
+        "file": "refinement.py",
+        "line": 649,
+        "function": "refine",
+        "calls": 6,
+        "own_seconds": 0.000626996,
+        "cumulative_seconds": 0.374688124
+      },
+      {
+        "file": "_util.py",
+        "line": 650,
+        "function": "inner",
+        "calls": 6,
+        "own_seconds": 0.00017696,
+        "cumulative_seconds": 0.278308168
+      },
+      {
+        "file": "least_squares.py",
+        "line": 266,
+        "function": "least_squares",
+        "calls": 6,
+        "own_seconds": 0.00012623700000000002,
+        "cumulative_seconds": 0.27812320900000004
+      },
+      {
+        "file": "trf.py",
+        "line": 113,
+        "function": "trf",
+        "calls": 6,
+        "own_seconds": 0.000271332,
+        "cumulative_seconds": 0.276963292
+      },
+      {
+        "file": "trf.py",
+        "line": 206,
+        "function": "trf_bounds",
+        "calls": 6,
+        "own_seconds": 0.003707025,
+        "cumulative_seconds": 0.276685334
+      },
+      {
+        "file": "refinement.py",
+        "line": 697,
+        "function": "predict",
+        "calls": 60,
+        "own_seconds": 0.000676582,
+        "cumulative_seconds": 0.20987095800000002
+      },
+      {
+        "file": "derivatives.py",
+        "line": 318,
+        "function": "evaluate",
+        "calls": 102,
+        "own_seconds": 0.004821986,
+        "cumulative_seconds": 0.209359383
+      },
+      {
+        "file": "least_squares.py",
+        "line": 262,
+        "function": "__call__",
+        "calls": 84,
+        "own_seconds": 5.7078000000000005e-05,
+        "cumulative_seconds": 0.181236782
+      },
+      {
+        "file": "_differentiable_functions.py",
+        "line": 741,
+        "function": "fun",
+        "calls": 42,
+        "own_seconds": 3.4289e-05,
+        "cumulative_seconds": 0.18045550500000002
+      },
+      {
+        "file": "_differentiable_functions.py",
+        "line": 705,
+        "function": "_update_fun",
+        "calls": 48,
+        "own_seconds": 4.4673000000000004e-05,
+        "cumulative_seconds": 0.18002088100000002
+      },
+      {
+        "file": "_differentiable_functions.py",
+        "line": 422,
+        "function": "__call__",
+        "calls": 42,
+        "own_seconds": 4.3001000000000004e-05,
+        "cumulative_seconds": 0.179915332
+      },
+      {
+        "file": "refinement.py",
+        "line": 714,
+        "function": "residual",
+        "calls": 42,
+        "own_seconds": 0.000146704,
+        "cumulative_seconds": 0.179819792
+      },
+      {
+        "file": "derivatives.py",
+        "line": 257,
+        "function": "intensity_block",
+        "calls": 126,
+        "own_seconds": 0.003161791,
+        "cumulative_seconds": 0.12607537900000002
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 1242,
+        "function": "einsum",
+        "calls": 3252,
+        "own_seconds": 0.004090881,
+        "cumulative_seconds": 0.124299428
+      },
+      {
+        "file": "derivatives.py",
+        "line": 237,
+        "function": "block",
+        "calls": 63,
+        "own_seconds": 0.031656626,
+        "cumulative_seconds": 0.11176195800000001
+      },
+      {
+        "file": "_decomp_svd.py",
+        "line": 37,
+        "function": "svd",
+        "calls": 36,
+        "own_seconds": 0.00019507200000000002,
+        "cumulative_seconds": 0.08369908200000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method scipy.linalg._batched_linalg._svd>",
+        "calls": 36,
+        "own_seconds": 0.08267421200000001,
+        "cumulative_seconds": 0.08267421200000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy._core._multiarray_umath.c_einsum>",
+        "calls": 5646,
+        "own_seconds": 0.059563922000000005,
+        "cumulative_seconds": 0.059563922000000005
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 634,
+        "function": "einsum_path",
+        "calls": 1890,
+        "own_seconds": 0.012265197,
+        "cumulative_seconds": 0.052723946
+      },
+      {
+        "file": "derivatives.py",
+        "line": 207,
+        "function": "_prepare_sites",
+        "calls": 42,
+        "own_seconds": 0.005210791,
+        "cumulative_seconds": 0.046267995000000006
+      },
+      {
+        "file": "copy.py",
+        "line": 118,
+        "function": "deepcopy",
+        "calls": 32759,
+        "own_seconds": 0.012411067000000001,
+        "cumulative_seconds": 0.026754492
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 330,
+        "function": "_greedy_path",
+        "calls": 1890,
+        "own_seconds": 0.007170938000000001,
+        "cumulative_seconds": 0.026733448
+      },
+      {
+        "file": "copy.py",
+        "line": 247,
+        "function": "_reconstruct",
+        "calls": 1346,
+        "own_seconds": 0.0014643050000000002,
+        "cumulative_seconds": 0.026388792
+      },
+      {
+        "file": "copy.py",
+        "line": 217,
+        "function": "_deepcopy_dict",
+        "calls": 1346,
+        "own_seconds": 0.0029325410000000003,
+        "cumulative_seconds": 0.025997871000000002
+      },
+      {
+        "file": "refinement.py",
+        "line": 541,
+        "function": "unpack",
+        "calls": 60,
+        "own_seconds": 0.001966924,
+        "cumulative_seconds": 0.025750124000000003
+      },
+      {
+        "file": "copy.py",
+        "line": 191,
+        "function": "_deepcopy_list",
+        "calls": 146,
+        "own_seconds": 0.00028655600000000004,
+        "cumulative_seconds": 0.023739495000000003
+      },
+      {
+        "file": "scattering.py",
+        "line": 126,
+        "function": "calculated_intensities",
+        "calls": 12,
+        "own_seconds": 0.000321129,
+        "cumulative_seconds": 0.019784415
+      },
+      {
+        "file": "scattering.py",
+        "line": 50,
+        "function": "structure_factors",
+        "calls": 12,
+        "own_seconds": 0.005370176,
+        "cumulative_seconds": 0.018755416
+      },
+      {
+        "file": "derivatives.py",
+        "line": 370,
+        "function": "right_singular_system",
+        "calls": 12,
+        "own_seconds": 0.000859336,
+        "cumulative_seconds": 0.016521584000000002
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 224,
+        "function": "_parse_possible_contraction",
+        "calls": 9702,
+        "own_seconds": 0.003251322,
+        "cumulative_seconds": 0.014282127
+      },
+      {
+        "file": "refinement.py",
+        "line": 635,
+        "function": "_physical_uncertainties",
+        "calls": 6,
+        "own_seconds": 0.0014274860000000002,
+        "cumulative_seconds": 0.012974041
+      },
+      {
+        "file": "_decomp_qr.py",
+        "line": 32,
+        "function": "qr",
+        "calls": 36,
+        "own_seconds": 8.325300000000001e-05,
+        "cumulative_seconds": 0.011365001000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method scipy.linalg._batched_linalg._qr>",
+        "calls": 36,
+        "own_seconds": 0.011170375000000001,
+        "cumulative_seconds": 0.011170375000000001
+      },
+      {
+        "file": "kernels.py",
+        "line": 105,
+        "function": "cpp_intensity_block",
+        "calls": 63,
+        "own_seconds": 0.000424847,
+        "cumulative_seconds": 0.011123379000000001
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 90,
+        "function": "_find_contraction",
+        "calls": 14301,
+        "own_seconds": 0.0078108990000000005,
+        "cumulative_seconds": 0.010170187
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method ariadne_xtal._intensity_cpp.intensity_block>",
+        "calls": 63,
+        "own_seconds": 0.009656128,
+        "cumulative_seconds": 0.009656128
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 1144,
+        "function": "bmm_einsum",
+        "calls": 1638,
+        "own_seconds": 0.0036989040000000003,
+        "cumulative_seconds": 0.009207799000000001
+      },
+      {
+        "file": "derivatives.py",
+        "line": 75,
+        "function": "parameter_differentials",
+        "calls": 48,
+        "own_seconds": 0.0037795650000000004,
+        "cumulative_seconds": 0.008875456
+      },
+      {
+        "file": "refinement.py",
+        "line": 372,
+        "function": "__init__",
+        "calls": 6,
+        "own_seconds": 5.3087e-05,
+        "cumulative_seconds": 0.008299625
+      }
+    ]
+  },
+  "predictor80": {
+    "measurement": {
+      "case": "eighty_atoms_memory",
+      "n_atoms": 80,
+      "n_domains": 1,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 1.506087124987971,
+          "median_cpu_seconds": 1.469767
+        },
+        "cpp": {
+          "median_wall_seconds": 0.21816391596803442,
+          "median_cpu_seconds": 0.21720500000000031
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 1.5188764999620616,
+          "cpu_seconds": 1.469767
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.21695608302252367,
+          "cpu_seconds": 0.21602900000000025
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.21816391596803442,
+          "cpu_seconds": 0.21720500000000031
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 1.506087124987971,
+          "cpu_seconds": 1.4951389999999996
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 1.472968582995236,
+          "cpu_seconds": 1.4635980000000002
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.22584229102358222,
+          "cpu_seconds": 0.2233010000000002
+        }
+      ],
+      "median_wall_speedup": 6.903465764744727,
+      "maximum_intensity_absolute_difference": 2.764863893389702e-10,
+      "maximum_scaled_jacobian_difference": 1.8607142093430356e-14,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+    },
+    "hotspots": [
+      {
+        "file": "<string>",
+        "line": 3,
+        "function": "<lambda>",
+        "calls": 1,
+        "own_seconds": 0.0015903330000000002,
+        "cumulative_seconds": 5.383402166000001
+      },
+      {
+        "file": "run_v08_kernels.py",
+        "line": 86,
+        "function": "predictor_benchmark",
+        "calls": 1,
+        "own_seconds": 0.015372411,
+        "cumulative_seconds": 5.381811833
+      },
+      {
+        "file": "derivatives.py",
+        "line": 318,
+        "function": "evaluate",
+        "calls": 52,
+        "own_seconds": 0.146685264,
+        "cumulative_seconds": 5.354801504
+      },
+      {
+        "file": "derivatives.py",
+        "line": 257,
+        "function": "intensity_block",
+        "calls": 400,
+        "own_seconds": 0.145641503,
+        "cumulative_seconds": 4.7556538800000006
+      },
+      {
+        "file": "derivatives.py",
+        "line": 237,
+        "function": "block",
+        "calls": 200,
+        "own_seconds": 1.794397035,
+        "cumulative_seconds": 4.212264743
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 1242,
+        "function": "einsum",
+        "calls": 36002,
+        "own_seconds": 0.041827224,
+        "cumulative_seconds": 2.5681399270000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy._core._multiarray_umath.c_einsum>",
+        "calls": 48402,
+        "own_seconds": 1.9576166030000002,
+        "cumulative_seconds": 1.9576166030000002
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 634,
+        "function": "einsum_path",
+        "calls": 20000,
+        "own_seconds": 0.122444856,
+        "cumulative_seconds": 0.5190524790000001
+      },
+      {
+        "file": "kernels.py",
+        "line": 105,
+        "function": "cpp_intensity_block",
+        "calls": 200,
+        "own_seconds": 0.0017824870000000001,
+        "cumulative_seconds": 0.397519789
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method ariadne_xtal._intensity_cpp.intensity_block>",
+        "calls": 200,
+        "own_seconds": 0.39145662200000003,
+        "cumulative_seconds": 0.39145662200000003
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 330,
+        "function": "_greedy_path",
+        "calls": 20000,
+        "own_seconds": 0.071034015,
+        "cumulative_seconds": 0.25833538500000003
+      },
+      {
+        "file": "derivatives.py",
+        "line": 207,
+        "function": "_prepare_sites",
+        "calls": 50,
+        "own_seconds": 0.030746519000000003,
+        "cumulative_seconds": 0.256781835
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 224,
+        "function": "_parse_possible_contraction",
+        "calls": 111600,
+        "own_seconds": 0.030276826000000003,
+        "cumulative_seconds": 0.137532646
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 90,
+        "function": "_find_contraction",
+        "calls": 155800,
+        "own_seconds": 0.084648807,
+        "cumulative_seconds": 0.110963925
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.zeros>",
+        "calls": 40863,
+        "own_seconds": 0.09341698400000001,
+        "cumulative_seconds": 0.09341698400000001
+      },
+      {
+        "file": "refinement.py",
+        "line": 541,
+        "function": "unpack",
+        "calls": 50,
+        "own_seconds": 0.0068124200000000005,
+        "cumulative_seconds": 0.085205086
+      },
+      {
+        "file": "copy.py",
+        "line": 118,
+        "function": "deepcopy",
+        "calls": 103785,
+        "own_seconds": 0.037593246000000004,
+        "cumulative_seconds": 0.080089291
+      },
+      {
+        "file": "copy.py",
+        "line": 247,
+        "function": "_reconstruct",
+        "calls": 4182,
+        "own_seconds": 0.004182325000000001,
+        "cumulative_seconds": 0.079561792
+      },
+      {
+        "file": "copy.py",
+        "line": 217,
+        "function": "_deepcopy_dict",
+        "calls": 4182,
+        "own_seconds": 0.008953904,
+        "cumulative_seconds": 0.079123253
+      },
+      {
+        "file": "copy.py",
+        "line": 191,
+        "function": "_deepcopy_list",
+        "calls": 102,
+        "own_seconds": 0.000783219,
+        "cumulative_seconds": 0.07719128700000001
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 445,
+        "function": "_parse_einsum_input",
+        "calls": 20000,
+        "own_seconds": 0.040705868,
+        "cumulative_seconds": 0.06772813100000001
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 1144,
+        "function": "bmm_einsum",
+        "calls": 8400,
+        "own_seconds": 0.021980351000000002,
+        "cumulative_seconds": 0.05522177700000001
+      },
+      {
+        "file": "derivatives.py",
+        "line": 75,
+        "function": "parameter_differentials",
+        "calls": 50,
+        "own_seconds": 0.015565832000000002,
+        "cumulative_seconds": 0.037125591
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 61,
+        "function": "_compute_size_by_dict",
+        "calls": 249400,
+        "own_seconds": 0.028157717000000002,
+        "cumulative_seconds": 0.028157717000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'append' of 'list' objects>",
+        "calls": 466933,
+        "own_seconds": 0.026555520000000003,
+        "cumulative_seconds": 0.026555520000000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.len>",
+        "calls": 538918,
+        "own_seconds": 0.026446349,
+        "cumulative_seconds": 0.026446349
+      },
+      {
+        "file": "kernels.py",
+        "line": 77,
+        "function": "pack_sites",
+        "calls": 25,
+        "own_seconds": 0.003448996,
+        "cumulative_seconds": 0.023599248
+      },
+      {
+        "file": "kernels.py",
+        "line": 69,
+        "function": "_tensor_six",
+        "calls": 4000,
+        "own_seconds": 0.009029398000000001,
+        "cumulative_seconds": 0.019573782
+      },
+      {
+        "file": "fromnumeric.py",
+        "line": 3737,
+        "function": "mean",
+        "calls": 4004,
+        "own_seconds": 0.0019392180000000001,
+        "cumulative_seconds": 0.016620411
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 23,
+        "function": "_flop_count",
+        "calls": 32600,
+        "own_seconds": 0.007674299000000001,
+        "cumulative_seconds": 0.015693768
+      },
+      {
+        "file": "fromnumeric.py",
+        "line": 207,
+        "function": "reshape",
+        "calls": 16700,
+        "own_seconds": 0.003708574,
+        "cumulative_seconds": 0.014948676000000001
+      },
+      {
+        "file": "_methods.py",
+        "line": 115,
+        "function": "_mean",
+        "calls": 4004,
+        "own_seconds": 0.006431539,
+        "cumulative_seconds": 0.014681193
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'copy' of 'set' objects>",
+        "calls": 155800,
+        "own_seconds": 0.012231102,
+        "cumulative_seconds": 0.012231102
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'count' of 'str' objects>",
+        "calls": 104000,
+        "own_seconds": 0.012167722,
+        "cumulative_seconds": 0.012167722
+      },
+      {
+        "file": "fromnumeric.py",
+        "line": 48,
+        "function": "_wrapfunc",
+        "calls": 16800,
+        "own_seconds": 0.003880258,
+        "cumulative_seconds": 0.011421808
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.sum>",
+        "calls": 12625,
+        "own_seconds": 0.003892434,
+        "cumulative_seconds": 0.010954455
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'get' of 'dict' objects>",
+        "calls": 211878,
+        "own_seconds": 0.010550728,
+        "cumulative_seconds": 0.010550728
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'pop' of 'list' objects>",
+        "calls": 128400,
+        "own_seconds": 0.010161011000000001,
+        "cumulative_seconds": 0.010161011000000001
+      },
+      {
+        "file": "einsumfunc.py",
+        "line": 1234,
+        "function": "_einsum_dispatcher",
+        "calls": 216010,
+        "own_seconds": 0.010121362,
+        "cumulative_seconds": 0.010121362
+      },
+      {
+        "file": "derivatives.py",
+        "line": 88,
+        "function": "add",
+        "calls": 15850,
+        "own_seconds": 0.006465203,
+        "cumulative_seconds": 0.009983946
+      }
+    ]
+  }
+}

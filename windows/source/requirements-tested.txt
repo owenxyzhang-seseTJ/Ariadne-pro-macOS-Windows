@@ -1,0 +1,19 @@
+# Direct runtime and verification dependencies used for the 0.8.0 validation.
+# Python 3.12.14 on Linux x86_64. This is a tested environment, not a claim
+# that other versions permitted by pyproject.toml are unsupported.
+# Install these first, then install ./python and ./native from this source tree.
+numpy==2.3.5
+scipy==1.17.0
+gemmi==0.7.5
+matplotlib==3.10.8
+plotly==7.1.0
+scikit-image==0.26.0
+mcp==1.30.0
+pytest==9.2.0
+build==1.6.1
+ruff==0.17.3
+threadpoolctl==3.6.0
+fonttools==4.61.1
+pillow==13.0.0
+setuptools==84.2.1
+wheel==0.48.0
