@@ -1,0 +1,230 @@
+--- a/src/dials/algorithms/indexing/model_evaluation.py
++++ b/src/dials/algorithms/indexing/model_evaluation.py
+@@ -30,0 +31 @@
++        "evidence",
+@@ -31,0 +33 @@
++    defaults=(None,),
+@@ -37 +39,2 @@
+-    for i1, s1 in enumerate(solutions):
++    cells = [(s, s.crystal.get_unit_cell()) for s in solutions]
++    for s1, _ in cells:
+@@ -38,0 +42,2 @@
++        a, b, c = (matrix.col(v) for v in s1.crystal.get_real_space_vectors())
++        space_group = s1.crystal.get_space_group()
+@@ -50 +54,0 @@
+-            a, b, c = (matrix.col(v) for v in s1.crystal.get_real_space_vectors())
+@@ -55 +59 @@
+-                space_group=s1.crystal.get_space_group(),
++                space_group=space_group,
+@@ -58 +62 @@
+-            for s2 in solutions:
++            for s2, unit_cell in cells:
+@@ -62 +66 @@
+-                    s2.crystal.get_unit_cell(), relative_length_tolerance=0.05
++                    unit_cell, relative_length_tolerance=0.05
+@@ -310 +314 @@
+-    def __init__(self, params):
++    def __init__(self, params, *, validation_selection=None):
+@@ -311,0 +316,8 @@
++        self._validation_selection = validation_selection
++        self._ariadne = (
++            self._params.indexing.basis_vector_combinations.solution_scorer == "ariadne"
++        )
++        if self._ariadne:
++            self._params.refinement.parameterisation.beam.fix = ["all"]
++            self._params.refinement.parameterisation.detector.fix = "all"
++            self._params.refinement.parameterisation.goniometer.fix = ["all"]
+@@ -341 +353,14 @@
+-            indexed_reflections = reflections.select(reflections["id"] > -1)
++            validation = None
++            if self._ariadne:
++                from ariadne.ranking import refinement_partition
++
++                partition = refinement_partition(
++                    reflections,
++                    self._params.indexing.basis_vector_combinations.ariadne,
++                    self._validation_selection,
++                )
++                if partition is None:
++                    return
++                indexed_reflections, validation = partition
++            else:
++                indexed_reflections = reflections.select(reflections["id"] > -1)
+@@ -363,0 +389,7 @@
++                crystal = experiments.crystals()[0]
++                candidate_evidence = None
++                if self._ariadne:
++                    from ariadne.ranking import evidence
++                    crystal = refiner.get_experiments().crystals()[0]
++                    candidate_evidence = evidence(crystal, validation,
++                        self._params.indexing.basis_vector_combinations.ariadne)
+@@ -366 +398 @@
+-                    crystal=experiments.crystals()[0],
++                    crystal=crystal,
+@@ -370,0 +403 @@
++                    evidence=candidate_evidence,
+--- a/src/dials/algorithms/indexing/lattice_search/__init__.py
++++ b/src/dials/algorithms/indexing/lattice_search/__init__.py
+@@ -2,0 +3 @@
++import copy
+@@ -43 +44 @@
+-    solution_scorer = filter *weighted
++    solution_scorer = filter *weighted ariadne
+@@ -45,0 +47,31 @@
++    ariadne
++    {
++        holdout_fraction = 0.2
++            .type = float(value_min=0.05, value_max=0.5)
++        holdout_block_frames = 20
++            .type = int(value_min=1)
++        seed = 42
++            .type = int(value_min=0)
++        min_training = 25
++            .type = int(value_min=5)
++        min_validation = 20
++            .type = int(value_min=5)
++        min_validation_indexed = 10
++            .type = int(value_min=4)
++        q_sigma = 0.001
++            .type = float(value_min=0.000001)
++        tail_sigma = 6
++            .type = float(value_min=3)
++        max_periodic_radius = 6
++            .type = int(value_min=1, value_max=20)
++        score_chunk = 512
++            .type = int(value_min=1)
++        min_log_density_ratio = 0
++            .type = float
++        match_sigma = 3
++            .type = float(value_min=1)
++        lattice_fraction = 0.6
++            .type = float(value_min=0.01, value_max=0.99)
++        evidence_directory = None
++            .type = path
++    }
+@@ -174 +206,4 @@
+-        if solution_scorer == "weighted":
++        if solution_scorer == "ariadne":
++            from ariadne.ranking import EvidenceRank
++            solutions = EvidenceRank()
++        elif solution_scorer == "weighted":
+@@ -191,0 +227,23 @@
++        sel = self.reflections["id"] == -1
++        if self.d_min is not None:
++            sel &= 1 / self.reflections["rlp"].norms() > self.d_min
++        zo = self.reflections["xyzobs.mm.value"].parts()[2]
++        imageset_id = self.reflections["imageset_id"]
++        for i_expt, expt in enumerate(self.experiments):
++            if expt.scan is not None and expt.scan.has_property("oscillation"):
++                start, end = expt.scan.get_oscillation_range()
++                if (end - start) > 360:
++                    # 每轮候选共用首个 360° 的观测范围。
++                    sel.set_selected(
++                        (imageset_id == i_expt)
++                        & (zo > ((start * math.pi / 180) + 2 * math.pi)),
++                        False,
++                    )
++        reflections = self.reflections.select(sel)
++        validation_selection = None
++        if solution_scorer == "ariadne":
++            from ariadne.ranking import holdout_selection
++
++            validation_selection = holdout_selection(
++                reflections, self.params.basis_vector_combinations.ariadne
++            )
+@@ -194,5 +251,0 @@
+-            sel = self.reflections["id"] == -1
+-            if self.d_min is not None:
+-                sel &= 1 / self.reflections["rlp"].norms() > self.d_min
+-            xo, yo, zo = self.reflections["xyzobs.mm.value"].parts()
+-            imageset_id = self.reflections["imageset_id"]
+@@ -200,11 +253 @@
+-            for i_expt, expt in enumerate(self.experiments):
+-                # XXX Not sure if we still need this loop over self.experiments
+-                if expt.scan is not None and expt.scan.has_property("oscillation"):
+-                    start, end = expt.scan.get_oscillation_range()
+-                    if (end - start) > 360:
+-                        # only use reflections from the first 360 degrees of the scan
+-                        sel.set_selected(
+-                            (imageset_id == i_expt)
+-                            & (zo > ((start * math.pi / 180) + 2 * math.pi)),
+-                            False,
+-                        )
++            for expt in self.experiments:
+@@ -221 +264 @@
+-            refl = self.reflections.select(sel)
++            refl = copy.deepcopy(reflections)
+@@ -275 +318,3 @@
+-        evaluator = model_evaluation.ModelEvaluation(self.all_params)
++        evaluator = model_evaluation.ModelEvaluation(
++            self.all_params, validation_selection=validation_selection
++        )
+@@ -284,4 +329,8 @@
+-        for soln in results:
+-            if soln is None:
+-                continue
+-            solutions.append(soln)
++        if solution_scorer == "ariadne":
++            from ariadne.ranking import write_trace
++            write_trace(self.params.basis_vector_combinations.ariadne.evidence_directory,
++                        results, len(args))
++
++        accepted = [soln for soln in results if soln is not None]
++        if accepted:
++            solutions.extend(accepted)
+--- /dev/null
++++ b/src/dials/extensions/ariadne_spotfinder_threshold_ext.py
+@@ -0,0 +1,53 @@
++"""Ariadne modification: calibrated multiscale candidate proposals."""
++from __future__ import annotations
++
++from scitbx.array_family import flex
++
++from ariadne.spots import propose
++
++
++class AriadneThresholdExt:
++    """Experimental count-excess proposals; downstream indexing verifies Bragg evidence."""
++    name = "ariadne"
++
++    @staticmethod
++    def phil():
++        from libtbx.phil import parse
++        return parse("""
++gain_adu_per_photon = None
++    .type = float(value_min=0.000001)
++offset_adu = 0
++    .type = float
++readout_variance_adu = 0
++    .type = float(value_min=0)
++noise_model = *poisson poisson_gaussian
++    .type = choice
++background_width = 31
++    .type = int(value_min=3)
++exclusion_width = 7
++    .type = int(value_min=1)
++scales = 1 3 5
++    .type = ints
++score_threshold = 6
++    .type = float(value_min=0.1)
++support_sigma = 1
++    .type = float(value_min=0)
++min_valid_fraction = 0.5
++    .type = float(value_min=0.01, value_max=1)
++background_iterations = 2
++    .type = int(value_min=0, value_max=5)
++""")
++
++    def __init__(self, params):
++        self.params = params.spotfinder.threshold.ariadne
++
++    def compute_threshold(self, image, mask, **kwargs):
++        p = self.params
++        selected = propose(image.as_numpy_array(), mask.as_numpy_array(),
++                           gain=p.gain_adu_per_photon, offset=p.offset_adu,
++                           readout_variance=p.readout_variance_adu, noise_model=p.noise_model,
++                           background_width=p.background_width, exclusion_width=p.exclusion_width,
++                           scales=p.scales, score_threshold=p.score_threshold,
++                           support_sigma=p.support_sigma, min_valid_fraction=p.min_valid_fraction,
++                           background_iterations=p.background_iterations)
++        return flex.bool(selected)

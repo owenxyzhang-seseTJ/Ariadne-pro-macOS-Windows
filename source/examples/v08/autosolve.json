@@ -1,0 +1,30 @@
+{
+  "action": "autosolve",
+  "hkl": "synthetic_reflections.json",
+  "cell": {
+    "a": 5.2,
+    "b": 5.7,
+    "c": 6.1,
+    "alpha": 90.0,
+    "beta": 90.0,
+    "gamma": 90.0
+  },
+  "elements": [
+    "C",
+    "C",
+    "C",
+    "C"
+  ],
+  "phasing_options": {
+    "algorithm": "hybrid",
+    "trials": 4,
+    "iterations": 400,
+    "keep": 4
+  },
+  "refinement_options": {
+    "max_nfev": 160
+  },
+  "options": {
+    "seed": 1729
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "python": "3.12.16 | packaged by conda-forge | (main, Oct 26 2026, 11:29:01) [MSC v.1944 64 bit (AMD64)]",
+  "executable": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env\\python.exe",
+  "versions": {
+    "cctbx-base": {
+      "version": "2026.10",
+      "build": "np2py312h46e1efe_1"
+    },
+    "dials": {
+      "version": "3.30.1",
+      "build": "py312hf7d3074_0"
+    },
+    "dxtbx": {
+      "version": "3.30.0",
+      "build": "py312h71b77d9_0"
+    },
+    "python": {
+      "version": "3.12.16",
+      "build": "hb12b558_0_cpython"
+    }
+  },
+  "module_paths": {
+    "dials": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-overlay\\src\\dials\\__init__.py",
+    "dxtbx": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env\\Lib\\site-packages\\dxtbx\\__init__.py",
+    "cctbx": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env\\Lib\\site-packages\\cctbx\\__init__.py",
+    "dials.algorithms.indexing.model_evaluation": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-overlay\\src\\dials\\algorithms\\indexing\\model_evaluation.py",
+    "dials.algorithms.indexing.lattice_search": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-overlay\\src\\dials\\algorithms\\indexing\\lattice_search\\__init__.py"
+  },
+  "threshold": [
+    {
+      "noise_model": "poisson",
+      "selected_pixels": 181,
+      "equals_direct_api": true,
+      "mask_respected": true
+    },
+    {
+      "noise_model": "poisson_gaussian",
+      "selected_pixels": 176,
+      "equals_direct_api": true,
+      "mask_respected": true
+    }
+  ],
+  "acceptance": true,
+  "raw_detector_end_to_end_tested": false
+}

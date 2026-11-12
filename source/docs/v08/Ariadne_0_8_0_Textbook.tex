@@ -1,0 +1,85 @@
+% Build: xelatex -interaction=nonstopmode -halt-on-error Ariadne_0_8_0_Textbook.tex
+% Run three times from this directory. Figures and subset open fonts are included.
+\documentclass[11pt,oneside,openany]{book}
+\input{preamble}
+\begin{document}
+\frontmatter
+\begin{titlepage}
+\vspace*{12mm}
+\noindent{\large\sffamily\color{accent} ARIADNE · 技术教材}\par
+\vspace{16mm}
+\noindent{\Huge\bfseries 从衍射像素\\[7pt]到晶体结构}\par
+\vspace{12mm}
+\noindent{\Large 数学、算法与原生智能体}\par
+\vspace{15mm}
+\noindent\rule{\textwidth}{0.8pt}\par
+\vspace{4mm}
+\noindent{\large 直接法\quad 双空间求解\quad 像素似然\quad 联合精修}\par
+\vspace{14mm}
+\begin{tikzpicture}[node distance=11mm, every node/.style={font=\small}, box/.style={draw=ink!50,rounded corners=2pt,fill=pale,minimum height=13mm,text width=27mm,align=center}, >=Latex]
+\node[box] (p) {像素与几何};
+\node[box,right=of p] (l) {可测的强度组合};
+\node[box,right=of l] (s) {结构候选};
+\node[box,right=of s] (v) {独立验证};
+\draw[->,thick,ink] (p)--(l);\draw[->,thick,ink] (l)--(s);\draw[->,thick,ink] (s)--(v);
+\draw[->,thick,accent] (s.south) -- ++(0,-12mm) -| node[pos=0.2,below]{用结构预测检验像素解释} (p.south);
+\end{tikzpicture}
+\vfill
+\noindent{\large Ariadne 0.8.0 · 研究版}\par
+\vspace{3mm}
+\noindent 2026 年 11 月 8 日\par
+\vspace{4mm}
+\noindent\small 基于可核对的 Ariadne 0.7.0 与 Ariadne-Xtal 0.1.0 源码重构。\\
+本书对应随附源代码、可重复实验脚本和本次运行的验证记录。
+\end{titlepage}
+
+\chapter*{读者指南}
+\addcontentsline{toc}{chapter}{读者指南}
+本书回答一个实际问题：能否把单晶衍射的数据还原、相位求解、结构精修和自动决策放在同一个数学框架里，使弱衍射和孪晶得到更合理的处理？答案是可以，但连接这些步骤的对象必须是观测似然及其不确定度。把某个模型预测的强度写回成“测得的强度”，会使结构看起来越来越正确，却没有增加实验信息。
+
+阅读顺序从波的叠加开始。第一至四章解释反射如何形成、怎样预测它落在哪个像素、怎样从有噪声和重叠的像素中取得信息，以及如何缩放和导出。第五、六章讲相位问题、直接法、双空间迭代和原点与空间群。第七、八章把精修写成可求导的物理模型，并把重叠像素直接接到结构参数上。第九章说明智能体怎样利用这些模块形成可检验的闭环。第十、十一章讲 C++ 数值内核和资源约束任务调度，最后两章给出源码接口、实测结果和使用方法。
+
+\begin{principle}
+“替代 SHELXT/SHELXL”在本项目中指逐步建立独立的原生计算内核。0.8.0 已能在明确适用的输入上独立完成相位求解、结构精修和重叠观测联合拟合；完整 SHELX 指令语言、所有自动结构处理和所有仪器的端到端生产验证，仍有专门的工程范围。第\ref{chap:software}章逐项列出当前实现。
+\end{principle}
+
+本次工作保留 Ariadne 原有 DIALS 适配、几何与体素积分、缩放、导出、进程隔离和持久化智能体能力。新增内容集中在有实质计算差异的环节：强度似然驱动的混合相位更新、带原点的对称投影、解析精修导数、保留重叠信息的结构精修，以及分离生成、选择和最终验证的原生流程。
+
+本书中的图分为三类：由公式直接计算的教学图；有指定随机种子的合成数据实验；公开 FeN$_4$ 实验强度的已知模型再精修。图注均标明来源。没有将合成数据的误差当作真实 MOF 的成功率，也没有使用 SHELXT/SHELXL 的运行结果冒充本软件的计算结果。
+
+\begingroup\small\setlength{\parskip}{0pt}\linespread{0.96}\selectfont\tableofcontents\endgroup
+\chapter*{统一记号}
+\addcontentsline{toc}{chapter}{统一记号}
+\begin{longtable}{p{0.25\textwidth}p{0.68\textwidth}}
+\toprule 记号 & 含义与单位\\\midrule
+$A, B=A^{-\mathsf T}$ & 正、倒易基矢矩阵；列为基矢；单位分别为 $\angstrom$、$\angstrom^{-1}$。\\
+$x,r=Ax$ & 原子的分数坐标与笛卡尔坐标。\\
+$h=(h,k,l)^{\mathsf T}$ & Miller 指数列向量；代码批量存储为行。\\
+$q=Bh$ & 不含 $2\pi$ 的倒易矢量；$s=\|q\|/2=\sin\theta/\lambda$。\\
+$F_h,I_h$ & 复结构因子与物理衍射强度；$I_h\propto |F_h|^2$。\\
+$y,\sigma^2$ & 含噪观测及其方差；背景扣除后的 $y$ 可以为负。\\
+$P,B_g$ & 像素轮廓矩阵和背景基矩阵；$B_g$ 与倒易基 $B$ 区分。\\
+$R,z,c$ & 高斯像素压缩后的矩阵、目标和与结构参数无关的残差常数。\\
+$U_j,o_j$ & 位移协方差张量（$\angstrom^2$）与物理位置占有率。\\
+$\theta,\alpha$ & 结构的独立参数与各晶畴的非负比例，$\sum_d\alpha_d=1$。\\
+$J,H$ & 残差 Jacobian 与局部信息矩阵；通常 $H=J^{\mathsf T}J$。\\
+\code{work/selection/audit} & 候选拟合、候选选择、最后一次独立评价的数据角色。\\
+\bottomrule
+\end{longtable}
+\mainmatter
+\input{chapters/01_forward}
+\input{chapters/02_geometry}
+\input{chapters/03_likelihood}
+\input{chapters/04_scaling}
+\input{chapters/05_phasing}
+\input{chapters/06_symmetry}
+\input{chapters/07_refinement}
+\input{chapters/08_joint}
+\input{chapters/09_loop}
+\input{chapters/12_kernels}
+\input{chapters/13_scheduler}
+\input{chapters/10_software}
+\input{chapters/11_validation}
+\backmatter
+\input{references}
+\end{document}

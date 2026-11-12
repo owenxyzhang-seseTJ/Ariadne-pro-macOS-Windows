@@ -1,0 +1,28 @@
+{
+  "schema": "ariadne.native-agent-transport-validation/1",
+  "tests": 11,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "pytest_seconds": 2.478,
+  "command": "OPENBLAS_NUM_THREADS=1 python -m pytest native/tests/test_agent_v08.py tests_rebuild/test_native_backend_v08.py -q",
+  "source_sha256": {
+    "native/src/ariadne_xtal/agent.py": "78a4664c8d58567e5fbc897ac227c5595e676fbb500d6bd61f55f7f13d9cc938",
+    "native/src/ariadne_xtal/reduction_bridge.py": "45f763361d25516e54640ec6a99c877334c503d9aa159b0291310a44e5caafd2",
+    "python/src/ariadne/agent/native_backend.py": "4dd4a5e05f8f031a1df836c62ecc8abf3d36b9866f46149cef5382a458b44b1d",
+    "python/src/ariadne/agent/spec.py": "7777f77860909c89601fdc91b124f42cc8c9341bb230de8cb7364e45a6c6f77e",
+    "native/tests/test_agent_v08.py": "1cc64b2f9a9fc5d99419d41278ebcf5d9f732796e3fed292c825ed9dae78f191",
+    "tests_rebuild/test_native_backend_v08.py": "36449cd63708e0f90ba70bd1914e2e8cfa82a3567de46d35bb0a2e0981aa4a23"
+  },
+  "checked": [
+    "Gaussian integration with known mean offset to persisted structure_groups.json",
+    "Poisson counts with nuisance-profile interval",
+    "Explicit readout-noisy Poisson-Gaussian backend handoff",
+    "Same-phase joint refinement through real file transport",
+    "solve-observations with explicit initial model and one reserved audit evaluation",
+    "Persistent native.run subprocess DAG with named artifacts and immutable snapshots",
+    "Interpreter basename resolution and module-name input remaining data",
+    "Error explanation, path/legacy rejection and process deadline",
+    "Capabilities persisted as a verified artifact"
+  ]
+}

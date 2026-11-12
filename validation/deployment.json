@@ -1,0 +1,97 @@
+{
+  "schema": "ariadne-pro-windows/1",
+  "product": "Ariadne pro Windows",
+  "version": "0.8.0",
+  "variant": "win-x86_64-localopt1",
+  "root": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win",
+  "source": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\source",
+  "python": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\python312\\tools\\python.exe",
+  "python_version": "3.12.10",
+  "launcher": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\ariadne-pro-win.cmd",
+  "kernel": {
+    "requested": "auto",
+    "resolved": "cpp",
+    "compiled_available": true,
+    "build": {
+      "kernel_version": 1,
+      "binding": "CPython checked native buffers",
+      "compiler": "Clang 20.1.2 (https://github.com/ziglang/zig-bootstrap 7ef74e656cf8ddbd6bf891a8475892aa1afa6891)",
+      "architecture": "x86_64",
+      "internal_threads": 1,
+      "releases_gil": true,
+      "openmp": false,
+      "fast_math": false
+    },
+    "fallback_reason": null,
+    "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+    "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+  },
+  "regression": {
+    "native_checks_passed": 114,
+    "python_reference_checks_passed": 13,
+    "failed": 0,
+    "skipped": 0
+  },
+  "acceptance": {
+    "native_windows": true,
+    "compiled_cpp_available": true,
+    "predictor_scaled_jacobian_below_1e_10": true,
+    "refinement_converged": true,
+    "refinement_prediction_sigma_rms_below_1e_6": true,
+    "measured_fen4_regression": true,
+    "synthetic_phasing_recovery": true,
+    "unicode_path_roundtrip": true
+  },
+  "windows_boundaries": {
+    "parent_mcp_server": false,
+    "persistent_posix_agent": false
+  },
+  "dials_runtime": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env",
+  "dials_launcher": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\ariadne-pro-dials.cmd",
+  "dials_validation": {
+    "python": "3.12.16 | packaged by conda-forge | (main, Oct 26 2026, 11:29:01) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env\\python.exe",
+    "versions": {
+      "cctbx-base": {
+        "version": "2026.10",
+        "build": "np2py312h46e1efe_1"
+      },
+      "dials": {
+        "version": "3.30.1",
+        "build": "py312hf7d3074_0"
+      },
+      "dxtbx": {
+        "version": "3.30.0",
+        "build": "py312h71b77d9_0"
+      },
+      "python": {
+        "version": "3.12.16",
+        "build": "hb12b558_0_cpython"
+      }
+    },
+    "module_paths": {
+      "dials": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-overlay\\src\\dials\\__init__.py",
+      "dxtbx": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env\\Lib\\site-packages\\dxtbx\\__init__.py",
+      "cctbx": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-env\\Lib\\site-packages\\cctbx\\__init__.py",
+      "dials.algorithms.indexing.model_evaluation": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-overlay\\src\\dials\\algorithms\\indexing\\model_evaluation.py",
+      "dials.algorithms.indexing.lattice_search": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\dials-overlay\\src\\dials\\algorithms\\indexing\\lattice_search\\__init__.py"
+    },
+    "threshold": [
+      {
+        "noise_model": "poisson",
+        "selected_pixels": 181,
+        "equals_direct_api": true,
+        "mask_respected": true
+      },
+      {
+        "noise_model": "poisson_gaussian",
+        "selected_pixels": 176,
+        "equals_direct_api": true,
+        "mask_respected": true
+      }
+    ],
+    "acceptance": true,
+    "raw_detector_end_to_end_tested": false
+  },
+  "timing_result": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\results\\windows-timing.json"
+}

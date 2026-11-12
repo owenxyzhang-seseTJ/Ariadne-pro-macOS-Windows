@@ -1,0 +1,181 @@
+\chapter{从倒易点到探测器体素}
+\label{chap:geometry}
+
+\section{反射预测是一道几何方程}
+
+一张衍射图记录的是散射光子到达探测器的位置。要把一个斑点解释为
+$(h,k,l)$，必须同时满足晶格、转动和探测器几何。设实空间晶胞矩阵
+$A_{\mathrm d}$ 的列为晶格矢量，长度单位为 \AA；取不含 $2\pi$ 的倒易约定，
+\begin{equation}
+ B=A_{\mathrm d}^{-T},\qquad
+ \bm q=UB\bm h,\qquad d_{hkl}^{-1}=\|\bm q\|.
+ \label{eq:geometry-reciprocal}
+\end{equation}
+这里 $U$ 是晶体取向，$\bm h=(h,k,l)^T$；$\bm q$ 的单位为
+\AA$^{-1}$。散射矢量的定义必须与波矢保持一致，不能把含 $2\pi$ 和不含
+$2\pi$ 的约定混用。
+
+设入射波矢为 $\bm s_0$，其长度是 $1/\lambda$。测角仪将倒易点转到
+$\bm r(\phi)$；用 $G_{\mathrm f}$、$G_{\mathrm s}$ 分别表示固定与设置转动，
+则弹性散射要求
+\begin{equation}
+ \bm r(\phi)=G_{\mathrm s}R_{\bm e}(\phi)G_{\mathrm f}UB\bm h,
+ \qquad
+ \bm s_1=\bm s_0+\bm r,\qquad
+ 2\bm s_0^T\bm r+\|\bm r\|^2=0.
+ \label{eq:geometry-ewald}
+\end{equation}
+最后一个等式就是 Ewald 球条件。它决定反射出现的转角，而不是在图上寻找一个
+足够近的点就算预测成功。Ariadne 沿用 DIALS 的反射枚举、进入／离开球面的分支、
+探测器面板及扫描周次选择\cite{dials2018}。
+
+\begin{figure}[!htbp]
+ \centering
+ \begin{tikzpicture}[scale=0.95]
+  \begin{scope}
+   \draw[gray] (-1.6,0) circle (1.6);
+   \fill (-1.6,0) circle (1.3pt) node[below] {$C$};
+   \fill (0,0) circle (1.3pt) node[below right] {$O$};
+   \fill (-0.8,1.386) circle (1.5pt) node[above right] {倒易点};
+   \draw[->,thick] (-1.6,0)--(0,0) node[midway,below] {$\bm s_0$};
+   \draw[->,thick] (-1.6,0)--(-0.8,1.386) node[midway,left] {$\bm s_1$};
+   \draw[->,thick] (0,0)--(-0.8,1.386) node[midway,right] {$\bm r$};
+   \node at (-1.6,-2.05) {倒易空间：波矢长度不变};
+  \end{scope}
+  \begin{scope}[xshift=4.9cm]
+   \fill (0,0) circle (1.5pt) node[below] {晶体};
+   \draw[thick] (2.9,-0.25)--(2.9,2.25) node[above] {探测器平面};
+   \draw[->,thick] (0,0)--(2.9,1.35) node[midway,above] {$\widehat{\bm s}_1$};
+   \fill (2.9,1.35) circle (1.5pt) node[right] {$\bm x$};
+   \draw[dashed] (0,0)--(2.9,0);
+   \draw[->] (2.9,0)--(2.9,1.3) node[midway,right] {$X$};
+   \node at (1.4,-2.05) {实验空间：射线与面板相交};
+  \end{scope}
+ \end{tikzpicture}
+ \caption{同一条反射的两种几何描述。左图中的长度为倒易长度，右图中的位置为实际长度；
+ 示意图没有表达晶胞或仪器的具体尺寸。}
+ \label{fig:geometry-ewald-ray}
+\end{figure}
+
+\section{位置导数与仪器单位}
+
+局部优化不必为每个参数反复搜索整个 Ewald 球。对已经选定的物理解作隐式微分，
+记 $\bm t=(G_{\mathrm s}\bm e)\times\bm r$，可得
+\begin{equation}
+ \frac{\partial\phi}{\partial p}
+ =-\frac{\bm s_1^T(\partial\bm r/\partial p)_{\phi}}
+          {\bm s_0^T\bm t}.
+ \label{eq:geometry-phi-derivative}
+\end{equation}
+分母趋近零对应切触情形，此时很小的晶体扰动也会引起很大的转角变化。
+保留的解析导数代码显式检查这种退化，不用任意有限差分步长掩盖它。
+
+探测器面板由原点 $\bm o$、法向 $\bm n$ 和面内单位轴
+$\bm e_x,\bm e_y$ 描述。令 $\widehat{\bm s}_1$ 为单位出射方向，则
+\begin{equation}
+ \ell=\frac{\bm n^T\bm o}{\bm n^T\widehat{\bm s}_1},\qquad
+ \bm x=\ell\widehat{\bm s}_1,\qquad
+ X=\bm e_x^T(\bm x-\bm o),\quad
+ Y=\bm e_y^T(\bm x-\bm o).
+ \label{eq:geometry-detector}
+\end{equation}
+$\bm o,\ell,X,Y$ 使用 mm，之后才用像素尺寸换算为像素坐标。
+扫描角使用 rad；若每帧角宽为 $\Delta\phi$，帧坐标为
+$(\phi-\phi_0)/\Delta\phi$。沿用代码的质心残差是
+$(\Delta X,\Delta Y,\Delta\phi)$，并非三个具有相同单位的长度。
+
+取向属于旋转群，局部扰动可以写成
+\begin{equation}
+ U_{\mathrm{new}}=\exp([\delta\bm\omega]_\times)U,
+ \qquad \delta\bm q=\delta\bm\omega\times\bm q+O(\|\delta\bm\omega\|^2).
+ \label{eq:geometry-so3}
+\end{equation}
+这说明应在旋转切空间上优化，而不是把九个矩阵元素独立调整。
+现有 DIALS 适配器使用保持晶体对称性的 $U/B$ 参数化，本次没有另造仪器标定器。
+
+几何也有可辨识性边界。例如波长和晶胞长度同比例改变时，衍射角可以保持不变。
+因此需要固定有独立标定依据的量，并检查残差随扫描角、面板和分辨率的系统变化。
+增加自由参数通常能降低质心残差，却不一定更接近真实仪器。
+
+几何误差还会改变似然的宽度。在线性近似下，若几何参数协方差为 $\Sigma_g$，
+\begin{equation}
+ C_i=C_{i,\mathrm{centroid}}+J_i\Sigma_gJ_i^T,
+ \qquad C_{ij}^{\mathrm{shared}}=J_i\Sigma_gJ_j^T.
+ \label{eq:geometry-covariance}
+\end{equation}
+第二项提醒我们：同一仪器误差可以同时移动许多反射。现有单源质心 EM 可以白化完整
+$3\times3$ 观测协方差，但共同仪器固定；声明的模型协方差不等于已经求得全部仪器参数误差。
+像素中的局部位置扰动消元，也应与整台仪器的共享协方差区分。
+
+\section{探测器记录体素积分}
+
+一个像素在一帧内积累的是有限体积上的概率质量。若三维轮廓密度为
+$g(\bm u-\bm c;\Sigma)$，则
+\begin{equation}
+ P_{ij}=\int_{\Omega_i}g_j(\bm u-\bm c_j;\Sigma_j)\,d^3\bm u,
+ \qquad \mu_i=b_i+\sum_j I_jP_{ij}.
+ \label{eq:geometry-voxel}
+\end{equation}
+这里 $\bm u$ 使用两个像素坐标和一个帧坐标，$P_{ij}$ 无量纲，$I_j$ 是完整轮廓强度。
+因此裁切盒内 $\sum_iP_{ij}<1$ 是正常的；不能再次归一化后又除一次 partiality。
+体素中心的密度乘体积仅是近似，窄斑点或像素边界附近尤其需要真正积分。
+
+对角 Gaussian 轮廓可精确分离为三个一维 CDF 差：
+\begin{equation}
+ P_i=\prod_{a=1}^{3}\left[
+ \Phi\!\left(\frac{u_{ia}^{+}-c_a}{\sigma_a}\right)
+ -\Phi\!\left(\frac{u_{ia}^{-}-c_a}{\sigma_a}\right)\right].
+ \label{eq:geometry-cdf}
+\end{equation}
+相关轮廓的沿用实现解析积分一个条件正态方向，其余方向使用分块
+Gauss--Legendre 积分。节点规则是数值精度策略，并非严格的误差证明。
+平移导数则由体素表面的通量得到：
+\begin{equation}
+ \frac{\partial P_i}{\partial c_a}
+ =\int_{\partial\Omega_{i,a}^{-}}g\,dS
+  -\int_{\partial\Omega_{i,a}^{+}}g\,dS.
+ \label{eq:geometry-face-flux}
+\end{equation}
+相邻体素共用的内表面通量相消，因此导数与质量守恒一致，也省去了反复平移后的体积分。
+
+\section{强参考与弱数据各自承担什么任务}
+
+分离清楚、定位稳定且覆盖扫描角的参考斑点适合约束几何和学习轮廓。
+局部模板由参考数据向全局模板收缩，并使用非负三线性插值；校准范围外回到全局模板。
+这比给每个弱斑点另拟合一套宽度更容易控制方差。
+沿用实现采用的收缩规则为
+\begin{equation}
+ \widehat g_{\mathrm{local}}=
+ \frac{n}{n+\kappa}\overline g_{\mathrm{local}}
+ +\frac{\kappa}{n+\kappa}\overline g_{\mathrm{pooled}},
+ \qquad n>0,\ \kappa>0.
+ \label{eq:geometry-profile-shrinkage}
+\end{equation}
+$n$ 是当地有效参考数，$\kappa$ 控制向共享模板收缩的程度。
+参考少时依靠全局形状，参考充分时才允许局部变化；这里约束的是轮廓形状，不是把弱反射的强度拉向某个目标值。
+
+参考子集只服务于初始化和标定，不自动成为最终积分的删点规则。
+一个重叠质心不能复制成多个独立观测；单源 EM 处理的是来源不确定性，复合斑点应回到共同像素模型。
+0.8 的新接口接收上述轮廓，再按计数模型和可辨识性保留弱信号及重叠组合量。
+几何比较沿用扫描块留出，使训练与检查覆盖不同角度区域。它评估的是给定候选的预测能力，
+不能自动声称候选生成过程也完全独立；模型选择应同时查看剩余未解释斑点和各域的独立锚点。
+
+\begin{table}[!htbp]
+ \centering\small
+ \caption{本章数学对象与沿用的源码。路径前缀为
+ \code{skills/ariadne-reduction/scripts/}。}
+ \begin{tabularx}{\textwidth}{@{}p{0.39\textwidth}X@{}}
+  \toprule
+  模块 & 实际职责 \\
+  \midrule
+  \code{rotation_geometry.py} & 已选反射分支的解析位置导数与白化距离。\\
+  \code{centroid_em.py} & 固定仪器下的单源质心 EM、DIALS $U/B$ 适配。\\
+  \code{profile_geometry.py} & 三维 Gaussian 体素概率与面通量导数。\\
+  \code{profile_learning.py} & 有限工作内存的模板对齐、汇总及收缩。\\
+  \code{local_profiles.py} & 固定局部模板的非负插值。\\
+  \bottomrule
+ \end{tabularx}
+\end{table}
+
+这些模块来自保留的 0.7 数值优化。0.8 的新增工作是将它们产生的前向设计接到原生像素似然和结构精修；
+本次合成数值验证不等同于完成某台仪器原始帧的端到端标定与还原。

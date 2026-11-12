@@ -1,0 +1,15 @@
+{
+  "version": "0.8.0",
+  "main_report_pages": 45,
+  "loop_report_pages": 8,
+  "compile": "Three XeLaTeX passes per report; no missing glyphs, undefined references or overfull hboxes.",
+  "visual_review": "All textbook pages rendered and inspected in contact sheets; loop report pages reviewed and diagrams enlarged. Final changed loop pages checked separately.",
+  "fixed_layout_issues": [
+    "TOC orphan entry",
+    "Loop final paragraph orphan page",
+    "Last reference orphan page",
+    "Scheduler diagram overflow",
+    "Missing font glyphs"
+  ],
+  "status": "passed"
+}

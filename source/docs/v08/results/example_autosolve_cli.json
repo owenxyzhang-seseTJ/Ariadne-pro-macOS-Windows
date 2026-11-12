@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "run_id": "autosolve_mroosae8",
+  "manifest": "runs/autosolve_mroosae8/manifest.json",
+  "result": "runs/autosolve_mroosae8/result.json",
+  "summary": {
+    "status": "completed",
+    "selected_candidate": 2,
+    "audit": {
+      "n": 454,
+      "chi_squared": 444.48352022360854,
+      "sigma_rmse": 0.9894637895349682,
+      "negative_intensities": 62,
+      "used_for_candidate_generation": false,
+      "used_for_candidate_selection": false,
+      "calibration": "conditional on the input sigma values and observation model"
+    },
+    "candidate_count": 4,
+    "audit_evaluations": 1
+  }
+}

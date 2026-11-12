@@ -1,0 +1,18 @@
+running build_ext
+building 'ariadne_xtal._intensity_cpp' extension
+/tmp/ariadne-kernel-build-rxtwmdm7/deliberately_missing_cxx -fno-strict-overflow -Wsign-compare -Wunreachable-code -DNDEBUG -g -O3 -Wall -O3 -fstack-protector -fstack-clash-protection -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer -fPIC -fPIC -I/opt/codex/runtimes/codex-primary-runtime/dependencies/python/include/python3.12 -I/workspace/scratch/4f12e5e7e14c/venv/include -I/opt/codex/runtimes/codex-primary-runtime/dependencies/python/include/python3.12 -c src/ariadne_xtal/cpp/intensity_kernel.cpp -o /tmp/ariadne-kernel-build-rxtwmdm7/objects_1/src/ariadne_xtal/cpp/intensity_kernel.o -O3 -std=c++17 -fno-fast-math -ffp-contract=off
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: SetuptoolsDeprecationWarning: `project.license` as a TOML table is deprecated
+!!
+
+        ********************************************************************************
+        Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+
+        By 2027-Feb-18, you need to update your project and remove deprecated calls
+        or your builds will no longer be supported.
+
+        See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+        ********************************************************************************
+
+!!
+  corresp(dist, value, root_dir)
+error: [Errno 2] No such file or directory: '/tmp/ariadne-kernel-build-rxtwmdm7/deliberately_missing_cxx'

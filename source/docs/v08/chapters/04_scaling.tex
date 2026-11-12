@@ -1,0 +1,141 @@
+\chapter{尺度、吸收与保留信息的导出}
+\label{chap:scaling}
+
+\section{为什么等价反射仍然强弱不同}
+
+理想结构因子只描述晶体内部的相干散射。同一反射在不同扫描位置的观测，
+还受入射通量、照射体积、偏振、Lorentz 因子和吸收影响。
+若积分结果已经是完整轮廓强度，一个单独反射的前向模型可写成
+\begin{equation}
+ \operatorname{E}[y_j]=g_jI_{h(j)},\qquad
+ g_j=k_j\,L_jP_j\,T_j>0.
+ \label{eq:scaling-forward}
+\end{equation}
+这里 $L_jP_j$ 表示已声明约定的 Lorentz--偏振乘子，并非上一章的体素轮廓矩阵。
+实现中的字段是 \code{lp_forward}；方向、单位和是否已经校正必须随数据保存。
+完整轮廓积分之后再次除以可见比例，会把同一效应校正两次。
+
+吸收来自光子沿路径的损失。线性吸收系数 $\mu$ 以 mm$^{-1}$ 表示时，
+路径长度必须使用 mm。单一路径及有限晶体的平均透过率分别为
+\begin{equation}
+ T(\bm r)=\exp[-\mu\{L_{\mathrm{in}}(\bm r)+L_{\mathrm{out}}(\bm r)\}],
+ \qquad
+ \overline T=\frac{1}{V}\int_V T(\bm r)\,d^3\bm r.
+ \label{eq:scaling-absorption}
+\end{equation}
+已知形状与面指数时，这给出物理吸收模型；缺少可靠形状时，多扫描等价反射可以约束经验方向响应。
+两者解决的问题相近，但经验系数不应解释成直接测得的晶体形状或绝对吸收系数\cite{scaling2020}。
+
+\section{现有方向模型到底包含什么}
+
+沿用的 Ariadne 全局缩放采用正值指数模型：
+\begin{equation}
+ g_j=g_j^{\mathrm{known}}\exp(\bm x_j^T\bm\beta).
+ \label{eq:scaling-exponential}
+\end{equation}
+当前代码支持每个扫描的零至二次角度特征，以及关闭吸收项或保留偶二阶方向项。
+对共同晶体坐标系中的单位方向 $\bm v=(x,y,z)$，所用基为
+\begin{equation}
+ H_2(\bm v)=
+ (xy,xz,yz,x^2-y^2,3z^2-1)^T,\qquad
+ \bm a_j=H_2(\widehat{\bm s}_{\mathrm{in}})
+          +H_2(\widehat{\bm s}_{\mathrm{out}}).
+ \label{eq:scaling-harmonics}
+\end{equation}
+这是实二阶球谐空间的一组基，未采用正交归一化常数；系数会吸收该常数。
+正值指数保证响应可用作尺度，但经过中心化的相对响应可以大于 1。
+它不是必须小于 1 的绝对透过率，也不是任意阶球谐吸收模型。
+
+\section{复合观测应在前向模型中缩放}
+
+重叠组可以给出一个总强度、多个可分辨分量，或一组正交信息模态。
+用 $D_b$ 表示这些观测对原贡献的线性映射，$E_b$ 将贡献连接到各自等价反射，则
+\begin{equation}
+ \bm\mu_b
+ =D_b\,\operatorname{diag}\!\bigl(\bm g_b(\bm\beta)\bigr)E_b\bm I.
+ \label{eq:scaling-composite}
+\end{equation}
+单一总量对应一行全 1 的 $D_b$；已辨识分量对应单位阵；压缩 Gaussian 观测则可直接使用上一阶段的 $R$。
+这样可以使用不同扫描上的等价信息，而无须先给不可分辨像素强行拆分强度。
+每个输入组保留自己的协方差，再统一白化；同一组内的相关分量不能当成互相独立的行。
+
+各孪晶域共享尺度约定也很关键。逐域把平均强度调成一样，会吸收本来属于域体积分数的信息。
+保留代码不进行这种独立域归一化；0.8 的结构桥接进一步用结构因子和域分数预测贡献，再进入原观测算子。
+
+\section{尺度规范与变量投影}
+
+强度和尺度存在可交换的乘数：$I\mapsto e^{-c}I$、$g\mapsto e^cg$
+不改变预测。现有实现将贡献特征在全局中心化，固定相对尺度规范：
+\begin{equation}
+ \sum_j\bm x_j=0
+ \quad\Longrightarrow\quad
+ \sum_j\log\frac{g_j}{g_j^{\mathrm{known}}}=0.
+ \label{eq:scaling-gauge}
+\end{equation}
+这只消除整体规范。若某个方向特征在每个等价反射组内都不变化，它仍可被该组未知强度吸收。
+代码另检查组内中心化特征的秩，保留剩余零空间；缺少角度覆盖不会因添加正则项而自动变成实验信息。
+
+给定非线性尺度 $\bm\beta$，有符号强度仍是线性未知量。
+把所有白化观测拼成 $\bm d$，相应设计记为 $A(\bm\beta)$，可先求
+\begin{equation}
+ \widehat{\bm I}(\bm\beta)=A(\bm\beta)^+\bm d,
+ \qquad
+ \bm r(\bm\beta)=A\widehat{\bm I}-\bm d.
+ \label{eq:scaling-varpro}
+\end{equation}
+这是变量投影\cite{golub1973}。在线性设计保持满列秩的邻域，完整残差导数为
+\begin{equation}
+ d\bm r=(1-AA^+)(dA)\widehat{\bm I}
+          -A^{+T}(dA)^T\bm r.
+ \label{eq:scaling-varpro-derivative}
+\end{equation}
+第二项在残差非零时不能省略。现有实现用 QR/SVD 和固定支撑分组减少重复计算，
+避免解正规方程造成条件数平方；满秩条件失效时返回原交替路径，并继续报告秩与收敛证据。
+这里的有符号线性解仍然保留负强度估计，不为获得好看的合并统计而截零。
+
+\section{误差传播与导出不能脱节}
+
+设校正后的可测总量为 $S=\bm f^T\bm I$。
+如果尺度也从这批强度估计出来，强度与校正因子通常相关，因此
+\begin{equation}
+ \operatorname{Var}(S)=
+ \bm f^TC_I\bm f+\bm I^TC_f\bm I
+ +2\bm f^TC_{If}\bm I.
+ \label{eq:scaling-cross-covariance}
+\end{equation}
+最后的同数据交叉项不能因为实现方便而省略。
+沿用缩放代码保存联合参数协方差和观测灵敏度，校正阶段据此传播误差。
+若像素只给出 $I_1+I_2$，而两分量需要不同的校正因子，仅凭该总量不能得到校正后的和；
+应保留复合前向模型，不能用一次结构预测拆分冒充两个新的实验测量。
+
+HKLF 5 是交换格式，不足以装下完整的分量与跨观测协方差。
+现有导出器只接受有完整贡献者记录、同相证据和真实校正来源的观测组。
+为适应固定小数字段，它可以对所有行共同变换
+\begin{equation}
+ I'_j=aI_j,\qquad \sigma'_j=a\sigma_j,\qquad a>0,
+ \label{eq:scaling-export}
+\end{equation}
+从而在小数舍入前保持 $I/\sigma$。负强度照常保留；若字段动态范围无法同时容纳有效误差条，
+程序保留主数据并报错，不把过小的 sigma 换成任意常数。
+非负计数的剖面区间也不能通过“区间宽度除以 2”伪装成 Gaussian sigma。
+主 JSON/JSONL 中的似然、协方差和行映射应与 HKL 同时交付。
+
+\begin{table}[!htbp]
+ \centering\small
+ \caption{沿用的缩放和导出实现；路径前缀为
+ \code{skills/ariadne-reduction/scripts/}。}
+ \begin{tabularx}{\textwidth}{@{}p{0.40\textwidth}X@{}}
+  \toprule
+  模块 & 数学对象及作用 \\
+  \midrule
+  \code{global_scale.py} & \code{harmonics} 与 \code{prepare} 构造共同方向特征、等价关系和观测块。\\
+  \code{composite_scaling.py} & \code{fit_global} 联合估计尺度与强度，检查规范、秩与曲率。\\
+  \code{variable_projection.py} & 线性强度消元及完整的残差导数。\\
+  \code{correct_overlap_groups.py} & 包含同数据交叉项的校正误差传播。\\
+  \code{hklf5_stream.py} & 两遍流式格式转换，记录舍入误差与信息损失。\\
+  \bottomrule
+ \end{tabularx}
+\end{table}
+
+本章解释保留的 0.7 数值能力。0.8 新增的是原生像素似然和结构前向桥接，
+没有把经验二阶吸收模型重新命名为完整形状吸收，也没有以合成测试代替真实原始帧的缩放验证。

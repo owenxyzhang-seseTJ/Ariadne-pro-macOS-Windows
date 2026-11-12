@@ -1,0 +1,30 @@
+[
+  {
+    "file": "ReportSerif-Regular.ttf",
+    "source_family": "NotoSerifSC-Regular.ttf",
+    "bytes": 400076,
+    "modification": "glyph subset and family renamed for report embedding",
+    "license": "SIL Open Font License 1.1; included Noto notices"
+  },
+  {
+    "file": "ReportSerif-Bold.ttf",
+    "source_family": "NotoSerifSC-Bold.ttf",
+    "bytes": 400012,
+    "modification": "glyph subset and family renamed for report embedding",
+    "license": "SIL Open Font License 1.1; included Noto notices"
+  },
+  {
+    "file": "ReportSans-Regular.ttf",
+    "source_family": "NotoSansSC-Regular.ttf",
+    "bytes": 296140,
+    "modification": "glyph subset and family renamed for report embedding",
+    "license": "SIL Open Font License 1.1; included Noto notices"
+  },
+  {
+    "file": "ReportSans-Bold.ttf",
+    "source_family": "NotoSansSC-Bold.ttf",
+    "bytes": 295868,
+    "modification": "glyph subset and family renamed for report embedding",
+    "license": "SIL Open Font License 1.1; included Noto notices"
+  }
+]

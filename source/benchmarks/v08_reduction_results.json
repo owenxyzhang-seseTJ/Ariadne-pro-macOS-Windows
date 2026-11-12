@@ -1,0 +1,437 @@
+{
+  "schema": "ariadne-v08-reduction-validation/1",
+  "environment": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "machine": "x86_64"
+  },
+  "data_kind": "synthetic controlled examples; no raw DIALS experiment in this benchmark",
+  "seed": 840108,
+  "gaussian_strong_weak": {
+    "truth": [
+      500.0,
+      4.0
+    ],
+    "fit": {
+      "schema": "ariadne-gaussian-pixel-fit/2",
+      "intensities": [
+        504.54908922381065,
+        11.517146354489542
+      ],
+      "intensities_internal": [
+        504.54908922381065,
+        11.517146354489542
+      ],
+      "internal_solution": "minimum Euclidean norm representative; not a detwinning measurement",
+      "individual_identifiable": [
+        true,
+        true
+      ],
+      "background_coefficients_internal": [
+        4.896499853638689
+      ],
+      "chi2": 128.18700010742657,
+      "covariance": [
+        [
+          123.53149571086588,
+          3.9309973123336097
+        ],
+        [
+          3.9309973123336097,
+          123.53149571086587
+        ]
+      ],
+      "covariance_identifiable_subspace": [
+        [
+          123.53149571086588,
+          3.9309973123336097
+        ],
+        [
+          3.9309973123336097,
+          123.53149571086587
+        ]
+      ],
+      "joint_covariance_intensity_then_background": [
+        [
+          123.53149571086588,
+          3.9309973123336097,
+          -1.2620048814178169
+        ],
+        [
+          3.9309973123336097,
+          123.53149571086587,
+          -1.2620048814178169
+        ],
+        [
+          -1.2620048814178169,
+          -1.2620048814178169,
+          0.06459415606767954
+        ]
+      ],
+      "conditional_information_ratio": [
+        0.9989873716217111,
+        0.9989873716217107
+      ],
+      "rank": 2,
+      "nullspace": [],
+      "selection": "all valid pixels; no intensity or sign threshold"
+    },
+    "maximum_relative_compressed_likelihood_error": 1.7370213889612508e-15,
+    "arbitrary_test_structural_predictions": 100
+  },
+  "joint_count_background": {
+    "data": [
+      8,
+      3
+    ],
+    "model": "mu=[I+b,b]",
+    "fit": {
+      "schema": "ariadne-joint-poisson-fit/1",
+      "intensities": [
+        4.999999999881544
+      ],
+      "intensities_internal": [
+        4.999999999881544
+      ],
+      "individual_identifiable": [
+        true
+      ],
+      "background_coefficients": [
+        2.9999999998892957
+      ],
+      "poisson_deviance": 1.0649477653534118e-20,
+      "converged": true,
+      "kkt_error": 9.413393234041186e-11,
+      "kkt_coordinates": "initial expected-Fisher diagonal units of integrated-count parameters",
+      "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "objective_evaluations": 11,
+      "rank_after_background": 1,
+      "nullspace": [],
+      "fisher_joint_covariance_intensity_then_background": [
+        [
+          10.999999999660137,
+          -2.9999999998892948
+        ],
+        [
+          -2.9999999998892948,
+          2.9999999998892948
+        ]
+      ],
+      "scope": "genuine independent photon counts; jointly fitted nonnegative linear background",
+      "uncertainty": "profile likelihood refits all free signal and background coefficients; LR cutoff is asymptotic",
+      "intensity_units": "full-profile expected photon counts; no profile renormalization"
+    },
+    "joint_background_interval": {
+      "contrast": [
+        1.0
+      ],
+      "confidence_level": 0.95,
+      "threshold": 3.841458820694124,
+      "lower": 0.0,
+      "upper": 12.419279778766823,
+      "scope": "profiles, calibration and known offset fixed; other intensities and background reoptimized",
+      "calibration": "chi-square(1) asymptotic LR; no exact sparse-count or boundary coverage claim",
+      "estimate": 4.999999999881544,
+      "status": "ok",
+      "profile_evaluations": 12
+    },
+    "frozen_background_interval": {
+      "contrast": [
+        1.0
+      ],
+      "confidence_level": 0.95,
+      "threshold": 3.841458820694124,
+      "lower": 0.6558701374349675,
+      "upper": 11.89154693334972,
+      "scope": "profiles, calibration and known offset fixed; other intensities and background reoptimized",
+      "calibration": "chi-square(1) asymptotic LR; no exact sparse-count or boundary coverage claim",
+      "estimate": 5.000000000002334,
+      "status": "ok",
+      "profile_evaluations": 19
+    }
+  },
+  "high_count_known_offset": {
+    "count": 1000000000000,
+    "known_offset": 10000000,
+    "closed_form_mle": 999990000000,
+    "error_in_poisson_sigma": 1.220703125e-10,
+    "fit": {
+      "schema": "ariadne-joint-poisson-fit/1",
+      "intensities": [
+        999990000000.0001
+      ],
+      "intensities_internal": [
+        999990000000.0001
+      ],
+      "individual_identifiable": [
+        true
+      ],
+      "background_coefficients": [],
+      "poisson_deviance": 1.4901161193847653e-20,
+      "converged": true,
+      "kkt_error": 1.110228575726402e-10,
+      "kkt_coordinates": "initial expected-Fisher diagonal units of integrated-count parameters",
+      "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "objective_evaluations": 8,
+      "rank_after_background": 1,
+      "nullspace": [],
+      "fisher_joint_covariance_intensity_then_background": [
+        [
+          1000000000000.0
+        ]
+      ],
+      "scope": "genuine independent photon counts; jointly fitted nonnegative linear background",
+      "uncertainty": "profile likelihood refits all free signal and background coefficients; LR cutoff is asymptotic",
+      "intensity_units": "full-profile expected photon counts; no profile renormalization"
+    },
+    "purpose": "regression for projected-gradient cancellation at large count coordinates"
+  },
+  "complete_twin_overlap": {
+    "fit": {
+      "schema": "ariadne-joint-poisson-fit/1",
+      "intensities": [
+        null,
+        null
+      ],
+      "intensities_internal": [
+        5.0,
+        5.0
+      ],
+      "individual_identifiable": [
+        false,
+        false
+      ],
+      "background_coefficients": [],
+      "poisson_deviance": 0.8109302162163288,
+      "converged": true,
+      "kkt_error": 5.8513891142945e-18,
+      "kkt_coordinates": "initial expected-Fisher diagonal units of integrated-count parameters",
+      "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "objective_evaluations": 4,
+      "rank_after_background": 1,
+      "nullspace": [
+        [
+          -0.7071067811865474,
+          0.7071067811865477
+        ]
+      ],
+      "fisher_joint_covariance_intensity_then_background": null,
+      "scope": "genuine independent photon counts; jointly fitted nonnegative linear background",
+      "uncertainty": "profile likelihood refits all free signal and background coefficients; LR cutoff is asymptotic",
+      "intensity_units": "full-profile expected photon counts; no profile renormalization"
+    },
+    "sum_interval": {
+      "contrast": [
+        1.0,
+        1.0
+      ],
+      "confidence_level": 0.95,
+      "threshold": 3.841458820694124,
+      "lower": 5.010765541410594,
+      "upper": 17.539344792499524,
+      "scope": "profiles, calibration and known offset fixed; other intensities and background reoptimized",
+      "calibration": "chi-square(1) asymptotic LR; no exact sparse-count or boundary coverage claim",
+      "estimate": 10.0,
+      "status": "ok",
+      "profile_evaluations": 16
+    },
+    "individual_interval": {
+      "contrast": [
+        1.0,
+        0.0
+      ],
+      "confidence_level": 0.95,
+      "threshold": 3.841458820694124,
+      "lower": null,
+      "upper": null,
+      "scope": "profiles, calibration and known offset fixed; other intensities and background reoptimized",
+      "calibration": "chi-square(1) asymptotic LR; no exact sparse-count or boundary coverage claim",
+      "status": "not_separately_identifiable",
+      "estimate": null
+    }
+  },
+  "overlap_observability_curve": [
+    {
+      "separation_pixels": 0.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 1,
+      "information_ratio": [
+        0.0,
+        0.0
+      ],
+      "individual_variance": null,
+      "sum_variance": 123.40640425195257
+    },
+    {
+      "separation_pixels": 0.01,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        4.079559516702658e-06,
+        4.079559516702659e-06
+      ],
+      "individual_variance": [
+        30249933.539809443,
+        30249933.539809454
+      ],
+      "sum_variance": 123.40653011575341
+    },
+    {
+      "separation_pixels": 0.05,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.00010198457931804244,
+        0.0001019845793180424
+      ],
+      "individual_variance": [
+        1210049.6474776405,
+        1210049.6474776405
+      ],
+      "sum_variance": 123.40955079998821
+    },
+    {
+      "separation_pixels": 0.2,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.0016306516074809977,
+        0.0016306516074809977
+      ],
+      "individual_variance": [
+        75679.19700676494,
+        75679.19700676497
+      ],
+      "sum_variance": 123.45675352425314
+    },
+    {
+      "separation_pixels": 0.5,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.010153120184325968,
+        0.010153120184325971
+      ],
+      "individual_variance": [
+        12154.530037225582,
+        12154.530037225599
+      ],
+      "sum_variance": 123.72124461025851
+    },
+    {
+      "separation_pixels": 1.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.04006897661441909,
+        0.040068976614419084
+      ],
+      "individual_variance": [
+        3079.8491670870026,
+        3079.8491670870003
+      ],
+      "sum_variance": 124.66800097502755
+    },
+    {
+      "separation_pixels": 2.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.15193196905251222,
+        0.15193196905251213
+      ],
+      "individual_variance": [
+        812.2477778805945,
+        812.2477778805948
+      ],
+      "sum_variance": 128.4877014474464
+    },
+    {
+      "separation_pixels": 4.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.49414767472103194,
+        0.49414767472103205
+      ],
+      "individual_variance": [
+        249.73587970721982,
+        249.73587970721942
+      ],
+      "sum_variance": 144.2309808665517
+    },
+    {
+      "separation_pixels": 8.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.9694481019758387,
+        0.9694481019758387
+      ],
+      "individual_variance": [
+        127.29552411617125,
+        127.29552411617118
+      ],
+      "sum_variance": 210.09082115775726
+    },
+    {
+      "separation_pixels": 16.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.9207290187816283,
+        0.9207290187816283
+      ],
+      "individual_variance": [
+        134.03118383848772,
+        134.0311838384876
+      ],
+      "sum_variance": 343.5356027933802
+    },
+    {
+      "separation_pixels": 24.0,
+      "profile_sigma_pixels": 4.0,
+      "rank": 2,
+      "information_ratio": [
+        0.9067928688732008,
+        0.9067928688732001
+      ],
+      "individual_variance": [
+        136.09023276396763,
+        136.09023276396772
+      ],
+      "sum_variance": 355.2767342261244
+    }
+  ],
+  "weak_signal_sign_selection": {
+    "truth": 0.0,
+    "sigma": 3.0,
+    "repetitions": 100000,
+    "signed_estimate_mean": 0.01011397444031833,
+    "clipped_estimate_mean": 1.2019596445460978,
+    "analytic_clipped_expectation": 1.1968268412042982,
+    "negative_fraction": 0.49892
+  },
+  "workspace": {
+    "pixels": 250000,
+    "signal_columns": 4,
+    "background_columns": 2,
+    "chunk_rows": 1024,
+    "streamed_complete_compression": {
+      "seconds": 0.059494844000028024,
+      "peak_traced_bytes": 515850
+    },
+    "dense_augmented_qr_only": {
+      "seconds": 0.02148979599996892,
+      "peak_traced_bytes": 43818012
+    },
+    "peak_traced_memory_ratio_dense_over_streamed": 84.94332073277116,
+    "note": "single measured run; dense baseline performs QR only, streamed path additionally profiles background and computes SVD diagnostics; tracemalloc peak excludes preallocated input arrays and is not process RSS",
+    "output_rank": 4,
+    "dense_factor_shape": [
+      7,
+      7
+    ]
+  }
+}

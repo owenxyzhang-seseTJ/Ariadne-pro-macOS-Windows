@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "archive": "Ariadne_0_8_0_LaTeX_Source.zip",
+  "archive_sha256": "485b17354cbf0379f2ec1313ac28ffaea0499258052e13b912e9a15bf9cc5c2f",
+  "manifest_files_checked": 49,
+  "compiled_from_independent_extraction": true,
+  "source_tree_access_needed_for_compilation": false,
+  "notes": "System XeLaTeX and standard TeX packages were reused; bundled fonts and figures were loaded from the extracted archive."
+}

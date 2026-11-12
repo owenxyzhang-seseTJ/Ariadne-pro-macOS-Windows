@@ -1,0 +1,47 @@
+{
+  "build": "0.7.0-rebuild-20261030",
+  "baseline": "Recovered R2 archive, Ariadne 0.5.0, upstream 797ac22ffa9b81da2dd977e013bea8f114b49eb2",
+  "source_recovery": "Reimplementation on recovered R2, not a byte-identical recovery of the lost 0.7.0 archive",
+  "implemented": [
+    "Block-low-rank fixed-Gaussian structure feedback",
+    "Real Gemmi CIF audit and IT92 X-ray factors",
+    "Training-only scale calibration",
+    "Closed training/validation/test groups",
+    "Frozen final-test exposure ledger",
+    "R2 experimental information-mode bridge",
+    "Persistent typed agent DAG",
+    "Dynamic paired SHELXT candidates",
+    "SHELXL execution contract and CIF audit",
+    "Deterministic and chat-completions planners",
+    "13 registered scientific actions",
+    "8 additional optional MCP tools"
+  ],
+  "tested_here": [
+    "NumPy/SciPy numerical tests",
+    "Real Gemmi native calculations",
+    "Subprocess protocol fixtures",
+    "Local HTTP planner fixture",
+    "Snapshot/resume/cancel/export",
+    "Synthetic feedback demonstration",
+    "Real MCP 1.30.0 tool registration",
+    "Installed-wheel audit outside checkout",
+    "All collectible regression modules and scientific adapter contracts"
+  ],
+  "not_tested_here": [
+    "DIALS native runtime",
+    "SHELXT/SHELXL binaries",
+    "Online LLM service",
+    "Experimental raw-frame end-to-end accuracy"
+  ],
+  "scientific_scope": [
+    "Real IT92 X-ray predictor; no anomalous or solvent correction",
+    "Feedback conditional on fixed profiles, geometry, background and calibration approximation",
+    "Automatic reduction is single-crystal; complex twins use explicit custom joint-analysis workflows",
+    "Not a unified raw-pixel and atomic-coordinate refinement engine"
+  ],
+  "validation": "reports/github_review_validation.json",
+  "benchmark": "reports/rebuild_feedback_benchmark.json",
+  "demo": "reports/rebuild_demo.json",
+  "historical_status": "reports/inherited-implementation-status.json",
+  "publication_review": "CODE_REVIEW.zh-CN.md"
+}

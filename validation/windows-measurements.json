@@ -1,0 +1,560 @@
+{
+  "product": "Ariadne pro Windows",
+  "version": "0.8.0",
+  "variant": "win-x86_64-localopt1",
+  "generated_utc": "2026-11-09T07:43:33.529582+00:00",
+  "environment": {
+    "platform": "Windows-11-10.0.22631-SP0",
+    "machine": "AMD64",
+    "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+    "executable": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\python312\\tools\\python.exe",
+    "prefix": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\python312\\tools",
+    "packages": {
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "gemmi": "0.7.5",
+      "threadpoolctl": "3.8.0",
+      "pytest": "9.2.0",
+      "mcp": "1.30.0",
+      "dials": null,
+      "cctbx-base": null
+    },
+    "kernel": {
+      "requested": "auto",
+      "resolved": "cpp",
+      "compiled_available": true,
+      "build": {
+        "kernel_version": 1,
+        "binding": "CPython checked native buffers",
+        "compiler": "Clang 20.1.2 (https://github.com/ziglang/zig-bootstrap 7ef74e656cf8ddbd6bf891a8475892aa1afa6891)",
+        "architecture": "x86_64",
+        "internal_threads": 1,
+        "releases_gil": true,
+        "openmp": false,
+        "fast_math": false
+      },
+      "fallback_reason": null,
+      "thread_policy": "C++ kernel uses one thread and releases GIL; agent workers own concurrency",
+      "scope": "Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution"
+    },
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\overlay\\numpy.libs\\libscipy_openblas64_-ed4f167a5330424524f45258e7ca2c8d.dll",
+        "version": "0.3.34.106.0",
+        "threading_layer": "pthreads",
+        "architecture": "Haswell"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\overlay\\scipy.libs\\libscipy_openblas-197ee2fc9b4d071f7e048078cac74115.dll",
+        "version": "0.3.31.dev",
+        "threading_layer": "pthreads",
+        "architecture": "Haswell"
+      }
+    ]
+  },
+  "predictor": [
+    {
+      "case": "three_atoms_three_domains",
+      "n_atoms": 3,
+      "n_domains": 3,
+      "n_reflections": 7280,
+      "n_parameters": 17,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 0.2240931000560522,
+          "median_cpu_seconds": 0.125
+        },
+        "cpp": {
+          "median_wall_seconds": 0.04027950018644333,
+          "median_cpu_seconds": 0.015625
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.22678779996931553,
+          "cpu_seconds": 0.046875
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.03786819986999035,
+          "cpu_seconds": 0.015625
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.034847999922931194,
+          "cpu_seconds": 0.046875
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.22342059994116426,
+          "cpu_seconds": 0.125
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 0.22483330010436475,
+          "cpu_seconds": 0.078125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.04054030007682741,
+          "cpu_seconds": 0.015625
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.043577800039201975,
+          "cpu_seconds": 0.03125
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 0.19672379991970956,
+          "cpu_seconds": 0.140625
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 0.2240931000560522,
+          "cpu_seconds": 0.125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.04027950018644333,
+          "cpu_seconds": 0.0
+        }
+      ],
+      "median_wall_speedup": 5.563452848689371,
+      "maximum_intensity_absolute_difference": 1.0231815394945443e-12,
+      "maximum_scaled_jacobian_difference": 2.205064920615893e-15,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+    },
+    {
+      "case": "thirty_two_atoms",
+      "n_atoms": 32,
+      "n_domains": 1,
+      "n_reflections": 4096,
+      "n_parameters": 126,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 1.1793966998811811,
+          "median_cpu_seconds": 0.578125
+        },
+        "cpp": {
+          "median_wall_seconds": 0.1903591000009328,
+          "median_cpu_seconds": 0.078125
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 0.41880600014701486,
+          "cpu_seconds": 0.125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 0.082204399863258,
+          "cpu_seconds": 0.015625
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 0.07782700005918741,
+          "cpu_seconds": 0.078125
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 0.5674889001529664,
+          "cpu_seconds": 0.171875
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 1.223943900084123,
+          "cpu_seconds": 0.578125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.20533060003072023,
+          "cpu_seconds": 0.109375
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 0.26960949995554984,
+          "cpu_seconds": 0.140625
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 1.1793966998811811,
+          "cpu_seconds": 0.671875
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 1.1855470999144018,
+          "cpu_seconds": 0.609375
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 0.1903591000009328,
+          "cpu_seconds": 0.015625
+        }
+      ],
+      "median_wall_speedup": 6.195641289937816,
+      "maximum_intensity_absolute_difference": 6.548361852765083e-11,
+      "maximum_scaled_jacobian_difference": 1.907548340571596e-14,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+    },
+    {
+      "case": "eighty_atoms_memory",
+      "n_atoms": 80,
+      "n_domains": 1,
+      "n_reflections": 8192,
+      "n_parameters": 318,
+      "block_size": 1024,
+      "evaluations_per_run": 8,
+      "summary": {
+        "python": {
+          "median_wall_seconds": 6.163947799941525,
+          "median_cpu_seconds": 3.3125
+        },
+        "cpp": {
+          "median_wall_seconds": 1.0185941001400352,
+          "median_cpu_seconds": 0.46875
+        }
+      },
+      "runs": [
+        {
+          "backend": "python",
+          "repeat": 1,
+          "wall_seconds": 6.09584950003773,
+          "cpu_seconds": 3.3125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 1,
+          "wall_seconds": 1.0551210001576692,
+          "cpu_seconds": 0.640625
+        },
+        {
+          "backend": "cpp",
+          "repeat": 2,
+          "wall_seconds": 1.0123044000938535,
+          "cpu_seconds": 0.46875
+        },
+        {
+          "backend": "python",
+          "repeat": 2,
+          "wall_seconds": 6.163947799941525,
+          "cpu_seconds": 3.1875
+        },
+        {
+          "backend": "python",
+          "repeat": 3,
+          "wall_seconds": 5.9093098000157624,
+          "cpu_seconds": 3.203125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 3,
+          "wall_seconds": 0.9288165001198649,
+          "cpu_seconds": 0.3125
+        },
+        {
+          "backend": "cpp",
+          "repeat": 4,
+          "wall_seconds": 1.0185941001400352,
+          "cpu_seconds": 0.453125
+        },
+        {
+          "backend": "python",
+          "repeat": 4,
+          "wall_seconds": 6.329864299856126,
+          "cpu_seconds": 3.359375
+        },
+        {
+          "backend": "python",
+          "repeat": 5,
+          "wall_seconds": 6.4573931999038905,
+          "cpu_seconds": 3.734375
+        },
+        {
+          "backend": "cpp",
+          "repeat": 5,
+          "wall_seconds": 1.1789470000658184,
+          "cpu_seconds": 0.5625
+        }
+      ],
+      "median_wall_speedup": 6.051426961037878,
+      "maximum_intensity_absolute_difference": 2.4010660126805305e-10,
+      "maximum_scaled_jacobian_difference": 1.9957407767480368e-14,
+      "timing_scope": "Cached predictor evaluate, including parameter unpacking, symmetry-site preparation, all domains, intensity and analytic Jacobian; fresh values defeat result cache"
+    }
+  ],
+  "memory": [
+    {
+      "backend": "python",
+      "peak_rss_bytes": 112533504,
+      "baseline_peak_rss_bytes": 74850304,
+      "returned_jacobian_bytes": 20840448,
+      "intensity_sum": 63132877.27641387
+    },
+    {
+      "backend": "cpp",
+      "peak_rss_bytes": 104308736,
+      "baseline_peak_rss_bytes": 74817536,
+      "returned_jacobian_bytes": 20840448,
+      "intensity_sum": 63132877.27641387
+    }
+  ],
+  "boundaries": {
+    "dials_runtime": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'dials'\n"
+    },
+    "dials_spotfinding": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'dials'\n"
+    },
+    "parent_mcp_import": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\source\\python\\src\\ariadne\\server.py\", line 9, in <module>\n    import fcntl\nModuleNotFoundError: No module named 'fcntl'\n"
+    },
+    "persistent_agent_execution_lock": {
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\source\\python\\src\\ariadne\\agent\\util.py\", line 101, in exclusive_lock\n    import fcntl\nModuleNotFoundError: No module named 'fcntl'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"<string>\", line 1, in <module>\n  File \"C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\python312\\tools\\Lib\\contextlib.py\", line 137, in __enter__\n    return next(self.gen)\n           ^^^^^^^^^^^^^^\n  File \"C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\source\\python\\src\\ariadne\\agent\\util.py\", line 103, in exclusive_lock\n    raise RuntimeError('Use Linux, macOS or WSL for the agent execution lock') from exc\nRuntimeError: Use Linux, macOS or WSL for the agent execution lock\n"
+    },
+    "persistent_agent_help": {
+      "returncode": 0,
+      "stdout": "usage: -c [-h]\n          {capabilities,init,run,status,cancel,resume,retry,recover,result,export,bridge,request-from-images}\n          ...\n\nAriadne 0.8.0: persistent crystallography agent\n\npositional arguments:\n  {capabilities,init,run,status,cancel,resume,retry,recover,result,export,bridge,request-from-images}\n\noptions:\n  -h, --help            show this help message and exit\n",
+      "stderr": ""
+    },
+    "native_capabilities": {
+      "returncode": 0,
+      "stdout": "{\n  \"package\": \"ariadne-xtal\",\n  \"version\": \"0.8.0\",\n  \"native_full_shelx_parity\": false,\n  \"native\": {\n    \"crystal_geometry\": \"General positive-definite cells; exact periodic closest image\",\n    \"symmetry\": \"All Gemmi space-group settings and validated explicit operation groups\",\n    \"scattering\": \"Independent IT92 kinematic X-ray sum; explicit f-prime/f-double-prime; physical special-site occupancies\",\n    \"phasing\": \"Multistart P1 charge flipping, atomic projection or hybrid signed-intensity proximal/tangent/Patterson search with supplied unit-cell composition\",\n    \"spacegroup_diagnostics\": \"Metric/absence diagnostics, explicit candidate Fourier origin search and exact orbit-to-ASU projection; independent selection required\",\n    \"refinement\": \"All signed work F-squared with blocked analytic diffraction Jacobian, physical constraints and bounded trust-region optimization\",\n    \"derivatives\": \"Exact symmetry/coordinate/Cholesky/log-tensor/occupancy/scale/twin chains; finite differences only for geometric restraint residuals\",\n    \"constraints\": \"Site symmetry, continuous origin gauge, native equality/occupancy constraints; see API schema\",\n    \"restraints\": \"Native distance, angle, similar-distance, planarity, ADP-similarity and rigid-bond residuals\",\n    \"twins\": \"Merohedral integer reciprocal laws; explicit indexed same-phase overlapping groups with jointly refined domain fractions and nullspace diagnostics\",\n    \"pixel_likelihood\": \"Gaussian background-profiled observable compression and true Poisson joint signal/background fitting via installed Ariadne package\",\n    \"joint_structure\": \"Direct R diag(c alpha) |F|^2 structural objective; no required deconvolved intensity table\",\n    \"absolute_structure\": \"Inversion-twin refinement and fixed-model weighted Friedel-quotient diagnostic\",\n    \"maps\": \"Unweighted Fo-Fc, 2Fo-Fc, calculated density, Patterson, CCP4/NPZ export\",\n    \"graphics\": \"Offline 3D ellipsoids and density surfaces, reciprocal space, diagnostics, SVG/PDF output\",\n    \"agent\": \"Native autosolve and solve-observations with connected work/selection/audit groups, structured CLI/JSONL/MCP and persistent parent-agent native.run\",\n    \"feedback\": \"Phase from geometrically isolated reference-domain evidence then refine all work groups; select independently and evaluate audit once\"\n  },\n  \"legacy_bridge\": {\n    \"engines\": [\n      \"shelxt\",\n      \"shelxl\"\n    ],\n    \"official_binaries_bundled\": false,\n    \"requires\": \"Explicit path to a separately installed executable; bridge enabled at agent startup\",\n    \"semantics\": \"Original INS/HKL/auxiliary bytes passed through; official engine executes its own features\",\n    \"validation\": \"Transport tested with mock executables; official numerical parity not measured in this environment\"\n  },\n  \"not_native\": [\n    \"Complete SHELXT integrated Laue/space-group/origin/element assignment pipeline\",\n    \"Full SHELXL instruction grammar execution, AFIX/HFIX/riding H, FRAG and rigid-group models\",\n    \"Automatic parsing/execution of every non-merohedral HKLF5 instruction; explicit native component-group interface is implemented\",\n    \"Neutron refinement, extinction, solvent masks/ABIN, SWAT and automatic absorption correction\",\n    \"CGLS/block least-squares, all SHELXL weighting modes and complete CIF archive/checkCIF certification\",\n    \"Raw detector-image indexing/integration/scaling or production instrument control\",\n    \"Automatic unrestricted MOF topology/chemical composition generation; full Poisson-pixel structure/geometry/absorption joint optimizer\"\n  ],\n  \"numeric_kernel\": {\n    \"requested\": \"auto\",\n    \"resolved\": \"cpp\",\n    \"compiled_available\": true,\n    \"build\": {\n      \"kernel_version\": 1,\n      \"binding\": \"CPython checked native buffers\",\n      \"compiler\": \"Clang 20.1.2 (https://github.com/ziglang/zig-bootstrap 7ef74e656cf8ddbd6bf891a8475892aa1afa6891)\",\n      \"architecture\": \"x86_64\",\n      \"internal_threads\": 1,\n      \"releases_gil\": true,\n      \"openmp\": false,\n      \"fast_math\": false\n    },\n    \"fallback_reason\": null,\n    \"thread_policy\": \"C++ kernel uses one thread and releases GIL; agent workers own concurrency\",\n    \"scope\": \"Structure-factor intensity and analytic derivative accumulation; no statistical-model substitution\"\n  }\n}\n",
+      "stderr": ""
+    }
+  },
+  "acceptance": {
+    "native_windows": true,
+    "compiled_cpp_available": true,
+    "predictor_scaled_jacobian_below_1e_10": true,
+    "refinement_converged": true,
+    "refinement_prediction_sigma_rms_below_1e_6": true,
+    "measured_fen4_regression": true,
+    "synthetic_phasing_recovery": true,
+    "unicode_path_roundtrip": true
+  },
+  "refinement": {
+    "kind": "synthetic_local_refinement",
+    "observation_generator": "Gemmi independent SF calculator",
+    "n_atoms": 18,
+    "n_reflections": 1098,
+    "n_parameters": 70,
+    "summary": {
+      "python": {
+        "median_wall_seconds": 0.3612061000894755,
+        "median_cpu_seconds": 0.109375
+      },
+      "cpp": {
+        "median_wall_seconds": 0.17016519978642464,
+        "median_cpu_seconds": 0.078125
+      }
+    },
+    "runs": [
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 1,
+        "wall_seconds": 0.3612061000894755,
+        "cpu_seconds": 0.109375,
+        "success": true,
+        "chi_squared": 1009.3951741064151,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 1,
+        "wall_seconds": 0.18057950004003942,
+        "cpu_seconds": 0.125,
+        "success": true,
+        "chi_squared": 1009.3951741064143,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 2,
+        "wall_seconds": 0.13929639989510179,
+        "cpu_seconds": 0.078125,
+        "success": true,
+        "chi_squared": 1009.3951741064143,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 2,
+        "wall_seconds": 0.3309367001056671,
+        "cpu_seconds": 0.09375,
+        "success": true,
+        "chi_squared": 1009.3951741064151,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "python",
+        "actual_backend": "python",
+        "repeat": 3,
+        "wall_seconds": 0.3925913998391479,
+        "cpu_seconds": 0.21875,
+        "success": true,
+        "chi_squared": 1009.3951741064151,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      },
+      {
+        "backend": "cpp",
+        "actual_backend": "cpp",
+        "repeat": 3,
+        "wall_seconds": 0.17016519978642464,
+        "cpu_seconds": 0.0625,
+        "success": true,
+        "chi_squared": 1009.3951741064143,
+        "diffraction_evaluations": 7,
+        "jacobian_rank": 70,
+        "negative_intensities": 18
+      }
+    ],
+    "median_wall_speedup": 2.1226790233421844,
+    "prediction_difference_sigma_rms": 1.0122603018196753e-13,
+    "chi_squared_difference": -7.958078640513122e-13,
+    "timing_scope": "Entire refine call, including initialization, analytic least squares, restraints, rank and covariance; same starting model, no ab initio or external-software comparison"
+  },
+  "measured_fen4": {
+    "seconds": 0.04992819996550679,
+    "n_reflections": 71,
+    "success": true,
+    "metrics": {
+      "n": 71,
+      "n_gt": 70,
+      "r1_all": 0.04126821953594241,
+      "r1_gt": 0.040315749370872046,
+      "wr2": 0.08148047291324201,
+      "chi_squared": 85.4156565297189,
+      "sigma_rmse": 4.965162464502112,
+      "negative_intensities": 0,
+      "n_work": 71,
+      "n_free": 0,
+      "n_parameters": 10,
+      "jacobian_rank": 10,
+      "diffraction_jacobian_rank": 10,
+      "identifiable": true,
+      "jacobian_condition": 129.52903868824203,
+      "normal_condition": 16777.7718635001,
+      "degrees_of_freedom": 61,
+      "gof": 1.1833244121633009,
+      "restraint_residual_count": 0,
+      "restraint_sum_squares": 0.0,
+      "free": {
+        "n": 0,
+        "r1_all": null,
+        "r1_gt": null,
+        "wr2": null,
+        "chi_squared": null,
+        "sigma_rmse": null,
+        "negative_intensities": 0
+      },
+      "objective_evaluations_total": 17,
+      "diffraction_evaluations": 12,
+      "analytic_jacobian_evaluations": 12,
+      "restraint_parameter_evaluations": 0,
+      "diffraction_derivative_method": "analytic",
+      "numeric_backend": "cpp",
+      "numeric_backend_requested": "auto",
+      "restraint_derivative_method": "none",
+      "reflection_block_size": 1024,
+      "rank_method": "streaming_QR_then_small_SVD",
+      "weighting": "frozen_weight_IRLS",
+      "covariance_scaling": "reduced_chi2",
+      "final_weight_relative_change": 1.7337353774848907e-10
+    },
+    "doi": "10.1107/S2056989018012161",
+    "scope": "公开合并实测强度上的已知模型重精修，不是从头解结构或原始图像还原"
+  },
+  "unicode_paths": {
+    "success": true,
+    "directory": "C:\\Users\\owenz\\CrystallographyPrograms\\ariadne-pro-win\\results\\benchmark\\中文 空格路径",
+    "cif_crlf": true
+  },
+  "phasing": {
+    "seconds": 5.615779500221834,
+    "n_reflections": 4540,
+    "observations_unchanged": true,
+    "candidates": [
+      {
+        "rank": 1,
+        "success": true,
+        "rms_cartesian_angstrom": 3.608224830031759e-17,
+        "wr2": 1.517122982611596e-15
+      },
+      {
+        "rank": 2,
+        "success": true,
+        "rms_cartesian_angstrom": 3.624972747147166e-16,
+        "wr2": 1.4446856319636432e-15
+      },
+      {
+        "rank": 3,
+        "success": true,
+        "rms_cartesian_angstrom": 5.127424741996832e-16,
+        "wr2": 1.4095408517362545e-15
+      },
+      {
+        "rank": 4,
+        "success": true,
+        "rms_cartesian_angstrom": 8.694409141350492e-17,
+        "wr2": 1.4532582994246737e-15
+      }
+    ]
+  }
+}

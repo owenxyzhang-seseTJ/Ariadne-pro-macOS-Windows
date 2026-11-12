@@ -1,0 +1,46 @@
+{
+  "01_phase_problem": {
+    "kind": "analytic teaching example",
+    "seed": 8108
+  },
+  "03_weak_bias": {
+    "kind": "analytic Gaussian expectation"
+  },
+  "04_overlap_information": {
+    "kind": "Gaussian profile information computed by compress_gaussian",
+    "pixels": 121
+  },
+  "05_poisson_profile": {
+    "kind": "exact two-pixel Poisson likelihood; asymptotic interval threshold",
+    "data": [
+      8,
+      3
+    ]
+  },
+  "06_radial_prox": {
+    "kind": "equation-derived radial proximal operator",
+    "tau": 8.0
+  },
+  "07_refinement_performance": {
+    "kind": "measured local benchmark",
+    "source": "native/validation/v08_refinement_measurements.json"
+  },
+  "08_joint_pixels": {
+    "kind": "synthetic local structure refinement",
+    "source": "native/validation/v08_joint_measurements.json"
+  },
+  "09_blind_recovery": {
+    "kind": "synthetic blind recovery; supplied composition, no truth coordinates",
+    "source": "native/validation/v08_phasing/result.json"
+  },
+  "10_cpp_kernel": {
+    "kind": "measured local CPU benchmark; same analytic model",
+    "source": "native/validation/v08_kernel_measurements.json",
+    "memory_scope": "whole process RSS, including inputs, libraries and global real Jacobian"
+  },
+  "14_scheduler_timeline": {
+    "kind": "measured event timeline of real concurrent native refinement",
+    "source": "docs/v08/results/scheduler_event_timeline.json",
+    "reproduce": "python benchmarks/v08_scheduler.py"
+  }
+}
