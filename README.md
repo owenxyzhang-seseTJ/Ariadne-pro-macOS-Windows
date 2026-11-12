@@ -84,7 +84,7 @@ DIALS 插件导入、注册与阈值调用已验证；本仓库没有真实原�
 - 许可全文见 [LICENSE](LICENSE)，条款说明见 [LICENSING.md](LICENSING.md)，第三方声明见 [NOTICE.md](NOTICE.md)。
 - 商业使用需要与版权持有人签订书面许可。潜在被许可方可在 30 天内进行非生产用途评估，不得再分发或商用。
 - 2026-10-29（commit 407d193）及更早发布的版本依 MIT 许可授权，该授权不可撤销，全文见 [LICENSE-MIT](LICENSE-MIT)。
-- DIALS 派生文件（`source/patches/` 与 `source/dials-*`）保留 BSD-3-Clause 许可，商业许可不替代上游条件，分发时须保留其声明。
+- DIALS 派生文件（`source/patches/` 与 `tools/dials-pro-overlay.zip` 内的 DIALS 源文件）保留 BSD-3-Clause 许可，声明见 `source/patches/DIALS-LICENSE`；商业许可不替代上游条件，分发时须保留该声明。
 - 未授予商标或品牌使用权。
 
 商业许可咨询请通过 GitHub 账号 [@owenxyzhang-seseTJ](https://github.com/owenxyzhang-seseTJ) 联系版权持有人。
