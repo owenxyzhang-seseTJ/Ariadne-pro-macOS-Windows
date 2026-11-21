@@ -21,7 +21,7 @@ def _watch_parent(descriptor):
     os.killpg(os.getpgrp(), signal.SIGKILL)
 
 
-def main(argv=None):
+def main(argv=None, *, execute_action=None):
     arguments = sys.argv[1:] if argv is None else argv
     if os.name == 'posix':
         if len(arguments) != 2 or os.getpgrp() != os.getpid():
@@ -39,10 +39,10 @@ def main(argv=None):
     else:
         guard = nullcontext()
     with guard:
-        return execute_payload(payload)
+        return execute_payload(payload, execute_action=execute_action)
 
 
-def execute_payload(payload):
+def execute_payload(payload, *, execute_action=None):
     from .actions import Context, execute
     from .process import Cancelled, NeedsReview
     from .store import Store
@@ -55,7 +55,7 @@ def execute_payload(payload):
                           deadline=payload['deadline'], resources=payload['resources'])
         if context.remaining() <= 0:
             raise TimeoutError('time budget exhausted before worker import completed')
-        result = execute(context, payload['tool'], payload['args'])
+        result = (execute_action or execute)(context, payload['tool'], payload['args'])
         if context.remaining() <= 0:
             raise TimeoutError('scientific action exceeded its time budget')
         if store.get('cancel_requested'):

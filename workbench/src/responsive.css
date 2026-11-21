@@ -1,0 +1,209 @@
+/* Window sizing is owned by the shell; each dock scrolls within its own space. */
+#root,.app-shell{min-width:0;min-height:100dvh}
+.entry-compact{display:none}
+.expert-shell{height:100dvh;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.expert-shell>.app-header,.expert-shell>.alert{flex-shrink:0}
+.expert-shell>.desktop-workspace{display:flex;flex:1;min-width:0;min-height:0;margin:0;padding:0}
+.desktop-workspace>.ws-root{width:100%;height:100%;min-height:0;grid-template-rows:40px 70px minmax(0,1fr) 30px}
+.ws-root .ws-dock-layout{min-width:0;min-height:0;overflow:hidden;grid-template-columns:var(--ws-left) var(--ws-left-handle) minmax(0,1fr) var(--ws-right-handle) var(--ws-right);grid-template-rows:minmax(0,1fr) var(--ws-bottom-handle) var(--ws-bottom)}
+.ws-ribbon-tools{display:flex;align-items:center;flex:1;min-width:0;gap:14px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#c3cbbf transparent}
+.ws-ribbon-tools>.ws-ribbon-group{flex-shrink:0}
+.ws-ribbon-tools>.ws-ribbon-group:nth-child(2){display:flex}
+.ws-ribbon-tools .ws-ribbon-button{flex-shrink:0}
+.ws-ribbon>.ws-auto-button,.ws-ribbon>.ws-dock-buttons{flex-shrink:0;margin-left:0}
+.ws-ribbon>.ws-dock-buttons{margin-left:auto}
+.ws-root .ws-resizer{overflow:hidden}
+.ws-root .collapsed{visibility:hidden;pointer-events:none;transition:opacity .18s,transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s}
+.ws-dock-buttons [data-tooltip]:after{left:auto;right:0;transform:translateY(-4px)}
+.ws-dock-buttons [data-tooltip]:hover:after{transform:translateY(0)}
+.ws-center,.ws-pane-grid,.ws-pane-content,.ws-bottom-content,.ws-detail-content{min-width:0;min-height:0}
+.ws-view-bar>.ws-sliding-tabs,.ws-bottom-bar>.ws-sliding-tabs{flex:1;overflow-x:auto;scrollbar-width:none}
+.ws-view-bar>.ws-sliding-tabs::-webkit-scrollbar,.ws-bottom-bar>.ws-sliding-tabs::-webkit-scrollbar{display:none}
+.ws-sliding-tabs .view-tab{flex-shrink:0}
+.ws-pane-content{container-type:inline-size}
+.ws-root .ws-pane-grid.layout-dual{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}
+.ws-root .ws-pane-grid.layout-quad{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+.ws-root .ws-pane .canvas-tools{display:flex}
+.ws-dock-scrim{position:absolute;inset:0;z-index:16;background:#29352e35;border-radius:0;backdrop-filter:blur(2px);animation:ws-detail-in .18s ease both}
+.left-overlay .ws-flow-dock,.right-overlay .ws-detail-dock{position:absolute;grid-column:1/-1;grid-row:1/-1;top:0;bottom:0;z-index:18;width:min(300px,calc(100% - 24px));max-width:100%;box-shadow:0 8px 30px #1c2c1b26;background:#fafbf7}
+.left-overlay .ws-flow-dock{left:0;border-right:1px solid var(--rule)}
+.left-overlay .ws-flow-dock.collapsed{transform:translateX(-100%)}
+.right-overlay .ws-detail-dock{right:0;border-left:1px solid var(--rule);transform:none}
+.right-overlay .ws-detail-dock.collapsed{transform:translateX(100%)}
+.left-overlay .ws-resizer.left,.right-overlay .ws-resizer.right{visibility:hidden}
+.bottom-overlay .ws-bottom-dock{position:absolute;grid-column:1/-1;grid-row:1/-1;left:0;right:0;bottom:0;z-index:19;height:min(70%,400px);min-height:min(220px,calc(100% - 16px));max-height:calc(100% - 16px);box-shadow:0 -8px 30px #1c2c1b26;border-top:1px solid #bac6b5;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.bottom-overlay .ws-bottom-dock.collapsed{transform:translateY(100%);opacity:0}
+.ws-bottom-bar{min-width:0}
+.ws-bottom-bar>.icon-button{flex-shrink:0}
+.ws-bottom-content .reflection-table .section-heading{height:auto;flex-shrink:0;min-height:44px;flex-wrap:wrap;gap:6px}
+.ws-bottom-content .reflection-table .inline{min-width:0;flex-wrap:wrap;gap:8px}
+.ws-bottom-content .reflection-table .table-scroll{overflow:auto;overscroll-behavior:contain}
+.ws-bottom-content .table-note{height:auto;flex-shrink:0;flex-wrap:wrap;gap:4px 16px}
+.ws-statusbar .ws-results-toggle{width:auto;max-width:90px;white-space:nowrap;font-size:12px;padding:2px 6px;border:1px solid #c0cbb6}
+.ws-project-title{min-width:0;flex:0 1 250px}
+.ws-project-title strong{min-width:0}
+.ws-menus{flex-shrink:0}
+.ws-menu-popup{max-width:min(290px,calc(100vw - 24px))}
+.ws-menu:last-child .ws-menu-popup{left:auto;right:0}
+.ws-menubar .ws-project-state{flex-shrink:0}
+.ws-pane .frame-toolbar{height:auto;min-height:42px;flex-wrap:wrap;gap:4px}
+.ws-pane .frame-toolbar>.inline{gap:2px;margin-left:auto}
+.frame-bottom label{min-width:0;flex:1}
+.frame-bottom input[type=range]{width:100%;min-width:24px}
+.frame-view .frame-bottom{flex-shrink:0}
+.frame-view .frame-canvas{min-height:0}
+.frame-resolution-readout{max-width:calc(100% - 20px)}
+.frame-resolution-readout strong,.frame-resolution-readout span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-view{min-width:0}
+.start-grid>*,.intake-column,.page-heading>*,.project-row>*,.tool-layout>*,.example-grid>*,.cell-fields>*{min-width:0}
+.start-page{width:100%}
+.project-row strong{overflow-wrap:anywhere}
+.panel-bottom{min-width:0}
+.panel-bottom>[role=tablist]{min-width:0;overflow-x:auto;scrollbar-width:thin}
+.panel-bottom .view-tab{flex-shrink:0}
+.artifact-list{grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr))}
+.modal{max-height:calc(100dvh - 64px);min-width:0}
+.modal fieldset,.modal input,.modal select,.modal textarea{min-width:0;max-width:100%}
+.example-card{min-width:0}
+.example-card p,.modal p,.modal .caption{overflow-wrap:anywhere}
+
+@container(max-width:420px){
+  .frame-toolbar .segmented{gap:0}
+  .frame-toolbar .segmented>button{font-size:13px;padding:5px;gap:3px}
+  .frame-toolbar .segmented>button svg{width:16px;height:16px}
+  .frame-toolbar .inline>.icon-button{width:28px;height:30px;padding:5px}
+  .frame-bottom{font-size:12px;gap:10px;padding:6px 8px}
+  .frame-bottom label{gap:5px}
+  .frame-resolution-readout{top:6px;left:6px;padding:5px 7px}
+  .profile-view svg{min-height:90px}
+  .profile-view .plot-caption{font-size:13px}
+}
+@media(max-width:1180px){
+  .ws-ribbon-tools{gap:8px}
+  .ws-menubar{gap:12px}
+  .ws-project-title{flex-basis:200px}
+  .ws-menu>button{padding:0 10px}
+}
+@media(max-width:900px){
+  .ws-ribbon-tools>.ws-ribbon-group{border-right:1px solid var(--rule);padding-right:10px}
+  .ws-root .ws-view-bar{padding:0 8px}
+  .ws-project-state{display:none}
+  .ws-root .ws-statusbar{font-size:12px;gap:8px}
+  .ws-statusbar>div{gap:8px}
+  .ws-statusbar>div:last-child>span:last-of-type{display:none}
+  .ws-pane>header h3{font-size:15px}
+  .ws-pane>header>span{font-size:12px}
+  .ws-bottom-content .reflection-table h3{display:none}
+  .ws-bottom-content .table-note>span:nth-child(2){display:none}
+}
+@media(max-width:600px){
+  .app-header{height:64px;padding:0 12px;gap:10px}
+  .brand{gap:7px}
+  .brand>img{width:28px;height:28px}
+  .brand>span{font-size:24px}
+  .brand>small{font-size:10px;padding:2px 5px;margin-left:3px}
+  .expert-entry{font-size:15px;gap:3px;white-space:nowrap}
+  .expert-entry>svg{width:17px;height:17px;flex-shrink:0}
+  .entry-full{display:none}
+  .entry-compact{display:inline}
+  .desktop-workspace>.ws-root{grid-template-rows:64px 104px minmax(0,1fr) 28px}
+  .ws-menubar{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:0 12px}
+  .ws-project-title{width:100%;height:30px;max-width:none;gap:7px}
+  .ws-project-title strong{font-size:15px}
+  .ws-project-title svg{width:16px;height:16px}
+  .ws-menus{height:34px;justify-content:space-between;gap:0}
+  .ws-menu>button{padding:0 9px;font-size:14px}
+  .ws-ribbon{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:58px 42px;gap:0 8px;padding:0 10px 4px}
+  .ws-ribbon-tools{grid-column:1/3;width:100%;height:58px;gap:8px}
+  .ws-ribbon-tools .ws-ribbon-button{height:52px;min-width:54px}
+  .ws-ribbon-tools .ws-ribbon-button span{font-size:14px}
+  .ws-ribbon-tools .ws-ribbon-button svg{width:20px;height:20px}
+  .ws-ribbon>.ws-auto-button{justify-self:start;height:34px!important;font-size:15px!important;min-width:112px;padding:0 12px!important}
+  .ws-ribbon>.ws-dock-buttons{justify-self:end;gap:5px}
+  .ws-ribbon>.ws-dock-buttons>.icon-button{height:32px;width:34px;padding:6px}
+  .ws-root .ws-view-bar{height:42px;padding:0 6px}
+  .ws-view-bar>.ws-layout-switch{display:none}
+  .ws-view-bar>.ws-sliding-tabs{width:100%}
+  .ws-view-bar .view-tab{padding:0 14px;font-size:15px}
+  .ws-pane-grid{padding:6px;gap:6px}
+  .ws-pane>header{height:34px;min-height:34px;padding-left:10px;gap:8px}
+  .ws-root .ws-sliding-tabs .view-tab{font-size:14px}
+  .ws-bottom-bar{padding-right:4px;gap:4px}
+  .ws-bottom-bar .view-tab{padding:0 10px}
+  .ws-statusbar{padding:0 8px;font-size:11px}
+  .ws-statusbar>div{gap:6px;overflow:hidden}
+  .ws-statusbar>div:first-child{flex:1}
+  .ws-statusbar>div:last-child>span{display:none}
+  .ws-statusbar .ws-real-progress{display:none}
+  .ws-statusbar .ws-results-toggle{font-size:12px;max-width:none}
+  .ws-statusbar>div:first-child>span:nth-last-child(2){overflow:hidden;text-overflow:ellipsis}
+  .start-page{padding:22px 16px 24px}
+  .page-heading h1{font-size:34px;line-height:1.25}
+  .page-heading{margin-bottom:20px;gap:14px}
+  .breadcrumb{font-size:14px;overflow-wrap:anywhere}
+  .start-grid{gap:18px;grid-template-columns:minmax(0,1fr)}
+  .intake-card{padding:20px;gap:14px}
+  .intake-card h2{font-size:23px;white-space:normal}
+  .intake-card>p{font-size:17px}
+  .intake-card .button,.heading-actions .button{height:auto;min-height:48px;padding:10px 14px;font-size:17px;white-space:normal}
+  .intake-card>.text-button{font-size:16px}
+  .showcase-only{height:clamp(280px,78vw,440px)}
+  .start-page .science-panel:not(.showcase-only){height:clamp(320px,65dvh,480px)}
+  .panel-top{height:56px;padding:10px 14px;gap:8px}
+  .panel-top h3{font-size:17px}
+  .panel-context{font-size:13px}
+  .start-page .science-content{inset:56px 0 64px}
+  .panel-bottom{left:10px;right:10px;bottom:6px}
+  .panel-bottom .view-tab{font-size:15px;padding:0 12px;height:44px}
+  .recent-projects{margin-top:22px}
+  .recent-projects .section-heading{gap:12px;align-items:baseline}
+  .recent-projects .section-heading h3{font-size:18px;white-space:nowrap}
+  .recent-projects .section-heading .text-button{font-size:14px;min-height:24px;gap:4px}
+  .project-row{grid-template-columns:minmax(0,1fr) auto;gap:12px;min-height:64px}
+  .project-row strong{font-size:16px}
+  .project-row>span{font-size:14px}
+  .project-row>span svg{width:16px}
+  .app-footer{font-size:12px;gap:8px;margin-top:24px;align-items:start}
+  .modal-backdrop{padding:10px}
+  .modal{padding:18px;max-height:calc(100dvh - 20px)}
+  .modal>header{gap:10px;margin-bottom:18px}
+  .modal>header h2{font-size:23px;line-height:1.4}
+  .modal>header>.icon-button{flex-shrink:0}
+  .cell-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .example-grid{grid-template-columns:minmax(0,1fr)}
+  .dialog-actions .button,.example-actions .button{font-size:16px;height:auto;min-height:48px;padding:10px 14px;max-width:100%;white-space:normal}
+  .tool-nav button{font-size:15px}
+  .tool-nav h4{font-size:14px}
+  .form-field input,.form-field select,.cell-fields input{font-size:17px;min-height:46px;padding:8px 10px}
+  .toast{top:74px;font-size:15px;padding:12px 16px}
+}
+@media(max-height:600px) and (min-width:601px){
+  .expert-shell>.app-header{height:64px}
+  .desktop-workspace>.ws-root{grid-template-rows:34px 58px minmax(0,1fr) 26px}
+  .ws-ribbon-tools .ws-ribbon-button{height:48px}
+  .ws-ribbon-tools .ws-ribbon-button svg{height:18px}
+  .ws-ribbon-tools .ws-ribbon-button span{font-size:14px}
+  .ws-ribbon>.ws-auto-button{height:36px!important}
+  .ws-statusbar{font-size:11px}
+}
+@media(max-height:520px) and (min-width:601px){
+  .expert-shell>.app-header{height:48px}
+  .expert-shell .app-header .brand>img{width:26px;height:26px}
+  .expert-shell .app-header .brand>span{font-size:25px}
+  .desktop-workspace>.ws-root{grid-template-rows:28px 48px minmax(0,1fr) 24px}
+  .ws-menu>button{font-size:14px}
+  .ws-project-title strong{font-size:14px}
+  .ws-ribbon{padding-top:0;padding-bottom:0}
+  .ws-ribbon-tools .ws-ribbon-button{height:44px;gap:2px}
+  .ws-ribbon-tools .ws-ribbon-button span{font-size:13px}
+  .ws-root .ws-view-bar{height:34px}
+  .ws-view-bar .view-tab{font-size:14px}
+  .ws-pane-grid{padding:4px;gap:4px}
+  .ws-pane-grid.layout-single .ws-pane>header{display:none}
+  .ws-pane>header{height:28px;min-height:28px}
+  .ws-pane .frame-toolbar{min-height:32px;padding:0 6px}
+  .ws-pane .frame-toolbar .segmented>button{font-size:13px;padding:3px 6px}
+  .ws-pane .frame-toolbar .icon-button{height:27px;width:27px;padding:4px}
+  .ws-pane .frame-bottom{min-height:30px;padding:3px 8px;font-size:12px}
+  .ws-view-bar .ws-layout-switch button{height:26px}
+}

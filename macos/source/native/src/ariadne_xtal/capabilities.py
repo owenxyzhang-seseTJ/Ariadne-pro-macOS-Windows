@@ -6,6 +6,7 @@ CAPABILITIES = {
         "symmetry": "All Gemmi space-group settings and validated explicit operation groups",
         "scattering": "Independent IT92 kinematic X-ray sum; explicit f-prime/f-double-prime; physical special-site occupancies",
         "phasing": "Multistart P1 charge flipping, atomic projection or hybrid signed-intensity proximal/tangent/Patterson search with supplied unit-cell composition",
+        "screened_phasing": "Opt-in coarse batched charge flipping on NumPy, Metal/MLX or CUDA/CuPy, followed by full-resolution CPU rechecks",
         "spacegroup_diagnostics": "Metric/absence diagnostics, explicit candidate Fourier origin search and exact orbit-to-ASU projection; independent selection required",
         "refinement": "All signed work F-squared with blocked analytic diffraction Jacobian, physical constraints and bounded trust-region optimization",
         "derivatives": "Exact symmetry/coordinate/Cholesky/log-tensor/occupancy/scale/twin chains; finite differences only for geometric restraint residuals",

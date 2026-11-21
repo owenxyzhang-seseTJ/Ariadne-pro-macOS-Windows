@@ -193,6 +193,28 @@ def test_screened_phasing_preserves_reference_data_and_rechecks_a_rejection():
     assert data.to_dict() == before
 
 
+def test_batched_screening_does_not_read_friedel_holdout_values():
+    from ariadne_xtal.screened_phasing import screened_phase_search
+
+    truth, data = _recovery_case().make_case()
+    flags = (np.abs(data.hkl).sum(axis=1) % 5 == 0)
+    data = Reflections(data.hkl, data.intensity, data.sigma, free_flags=flags)
+    altered = copy.deepcopy(data)
+    altered.intensity[flags] = -1e12
+    altered.sigma[flags] = 1e-9
+    options = PhasingOptions(algorithm='hybrid', trials=4, iterations=25, keep=2)
+    settings = dict(coarse_backend='batched_cpu', coarse_iterations=7, promoted=2,
+                    random_promotions=1, inspected_rejections=1, batch_size=3)
+    answers = [screened_phase_search(truth.cell,item,['C']*4,options,**settings) for item in (data,altered)]
+    assert answers[0]['screening'] == answers[1]['screening']
+    assert answers[0]['screening_runtime']['backend'] == 'batched_cpu'
+    assert len(answers[0]['audited_rejections']) == 1
+    assert all(row['backend'] == 'cpu_float64' for row in answers[0]['trial_diagnostics'])
+    altered.free_flags[0] = not altered.free_flags[0]
+    with pytest.raises(ValueError,match='Holdout leakage'):
+        screened_phase_search(truth.cell,altered,['C']*4,options,**settings)
+
+
 def test_hybrid_blind_recovery_then_signed_f_squared_refinement():
     module = _recovery_case()
     truth, clean = module.make_case()

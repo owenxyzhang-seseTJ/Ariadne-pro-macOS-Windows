@@ -53,7 +53,8 @@ def _lost(row):
     return not pid_alive(pid)
 
 
-def submit(session, request_key, max_steps=None):
+def submit(session, request_key, max_steps=None, *, runner_module='ariadne.agent.async_runs',
+           worker_module=engine.DEFAULT_ACTION_WORKER, import_root=None):
     if not isinstance(request_key, str) or not request_key.strip() or len(request_key) > 128:
         raise ValueError('request_key must be a nonempty string of at most 128 characters')
     if max_steps is not None and (type(max_steps) is not int or not 1 <= max_steps <= 10000):
@@ -62,6 +63,8 @@ def submit(session, request_key, max_steps=None):
     with exclusive_lock(root / '.async.lock', blocking=True):
         store = Store(root)
         try:
+            if store.get('action_worker_module', engine.DEFAULT_ACTION_WORKER) != worker_module:
+                raise ValueError('This session requires its application executor')
             _schema(store)
             row = store.db.execute('SELECT * FROM runs WHERE request_key=?', (request_key,)).fetchone()
             if row is not None:
@@ -87,10 +90,15 @@ def submit(session, request_key, max_steps=None):
                 environment = os.environ.copy()
                 source = str(Path(__file__).resolve().parents[2])
                 paths = [source, *(str(Path(p).resolve()) for p in environment.get('PYTHONPATH', '').split(os.pathsep) if p)]
+                if import_root is not None:
+                    paths.insert(0, str(Path(import_root).resolve()))
                 environment['PYTHONPATH'] = os.pathsep.join(dict.fromkeys(paths))
+                command = [sys.executable, '-m', runner_module]
+                if runner_module != 'ariadne.agent.async_runs':
+                    command.append('--run')
                 with (root / f'run-{run_id}.log').open('wb') as log:
                     child = subprocess.Popen(
-                        [sys.executable, '-m', 'ariadne.agent.async_runs', str(root), run_id],
+                        [*command, str(root), run_id],
                         stdin=subprocess.DEVNULL, stdout=log, stderr=log, cwd=root, env=environment, **detached)
             except OSError as error:
                 _mark(store, run_id, 'failed', f'runner could not be launched: {error}')
@@ -119,6 +127,19 @@ def status(session, run_id):
         try:
             _schema(store)
             return _refresh(store, _get(store, run_id))
+        finally:
+            store.close()
+
+
+def latest(session):
+    """Return the most recently submitted run, including its recovered liveness."""
+    root = Path(session).expanduser().resolve()
+    with exclusive_lock(root / '.async.lock', blocking=True):
+        store = Store(root)
+        try:
+            _schema(store)
+            row = store.db.execute('SELECT * FROM runs ORDER BY rowid DESC LIMIT 1').fetchone()
+            return _refresh(store, dict(row)) if row is not None else None
         finally:
             store.close()
 
@@ -155,7 +176,7 @@ def cancel(session, run_id):
             store.close()
 
 
-def _worker(root, run_id):
+def _worker(root, run_id, *, worker_module=engine.DEFAULT_ACTION_WORKER):
     store = Store(root)
     try:
         with exclusive_lock(root / '.async.lock', blocking=True):
@@ -166,7 +187,7 @@ def _worker(root, run_id):
             _mark(store, run_id, 'running', pid=os.getpid())
         status, error = 'completed', None
         try:
-            engine.run(root, max_steps=row['max_steps'], force_isolated=True)
+            engine.run(root, max_steps=row['max_steps'], force_isolated=True, worker_module=worker_module)
         except Exception as exc:
             status, error = 'failed', f'{type(exc).__name__}: {exc}'
         with exclusive_lock(root / '.async.lock', blocking=True):

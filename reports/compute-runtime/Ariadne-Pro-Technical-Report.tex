@@ -1,0 +1,262 @@
+\documentclass[11pt,a4paper,fontset=fandol,UTF8]{ctexart}
+\usepackage[a4paper,left=24mm,right=24mm,top=24mm,bottom=22mm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,tabularx,array,siunitx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\definecolor{ink}{HTML}{172E40}
+\definecolor{teal}{HTML}{006B6B}
+\definecolor{muted}{HTML}{495D67}
+\definecolor{pale}{HTML}{E9F3F1}
+\definecolor{rulegray}{HTML}{D0DEE0}
+\hypersetup{
+  pdftitle={Ariadne Pro 单晶衍射计算与持久工作流},
+  pdfauthor={Ariadne Pro},colorlinks=true,linkcolor=teal,urlcolor=teal
+}
+\setlength{\headheight}{16pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\sffamily\small\color{muted}ARIADNE PRO}
+\fancyhead[R]{\sffamily\small\color{muted}计算与工作流技术报告}
+\fancyfoot[R]{\sffamily\small\color{muted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{4pt}
+\ctexset{
+  section={format=\Large\bfseries\color{ink},aftername=\quad,beforeskip=12pt,afterskip=7pt},
+  subsection={format=\large\bfseries\color{ink},aftername=\quad,beforeskip=8pt,afterskip=4pt}
+}
+\sisetup{group-minimum-digits=4,group-separator={\,}}
+\DeclareSIUnit{\angstromunit}{\text{Å}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\capline}[1]{\medskip{\small\sffamily\color{muted}#1}\par\smallskip}
+\newcommand{\metric}[3]{%
+  \fcolorbox{pale}{pale}{\begin{minipage}[t][20mm][c]{0.291\linewidth}
+    \raggedright\small\sffamily\hspace{2mm}#1\\[0.5mm]
+    \hspace{2mm}{\LARGE\bfseries\color{teal}#2}\\[-0.5mm]
+    \hspace{2mm}{\small\color{muted}#3}
+  \end{minipage}}}
+\tikzset{
+  flow/.style={draw=teal!55,fill=pale,rounded corners=2pt,align=center,minimum height=11mm,
+    text width=28mm,font=\small\sffamily,text=ink},
+  link/.style={-{Latex[length=2.2mm]},semithick,draw=teal}
+}
+
+\begin{document}
+\thispagestyle{empty}
+
+{\sffamily\bfseries\large\color{teal}Ariadne Pro \hfill 2026 年 11 月\par}
+\vspace{8mm}
+{\fontsize{29}{36}\selectfont\bfseries\color{ink}单晶衍射计算与持久工作流\par}
+\vspace{2mm}
+{\large\sffamily\color{muted}实测像素审计、批量相位筛选与工作台调度\par}
+\vspace{8mm}
+
+\noindent
+\metric{实测像素审计}{\num{85866}}{三组扫描轮流留出}\hfill
+\metric{Metal 粗筛}{\(\mathbf{3.96}\)\,–\,\(\mathbf{4.89\times}\)}{三组大网格的同机速度比}\hfill
+\metric{工作台自动流程}{7 个节点}{30 张实测帧至 HKL 导出}
+
+\vspace{8mm}
+\noindent{\large\bfseries\color{ink}摘要}\par
+单晶衍射解析同时处理像素计数、高维反射和多阶段计算。Ariadne Pro 将峰形预测、候选搜索和任务交付建立在可独立核验的接口上。三组实测扫描轮流留出后，训练得到的共享峰宽使三组留出像素的负对数预测似然均下降。批量粗筛将一组相位起点留在同一 GPU 上迭代，晋级候选用 CPU 双精度复算。工作台和 MCP 通过同一套持久调度器执行任务，已提交的结果能在取消、进程异常退出和恢复后继续进入下游。
+
+\vspace{4mm}
+\capline{图 1\quad 计算和交付路径}
+\begin{center}
+\begin{tikzpicture}[node distance=7mm and 6.5mm]
+  \node[flow] (frames) {衍射帧\\像素与几何};
+  \node[flow,right=of frames] (profile) {积分及校正\\反射强度};
+  \node[flow,right=of profile] (phase) {相位筛选\\及结构精修};
+  \node[flow,right=of phase] (export) {诊断与导出\\结构交付};
+  \draw[link] (frames) -- (profile);
+  \draw[link] (profile) -- (phase);
+  \draw[link] (phase) -- (export);
+  \node[below=7mm of profile,anchor=north,align=center,font=\small\sffamily,
+        text=muted,text width=80mm,xshift=18mm] {持久 DAG 管理节点依赖、资源预约、运行事件与结果文件};
+\end{tikzpicture}
+\end{center}
+
+\vspace{3mm}
+\noindent\textbf{报告数据口径。}
+实测对象以 A1–A3 和 M01 表示。报告提供汇总统计、评分方法和程序入口。完整结构、逐条反射、原始帧与实验文件由本地项目管理。
+
+\clearpage
+\section{数值内核与数据复用}
+
+\subsection{分块导数与相关观测}
+普通强度精修保留带符号的 \(F^2\) 以及各观测的不确定度。原子散射、尺度和孪晶占比沿同一解析导数链计算。反射块逐次生成雅可比结果，块大小控制同时进入内存的中间量。大问题可把工作集限制在分块内，小问题沿用稠密路径。
+
+在结构辅助反馈中，每个观测块以三角因子 \(L_b\) 白化。若先验精度为 \(L_0^\mathsf{T}L_0\)，增量参数 \(\delta\) 由增广最小二乘给出
+\[
+  \widehat\delta =
+  \arg\min_\delta \left\|
+  \begin{bmatrix}L_0\\ L_1^{-1}J_1\\ \vdots\\ L_B^{-1}J_B\end{bmatrix}\delta
+  -
+  \begin{bmatrix}0\\ L_1^{-1}r_1\\ \vdots\\ L_B^{-1}r_B\end{bmatrix}
+  \right\|_2^2 .
+\]
+Householder QR 在同一分解中给出增量与协方差因子。块白化保留了重叠观测强度的相关性。900 块对照的预测负对数似然差为 \(9.1\times10^{-13}\)，数据秩均为 3。
+
+\subsection{输入快照、缓存和并发}
+原始输入按清单进入快照。文件元数据用于筛出可能复用的快照，纯计算阶段按输入内容、工具、参数和运行环境生成缓存键。命中缓存时，运行记录保存来源和本次产物引用。进程结束与规划器回包触发调度器重新判断节点就绪。DIALS 并行进程数使用节点的 CPU 预约，底层数学库的线程设置随进程层级分配。
+
+\capline{表 1\quad 前序计算升级的受控测量}
+\noindent\begin{tabularx}{\linewidth}{@{}Yrrr@{}}
+\toprule
+工作负载与计时范围 & 对照 & 升级 & 速度比\\
+\midrule
+900 个相关观测块，反馈内核中位值 & 161.95 ms & 22.58 ms & \(7.17\times\)\\
+540 帧输入快照，交错运行中位值 & 2.23 s & 0.84 s & \(2.65\times\)\\
+540 帧求和积分，固定分块，1 / 4 进程 & 56.56 s & 20.44 s & \(2.77\times\)\\
+同一积分方案至 HKL 导出，1 / 4 进程 & 78.28 s & 52.45 s & \(1.49\times\)\\
+853 张可读 SFRM 帧寻峰，1 / 4 进程 & 49.77 s & 25.64 s & \(1.94\times\)\\
+\bottomrule
+\end{tabularx}
+
+相关观测块对照的最高进程 RSS 从 287.3 MiB 降至 77.5 MiB。固定分块的积分对照保留 \num{90906} 条积分记录，最终两份 HKL 的字节内容一致。该项的最大单进程 RSS 为 1223 与 860 MiB，口径为单进程峰值。积分与导出对照在相同实验几何、峰形尺度和参考点下执行，各设置一次。SFRM 两种设置均找到 \num{9570} 个斑点，匹配的观测列一致。
+
+\clearpage
+\section{真实像素的独立审计}
+
+\subsection{审计单位与评分方法}
+审计使用单位增益的光子计数探测器和整数原始计数。候选以固定几何、预测位置、可信像素掩膜与邻近预测划定。使用同一数据的三条完整扫描，逐条留出。每个留出峰窗先以环带估计背景，再用峰内偶校验格点估计单峰幅度。峰内奇校验格点进入评分。留出扫描的像素不参与全局峰形训练。
+
+窗口为 \(19\times19\) 像素，峰内筛选使用 5 像素半径，估计背景使用 7–9 像素环带。候选的预测部分度至少为 0.75。每帧按预测位置顺序最多取四个隔离的峰窗。训练允许峰宽相对参考值在四分之一至四倍之间变化。
+
+像素窗口 \(j\) 的期望计数为
+\[
+    \lambda_{jp}=b_j+a_jP_p(\boldsymbol{\mu}_j+\Delta,\; w\sigma_0),\qquad a_j\geq 0 ,
+    \quad \sigma_0=1.6\,\text{像素},
+\]
+其中 \(P_p\) 是二维高斯在像素面积上的积分。对照固定峰位与峰宽，第一种拟合学习共享宽度 \(w\)，第二种拟合再学习共享位移 \(\Delta\)。留出评分用单独实现的误差函数矩形积分和 Brent 一维求根。每个像素的分数为
+\[
+    \ell(y,\lambda)=\lambda-y\log\lambda+\log\Gamma(y+1).
+\]
+分数下降表示该条件下预测概率提高。每个扫描内按 15 帧分块重采样，汇总区间以已拟合的三组峰形和当前扫描为条件。
+
+\subsection{宽度校准的收益集中在强峰}
+\capline{表 2\quad 留出扫描的预测负对数似然，除以该扫描审计像素数}
+\noindent\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrrr@{}}
+\toprule
+扫描 & 峰窗 & 审计像素 & 固定峰形 & 只拟合宽度 & 位移与宽度\\
+\midrule
+A1 & 650 & \num{28513} & 59.76 & 22.92 & 22.67\\
+A2 & 627 & \num{27494} & 47.57 & 21.58 & 21.67\\
+A3 & 681 & \num{29859} & 58.04 & 21.22 & 21.46\\
+\bottomrule
+\end{tabular*}
+
+只拟合宽度后，三折的最优 \(w\) 为 0.418–0.457。每像素负对数似然平均下降 33.36，条件分块区间为 [22.05, 47.17]。宽度模型改善了 868 个单峰窗口。按估计幅度的校准计数分层，强峰组（至少 200 计数）每像素改善 39.10–55.67，弱峰组的变化为 \(-0.24\) 至 \(-0.08\)。这些数值支持以强峰评估宽度校准，以弱峰层单独核查迁移效果。
+
+共享位移带来的额外平均变化为每像素 \(-0.027\)，区间为 [\(-0.449\), 0.366]。这组数据的稳定收益来自峰宽。实验几何、候选邻域和单一高斯模板构成这一轮审计的适用条件。
+
+\clearpage
+\section{CPU 与 GPU 的配对盲解}
+
+\subsection{相位筛选和独立复核}
+衍射强度计算峰值模型的尺度与排序。每组以固定随机种子划分整组对称等价与 Friedel 反射，约五分之一留作评估。粗筛按工作集 \(s^2\) 的第 65 百分位截取低至中分辨率数据。12 个固定随机起点各执行 55 次批量电荷翻转。排序前两名和一个随机保留名额进入全工作集，每个起点以 CPU 双精度 hybrid 方法重跑 180 次。软件支持 NumPy、Metal/MLX 和 CUDA/CuPy，设备由用户指定。
+
+\[
+  F_k \xrightarrow{\ \mathrm{FFT}\ } \rho_k
+      \xrightarrow{\ \rho<\tau\,\mathrm{sd}(\rho)\ } \rho_k'
+      \xrightarrow{\ \mathrm{IFFT}\ } G_k
+      \xrightarrow{\ \text{工作振幅投影}\ }F_{k+1}.
+\]
+FFT 网格在设备内批量更新。回传时只提取观测对应的系数和分数。在 Apple M5 最大测试网格的一个批次内，逻辑上传量约 8.35 MiB，下载量约 1.93 MiB。批量密集网格上限为 \(2\,097\,152\) 个体素，计量口径为每批同时处理的网格体素数。
+
+\subsection{精度、召回与用时}
+合成用例 S01–S06 提供晶胞和元素清单。目标坐标在候选确定后参与周期匹配，允许原点平移和反演。匹配 RMSD 不超过 \qty{0.25}{\angstromunit} 即为恢复。每一侧额外复算所有九个被筛掉的起点，得到正确候选在当前 CPU 复算算法下的可恢复总数。
+
+\capline{表 3\quad Apple M5 配对结果，墙钟秒}
+\noindent\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lrrrrr@{}}
+\toprule
+&\multicolumn{2}{c}{粗筛}&\multicolumn{2}{c}{筛选及晋级复算}& 首个正确候选\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+用例 & CPU & Metal & CPU & Metal & CPU / Metal\\
+\midrule
+S01 & 0.095 & 0.079 & 0.369 & 0.358 & 0.187 / 0.174\\
+S02 & 0.130 & 0.061 & 0.505 & 0.435 & 0.254 / 0.188\\
+S03 & 0.186 & 0.074 & 0.618 & 0.501 & 0.329 / 0.217\\
+S04 & 0.792 & 0.169 & 2.120 & 1.345 & 1.683 / 0.561\\
+S05 & 1.062 & 0.268 & 3.082 & 2.302 & 1.734 / 0.949\\
+S06 & 1.804 & 0.369 & 4.870 & 3.404 & 3.844 / 2.399\\
+\bottomrule
+\end{tabular*}
+
+两端均在 6/6 组恢复结构。最大的三组中，粗筛提速 \(3.96\)–\(4.89\times\)，筛选及晋级复算提速 \(1.34\)–\(1.58\times\)。每端 63 个可恢复起点中有 16 个晋级，六组均至少保留两个可恢复起点。以 3 s 为观察截面，CPU 和 Metal 分别在 5/6 与 6/6 组找到首个正确候选。计时以单次配对、交替执行顺序以及单线程 CPU 为条件。
+
+\clearpage
+\subsection*{实测反射对照与跨平台运行}
+匿名实测用例 M01 含 71 条原始强度，其中 15 条留出。CPU、Metal 的首选结构 RMSD 分别为 \qty{0.724}{\angstromunit} 和 \qty{0.658}{\angstromunit}。两端的所有起点均未达到 \qty{0.25}{\angstromunit} 恢复阈值。按工作集拟合强度尺度后，留出反射的标准化 RMSE 为 67.46 和 55.38。
+
+本轮 GPU 对照在 Apple M5 上运行。CUDA/CuPy 接口面向已配齐设备运行库的环境，Windows 上的设备对照待依赖就绪后运行。
+
+\section{工作台的持久 DAG}
+
+自动流程按输入类型创建计算图。原始帧路线依次提交导入、寻峰、指标化、几何精修、积分、缩放校正、导出七个节点。结构、反射与峰形数据的路线分别衔接对应的原生或外部引擎。用户逐步确认时，每次批准提交当前步骤，已计算数据与人工选点进入下一次提交。
+
+\capline{图 2\quad 任一节点的执行和恢复路径}
+\begin{center}
+\begin{tikzpicture}[node distance=7mm and 6mm]
+  \node[flow] (ready) {依赖就绪\\资源预约};
+  \node[flow,right=of ready] (active) {独立进程\\执行节点};
+  \node[flow,right=of active] (done) {提交结果\\推进下游};
+  \node[flow,below=of active] (retry) {恢复未完成节点\\创建下一次执行};
+  \draw[link] (ready) -- (active);
+  \draw[link] (active) -- (done);
+  \draw[link] (active) -- (retry);
+  \draw[link] (retry) -| (ready);
+\end{tikzpicture}
+\end{center}
+
+浏览器提交任务后，由分离的运行进程持有 SQLite 会话。任务事件带顺序号，HTTP 接口可按游标读取。每次节点执行拥有独立目录和运行日志。已提交的节点结果通过依赖引用传递，项目通过游标应用结果。并发计算由共享资源预算约束，内存字段表示预约，运行期峰值由测量另行记录。
+
+取消通过调度器回收计算子进程。进程异常退出后，工作台查询保存的状态，确认旧执行停止，再在同一任务下启动未完成节点的下一次执行。前序结果及旧执行记录随任务保留。旧项目使用原有项目目录继续读取。
+
+\clearpage
+\section*{验收与复现}
+
+\capline{表 4\quad 工作台和计算运行时验证}
+\noindent\begin{tabularx}{\linewidth}{@{}p{48mm}Y@{}}
+\toprule
+场景 & 观测结果\\
+\midrule
+实测帧走完自动 DAG & 30 张实测帧，七个节点各执行一次。HKL 导出含 124 个带指数记录。\\
+工作台提交进程退出 & 新 API 进程读取的运行标识一致，任务获配额后完成。\\
+取消及调度进程异常退出 & 外部计算进程被回收。恢复后第一个节点仍为首次执行，第二个节点在第二次执行完成。\\
+节点报错后的恢复 & 精修结果由后续图谱节点继续使用。独立目录保存两次图谱运行。\\
+macOS 回归 & 数值及 MCP 运行时通过 246 项和 10 个子测试，工作台通过 26 项。\\
+Windows x64 回归 & 数值及 MCP 运行时通过 219 项，跳过 18 项。工作台通过 19 项，跳过 7 项 POSIX 外部进程用例。\\
+前端构建 & TypeScript 检查和生产构建通过。\\
+\bottomrule
+\end{tabularx}
+
+\subsection*{复现入口}
+\begin{itemize}
+  \item \code{tools/audit\_pixel\_profiles.py} 接收固定几何和反射预测目录，逐扫描输出匿名 Poisson 审计统计。
+  \item \code{tools/benchmark\_blind\_phasing.py} 使用合成用例或外部实测强度与评价参考。参数 \code{--gpu metal} 和 \code{--gpu cuda} 对应两种 GPU 后端。
+  \item \code{workbench/launch.py} 从已有科学环境启动工作台。
+  \item \code{ARIADNE\_PROJECTS\_DIR} 指定项目目录。\\
+        \code{ARIADNE\_HOST\_BUDGET} 指向工作台与 MCP 共用的资源配置。
+  \item \code{validation-summary.json} 保存逐组匿名评分、候选恢复、计时以及验证计数。
+\end{itemize}
+\noindent 使用 XeLaTeX 编译本报告。源文件与汇总指标可独立归档。
+
+\subsection*{结论}
+Ariadne Pro 以实测像素评分判定峰形改进，以完整复算核查 GPU 筛选保留的解，并以持久工作流承接计算结果。共享峰宽的收益、较大批量 FFT 的提速和外部计算的恢复都由各自实验直接给出。三条证据共同支撑从像素到可追溯结果的工作台流程。
+
+\capline{方法与软件文献}
+\noindent{\small
+G.~Oszlányi 与 A.~Sütő，\emph{Ab initio structure solution by charge flipping}，
+Acta Crystallographica A \textbf{60}, 134–141 (2004)。
+\href{https://doi.org/10.1107/S0108767303027569}{DOI}\par
+J.~Beilsten-Edmands 等，\emph{Scaling diffraction data in the DIALS software package}，
+Acta Crystallographica D \textbf{76}, 385–399 (2020)。
+\href{https://doi.org/10.1107/S2059798320003198}{DOI}
+}
+
+\end{document}

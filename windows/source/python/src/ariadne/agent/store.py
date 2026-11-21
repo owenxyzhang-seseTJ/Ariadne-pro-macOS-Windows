@@ -8,7 +8,7 @@ import tempfile
 import time
 from typing import Any
 
-from .spec import TERMINAL, task_resources, validate_node, validate_scheduler
+from .spec import TERMINAL, TOOLS, task_resources, validate_node, validate_scheduler
 from .util import CONTENT_ALGORITHM, digest, dumps, now
 
 
@@ -103,8 +103,8 @@ class Store:
             previous = h
         return True
 
-    def add_nodes(self, nodes: list[dict[str, Any]]):
-        nodes = [validate_node(n) for n in nodes]
+    def add_nodes(self, nodes: list[dict[str, Any]], *, tools=TOOLS):
+        nodes = [validate_node(n, tools=tools) for n in nodes]
         scheduler = validate_scheduler(self.get('request', {}).get('scheduler'))
         for node in nodes:
             task_resources(node, scheduler)

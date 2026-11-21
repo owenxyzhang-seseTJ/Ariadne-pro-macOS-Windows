@@ -97,7 +97,7 @@ class PlannerCall:
             return None
 
 
-def _launch(store, node, arguments, resources, remaining, *, queued=None):
+def _launch(store, node, arguments, resources, remaining, *, queued=None, worker_module):
     work = store.begin(node['id'])
     started = time.monotonic()
     deadline = started + min(store.get('request')['budget']['action_seconds'], remaining)
@@ -114,7 +114,7 @@ def _launch(store, node, arguments, resources, remaining, *, queued=None):
         environment['PYTHONPATH'] = os.pathsep.join(dict.fromkeys(python_path))
         stdout = (work/'worker.stdout.log').open('wb')
         stderr = (work/'worker.stderr.log').open('wb')
-        argv = [sys.executable, '-m', 'ariadne.agent.action_worker', str(work/'worker.input.json')]
+        argv = [sys.executable, '-m', worker_module, str(work/'worker.input.json')]
         launch_options = {}
         if os.name == 'posix':
             reader, writer = os.pipe()
@@ -183,7 +183,8 @@ def _wake_on_exit(action, wake):
 
 
 def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
-                 capabilities, experts, validate_inputs, host=None):
+                 capabilities, experts, validate_inputs, host=None,
+                 worker_module='ariadne.agent.action_worker'):
     request = store.get('request')
     budget = request['budget']
     pool = ResourcePool(configuration)
@@ -224,7 +225,8 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                     if waiting.ticket.try_admit():
                         key = waiting.node['id']
                         action = _launch(store, waiting.node, waiting.arguments, waiting.resources,
-                                         budget['wall_seconds']-store.wall_elapsed(), queued=waiting)
+                                         budget['wall_seconds']-store.wall_elapsed(), queued=waiting,
+                                         worker_module=worker_module)
                         pool.acquire(key, waiting.resources)
                         active[key] = action
                         _wake_on_exit(action, wake)
@@ -275,7 +277,9 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                                 frontier_changed = True
                             else:
                                 if host is None:
-                                    action = _launch(store, node, args, resources, budget['wall_seconds']-store.wall_elapsed())
+                                    action = _launch(store, node, args, resources,
+                                                     budget['wall_seconds']-store.wall_elapsed(),
+                                                     worker_module=worker_module)
                                     pool.acquire(key, resources)
                                     active[key] = action
                                     _wake_on_exit(action, wake)

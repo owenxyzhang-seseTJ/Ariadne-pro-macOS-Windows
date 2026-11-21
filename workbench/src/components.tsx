@@ -1,0 +1,15 @@
+import React,{ReactNode,useEffect,useRef} from 'react';
+import {X,LoaderCircle,ArrowUpRight,Upload,ChevronRight} from 'lucide-react';
+export {Upload,ArrowUpRight,ChevronRight};
+export function Button({children,variant='primary',busy=false,...props}:React.ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'primary'|'secondary'|'quiet';busy?:boolean}){return <button {...props} disabled={busy||props.disabled} className={`button ${variant} ${props.className||''}`}>{busy&&<LoaderCircle size={22} className="spin"/>}{children}</button>;}
+export function Tab({active,children,...props}:React.ButtonHTMLAttributes<HTMLButtonElement>&{active?:boolean}){return <button {...props} role="tab" aria-selected={active} className={`view-tab ${active?'active':''} ${props.className||''}`}>{children}</button>;}
+export function Empty({title,children,action}:{title:string;children?:ReactNode;action?:ReactNode}){return <div className="empty"><span className="empty-symbol">◇</span><strong>{title}</strong>{children&&<p>{children}</p>}{action}</div>;}
+export function Modal({title,children,onClose,wide=false}:{title:string;children:ReactNode;onClose:()=>void;wide?:boolean}){
+  const ref=useRef<HTMLDivElement>(null);
+  useEffect(()=>{const old=document.activeElement as HTMLElement;ref.current?.focus();const fn=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose();if(e.key==='Tab'){const list=ref.current?.querySelectorAll<HTMLElement>('button,input,select,textarea,a[href]');if(list?.length){const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}}};document.addEventListener('keydown',fn);document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',fn);document.body.style.overflow='';old?.focus();};},[]);
+  return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><div className={`modal ${wide?'wide':''}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={ref}><header><h2>{title}</h2><button className="icon-button" aria-label="关闭" onClick={onClose}><X/></button></header>{children}</div></div>;
+}
+export const LABELS:Record<string,string>={'automatic':'自动解析','inspect':'结构检查','refine':'结构精修','autosolve':'自动求解与精修','solve':'相位求解','maps':'电子密度图','symmetry':'空间群检查','absolute':'绝对结构诊断','integrate-pixels':'校准像素积分','joint-refine':'重叠观测联合精修','solve-observations':'从观测求解','dials:import':'导入衍射帧','dials:find_spots':'找点','dials:index':'定晶胞','dials:refine':'实验几何','dials:integrate':'积分','dials:scale':'校正','dials:export':'导出反射','dials:predict':'预测反射','legacy:shelxl':'SHELXL 精修','legacy:shelxt':'SHELXT 结构求解'};
+export const STATUS:Record<string,string>={queued:'等待中',running:'正在计算',completed:'计算完成 · 待检查',failed:'需要处理',cancelled:'已取消',interrupted:'可重新运行'};
+export const ROLE:Record<string,string>={frame:'衍射帧',structure:'晶体结构',reflections:'反射数据',experiments:'实验几何',dials_reflections:'衍射点表',pixels:'校准像素',observations:'重叠观测',density:'电子密度图',artifact:'辅助文件'};
+LABELS['legacy:shelxl-maps']='SHELXL 电子密度';

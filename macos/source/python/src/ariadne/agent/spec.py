@@ -99,18 +99,18 @@ def references(value: Any) -> set[str]:
     return set()
 
 
-def validate_node(node: dict[str, Any]) -> dict[str, Any]:
+def validate_node(node: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
     if not isinstance(node, dict):
         raise ValueError('node must be an object')
     if set(node)-{'id', 'tool', 'args', 'depends_on', 'allow_failed_dependencies', 'resources'}:
         raise ValueError('unknown node fields')
     check_name(node.get('id'))
-    if node.get('tool') not in TOOLS:
+    if node.get('tool') not in tools:
         raise ValueError('unregistered tool')
     args = node.get('args', {})
     if not isinstance(args, dict):
         raise ValueError('tool arguments must be an object')
-    spec = TOOLS[node['tool']]
+    spec = tools[node['tool']]
     if not spec.required <= args.keys() or set(args)-spec.required-spec.optional:
         raise ValueError('missing or unknown tool arguments')
     dependencies = node.get('depends_on', [])
@@ -146,7 +146,7 @@ def validate_node(node: dict[str, Any]) -> dict[str, Any]:
     return output
 
 
-def validate_request(request: dict[str, Any]) -> dict[str, Any]:
+def validate_request(request: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
     if not isinstance(request, dict):
         raise ValueError('request must be an object')
     allowed = {'schema', 'mode', 'inputs', 'nodes', 'budget', 'executables', 'planner', 'settings', 'experts', 'scheduler', 'cache'}
@@ -198,7 +198,7 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
         raise ValueError('experts must be a list of names')
     if not isinstance(request.get('nodes', []), list):
         raise ValueError('nodes must be a list')
-    nodes = [validate_node(x) for x in request.get('nodes', [])]
+    nodes = [validate_node(x, tools=tools) for x in request.get('nodes', [])]
     scheduler = validate_scheduler(request.get('scheduler'))
     cache = request.get('cache')
     if cache is not None:

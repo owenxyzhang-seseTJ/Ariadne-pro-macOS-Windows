@@ -1,0 +1,25 @@
+{
+  "name": "ariadne-pro-workbench",
+  "version": "0.1.0",
+  "dependencies": {
+    "lucide-react": "0.468.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/cli": "^0.1.24",
+    "@types/react": "18.3.26",
+    "@types/react-dom": "18.3.7",
+    "@types/three": "0.180.0",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  }
+}

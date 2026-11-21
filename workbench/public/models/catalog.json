@@ -1,0 +1,109 @@
+[
+  {
+    "id": "mof5",
+    "name": "MOF-5",
+    "subtitle": "IRMOF-1 · Zn₄O(BDC)₃",
+    "credit": "RASPA IRMOF-1 reference structure; Eddaoudi et al., Science 295, 469–472 (2002).",
+    "doi": "10.1126/science.1067208",
+    "cell": [
+      [
+        25.832,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        25.832,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        25.832
+      ]
+    ],
+    "variants": [
+      {
+        "id": "nodes",
+        "label": "节点多面体",
+        "glb": "/models/mof5-nodes.glb",
+        "poster": "/models/mof5-nodes.png",
+        "objects": 116,
+        "glbBytes": 47172,
+        "geometryObjects": 116
+      },
+      {
+        "id": "atoms",
+        "label": "球棍模型",
+        "glb": "/models/mof5-atoms.glb",
+        "poster": "/models/mof5-atoms.png",
+        "objects": 1112,
+        "glbBytes": 504892,
+        "geometryObjects": 1112
+      }
+    ],
+    "topology": [
+      "pcu"
+    ],
+    "matchTier": [
+      {
+        "candidates": [
+          "pcu"
+        ],
+        "tier": "exact"
+      }
+    ],
+    "sourceType": "reference CIF; visual example, not an Ariadne processing result",
+    "defaultVariant": "nodes",
+    "representationNote": "Zn4O 六连接节点按实际连接方向表示为多面体；连接体为拓扑杆。不是原子配位多面体或键级模型。",
+    "sourceCif": "/models/sources/mof5.cif"
+  },
+  {
+    "id": "hkust1",
+    "name": "HKUST-1",
+    "subtitle": "Cu-BTC · Cu₃(BTC)₂",
+    "credit": "RASPA Cu-BTC reference structure; Chui et al., Science 283, 1148–1150 (1999).",
+    "doi": "10.1126/science.283.5405.1148",
+    "cell": [
+      [
+        26.343,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        26.343,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        26.343
+      ]
+    ],
+    "variants": [
+      {
+        "id": "atoms",
+        "label": "球棍模型",
+        "glb": "/models/hkust1-atoms.glb",
+        "poster": "/models/hkust1-atoms.png",
+        "objects": 1824,
+        "glbBytes": 706004,
+        "geometryObjects": 1824
+      }
+    ],
+    "topology": [
+      "tbo"
+    ],
+    "matchTier": [
+      {
+        "candidates": [
+          "tbo"
+        ],
+        "tier": "contracted"
+      }
+    ],
+    "sourceType": "reference CIF; visual example, not an Ariadne processing result",
+    "sourceCif": "/models/sources/hkust1.cif"
+  }
+]

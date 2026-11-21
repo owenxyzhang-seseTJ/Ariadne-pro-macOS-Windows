@@ -43,13 +43,16 @@ python -m ariadne.server --transport streamable-http --port 8766
 
 DIALS 寻峰、指标化、积分和缩放将节点的 CPU 声明传给各自的进程参数，每个 DIALS 进程配置一个 BLAS 线程。普通还原会话的寻峰可从会话配额借用最多四个 CPU slot。用户可在自定义积分节点设 `resources.cpu_threads`，并在 `options` 中给出 `integration.block.size` 以固定区块划分。多扫描的 `indexing.joint_indexing` 可按实际晶体与扫描关系明确指定。
 
-本地工作台按现有步骤申请同一份主机配额。客户端可在作业设置中提供 `"resources":{"cpu_threads":4,"memory_mb":3072}` 覆盖桌面预约值。
+[本地工作台](workbench/README.zh-CN.md)将在 SQLite 会话中登记新任务、依赖与逐次执行记录。客户端可在作业设置中提供 `"resources":{"cpu_threads":4,"memory_mb":3072}` 覆盖桌面预约值。工作台进程退出后继续运行，取消和续跑由同一调度器管理。
 
 ## 实验方法
 
 - `ariadne_xtal.count_refinement.refine_count_observations` 在固定几何与峰形下直接用校准 Poisson 像素拟合结构，工作组背景用剖面似然消元，审计组使用独立给定的背景。CLI 为 `python -m ariadne_xtal count-refine MODEL.cif GROUPS.json --options OPTIONS.json`。每组提供按列对应的 `hkl`、`observation` 和可选的曝光 `coefficients`。观察对象包含 `data`、`profiles` 及可选的 `background`、`offset`、`valid`。
 - 在命令中添加 `--profile-options PROFILE.json` 可试验联合修正峰位和峰宽。配置允许 `max_shift` 与 `max_width_ratio`，默认分别为 1 个输入坐标单位和 1.5。组内 `profile_model` 提供 `lower`、`upper` 像素边界及每项反射的 `centres`、`sigma`，支持一至三轴。相同 `profile_group` 共用各轴峰位偏移和总宽度倍率。`audit` 组沿用工作组的偏移、宽度和结构参数。此路径按有限差分和合成留出数据验收。
 - `ariadne.lattice_selection.select_lattices` 用工作扫描拟合既有晶格候选的质心混合模型，在保留扫描块比较新增晶格的预测增益。 `tools/validate_observed_lattices.py` 对 DIALS 数据按物理扫描分别运行，从工作块重估各候选晶格。不同扫描中的取向必须按仪器坐标或明确的基变换对应。输出权重属于质心模型，畴体积分数需由强度模型估计。
-- `ariadne_xtal.screened_phasing.screened_phase_search` 在低分辨率上筛选可复现的起点，在完整工作反射上进行 CPU 双精度重评。可以保留随机晋级名额，并抽查被淘汰的起点。真实盲解成功率与 GPU 数据仍需专门对照。
+- `tools/audit_pixel_profiles.py` 轮流留出实测扫描，用独立误差函数积分和 Poisson 评分审核峰形迁移。峰内偶数格点估计幅度，奇数格点评分。
+- `ariadne_xtal.screened_phasing.screened_phase_search` 支持 NumPy 批量粗筛、Metal/MLX 和 CUDA/CuPy。晋级、随机保留和被抽查的起点使用同一 CPU 双精度复算。工作台的多起点求解接受 `screening` 参数。配对盲解由 `tools/benchmark_blind_phasing.py` 执行。
+
+真实像素和盲解的样本规模、评价条件、计时与 DAG 验证见[脱敏技术报告](reports/compute-runtime/Ariadne-Pro-Technical-Report.tex)。
 
 对照原有 Python/C++ 内核、独立像素似然和解析特例，运行 `python tools/validate_upgrade.py`。使用当前安装环境时可通过 `--dependency-path` 提供依赖目录。原始工作数据保持在各自的数据目录，基准和回归产物另行写入。

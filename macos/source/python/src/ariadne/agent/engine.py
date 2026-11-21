@@ -19,6 +19,7 @@ from .util import artifact, artifact_path, atomic_json, content_id, dumps, exclu
 
 
 BUILD = '0.8.0-native-20261108'
+DEFAULT_ACTION_WORKER = 'ariadne.agent.action_worker'
 
 
 def ref(node: str, path: str = ''):
@@ -104,8 +105,9 @@ def _validate_input_refs(value, inputs):
             _validate_input_refs(child, inputs)
 
 
-def initialize(request: dict, directory: str | Path, *, base: str | Path = '.') -> dict:
-    request = validate_request(request)
+def initialize(request: dict, directory: str | Path, *, base: str | Path = '.',
+               tools=TOOLS, worker_module=DEFAULT_ACTION_WORKER) -> dict:
+    request = validate_request(request, tools=tools)
     root = Path(directory).expanduser().resolve()
     if root.exists():
         raise FileExistsError('session directory must not exist; choose a new directory')
@@ -138,6 +140,8 @@ def initialize(request: dict, directory: str | Path, *, base: str | Path = '.') 
         store.set('request_digest', store.digest(request))
         store.set('inputs', manifest)
         store.set('build', BUILD)
+        if worker_module != DEFAULT_ACTION_WORKER:
+            store.set('action_worker_module', worker_module)
         import importlib.metadata, sys
         versions = {}
         for package in ('numpy', 'scipy', 'gemmi', 'mcp', 'dials', 'cctbx-base'):
@@ -147,7 +151,7 @@ def initialize(request: dict, directory: str | Path, *, base: str | Path = '.') 
                 versions[package] = None
         atomic_json(root/'runtime.json', {'build': BUILD, 'python': sys.version, 'dependencies': versions})
         store.event('session_initialized', dict(build=BUILD, request_digest=store.digest(request), inputs=manifest))
-        store.add_nodes(plan)
+        store.add_nodes(plan, tools=tools)
         atomic_json(root/'request.json', request)
         atomic_json(root/'inputs_manifest.json', manifest)
         return store.snapshot()
@@ -289,7 +293,8 @@ def _verify(store: Store):
                 artifact_path(store.root, item)
 
 
-def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: bool = False) -> dict:
+def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: bool = False,
+        worker_module=DEFAULT_ACTION_WORKER) -> dict:
     root = Path(directory).expanduser().resolve()
     if max_steps is not None and (type(max_steps) is not int or max_steps < 1):
         raise ValueError('max_steps must be a positive integer')
@@ -297,6 +302,8 @@ def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: 
         store = Store(root)
         clock_started = False
         try:
+            if store.get('action_worker_module', DEFAULT_ACTION_WORKER) != worker_module:
+                raise ValueError('This session requires its application executor')
             _verify(store)
             # An interrupted native process may still exist. Never silently rerun it.
             running = [x['id'] for x in store.summaries() if x['status'] == 'running']
@@ -307,11 +314,13 @@ def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: 
             configuration = validate_scheduler(store.get('request').get('scheduler'))
             from .host_budget import HostBudget
             host = HostBudget.configured()
-            if configuration['isolate_actions'] or force_isolated or host is not None:
+            if (configuration['isolate_actions'] or force_isolated or host is not None
+                    or worker_module != DEFAULT_ACTION_WORKER):
                 from .scheduler import run_isolated
                 run_isolated(store, configuration, max_steps=max_steps, choose=choose, resolve=resolve,
                              expand=_expand_solve, capabilities={'actions': capabilities()['actions']},
-                             experts=_experts(store.get('request')), validate_inputs=_validate_input_refs, host=host)
+                             experts=_experts(store.get('request')), validate_inputs=_validate_input_refs,
+                             host=host, worker_module=worker_module)
                 store.stop_clock()
                 clock_started = False
                 result = store.snapshot()
