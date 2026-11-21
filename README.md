@@ -1,5 +1,7 @@
 # Ariadne pro macOS / Windows
 
+[计算与调度升级使用说明](UPGRADE.zh-CN.md)
+
 Ariadne pro 0.8.0 的 macOS 与 Windows 并行版本，共用同一份源码，各自提供原生 C++ 扩展、入口脚本、固定依赖和验证记录。
 
 | 平台 | 构建标识 | 原生扩展 | 验证 |

@@ -237,6 +237,23 @@ def test_sparse_tangents_preserve_nonfinite_metric_error():
 
 
 @CPP
+def test_parallel_blocks_preserve_intensity_and_derivative_order(monkeypatch):
+    parameterization, values, hkl, laws = _problem()
+    monkeypatch.setenv("ARIADNE_CPU_THREADS", "1")
+    serial = DiffractionPredictor(parameterization, hkl, laws, block_size=17, backend="cpp")
+    expected = serial.evaluate(values)[1:]
+    monkeypatch.setenv("ARIADNE_CPU_THREADS", "4")
+    parallel = DiffractionPredictor(parameterization, hkl, laws, block_size=17, backend="cpp")
+    assert parallel.reflection_workers == 4
+    assert all(np.array_equal(a, b) for a, b in zip(parallel.evaluate(values)[1:], expected))
+    monkeypatch.delenv("ARIADNE_CPU_THREADS")
+    monkeypatch.setattr("ariadne_xtal.derivatives.os.cpu_count", lambda: 8)
+    small = DiffractionPredictor(parameterization, hkl, laws, backend="cpp")
+    large = DiffractionPredictor(parameterization, np.tile(hkl, (400, 1)), laws, backend="cpp")
+    assert small.reflection_workers == 1 and large.reflection_workers == 4
+
+
+@CPP
 def test_independent_kernel_calls_are_thread_safe_without_internal_threads():
     def execute(_):
         parameterization, values, hkl, laws = _problem()

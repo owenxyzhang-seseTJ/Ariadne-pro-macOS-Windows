@@ -11,7 +11,8 @@ from ..crystal import audit_cif, predict
 from ..feedback import condition
 from . import backends
 from .loop import run_loop
-from .util import artifact, artifact_path, atomic_json, dumps, read_json, pointer
+from .util import (artifact, artifact_identity, artifact_path, atomic_json, content_id, dumps,
+                   is_artifact, read_json, pointer)
 
 
 @dataclass
@@ -49,7 +50,8 @@ def compare(candidates: list[dict]) -> dict:
             failures.append(dict(index=i, reason=candidate.get('error') or candidate.get('audit', {}).get('errors', [])))
             continue
         valid.append(dict(index=i, cif=candidate['cif'], res=candidate['res'], hkl=candidate['hkl'],
-                          metrics=candidate.get('metrics', {}), input_hkl_sha256=candidate.get('input_hkl_sha256')))
+                          metrics=candidate.get('metrics', {}), input_hkl_sha256=candidate.get('input_hkl_sha256'),
+                          input_hkl_content_id=candidate.get('input_hkl_content_id')))
     with_r = [v for v in valid if isinstance(v['metrics'].get('R1'), (int, float))]
     preference = min(with_r, key=lambda x: x['metrics']['R1'])['index'] if with_r else None
     return dict(eligible_candidates=valid, failures=failures, descriptive_lowest_R1=preference,
@@ -59,7 +61,7 @@ def compare(candidates: list[dict]) -> dict:
 
 def collect_artifacts(value: Any):
     if isinstance(value, dict):
-        if {'path', 'sha256', 'size_bytes', 'role'} <= value.keys():
+        if is_artifact(value):
             yield value
         else:
             for item in value.values():
@@ -103,6 +105,33 @@ def package(ctx: Context, evidence: list[dict]) -> dict:
                 artifact_count=len(artifacts), scientific_acceptance='not_established')
 
 
+def _cached_crystal(ctx, tool, records, options, compute):
+    cache = ctx.request.get('cache')
+    if cache is None:
+        return compute()
+    import gemmi
+    import numpy as np
+    from .. import crystal
+    from .process import Cancelled
+    from .stage_cache import StageCache
+
+    dependencies = {'stage': tool, 'content': [artifact_identity(record) for record in records],
+                    'options': options, 'implementation': content_id(Path(crystal.__file__)),
+                    'gemmi': gemmi.__version__, 'numpy': np.__version__}
+    directory = (ctx.root / Path(cache['directory']).expanduser()).resolve()
+
+    def completed_result():
+        result = compute()
+        if ctx.store.get('cancel_requested'):
+            raise Cancelled('cancelled before caching the scientific result')
+        if ctx.remaining() <= 0:
+            raise TimeoutError('budget expired before caching the scientific result')
+        return result
+
+    result, hit = StageCache(directory, cache.get('max_mib', 64) * 1024**2).get(dependencies, completed_result)
+    return {**result, 'stage_cache': {'hit': hit, 'stage': tool}}
+
+
 def execute(ctx: Context, tool: str, args: dict) -> dict:
     if tool == 'artifact.inspect':
         source = artifact_path(ctx.root, args['artifact'])
@@ -121,13 +150,21 @@ def execute(ctx: Context, tool: str, args: dict) -> dict:
         from .bundles import unpack
         result = unpack(ctx, args)
     elif tool == 'crystal.audit':
-        result = audit_cif(artifact_path(ctx.root, args['cif']), block=args.get('block'),
-                           expected_elements=args.get('expected_elements'))
+        path = artifact_path(ctx.root, args['cif'])
+        options = {'block': args.get('block'), 'expected_elements': args.get('expected_elements')}
+        result = _cached_crystal(ctx, tool, [args['cif']], options, lambda: audit_cif(path, **options))
         result['cif'] = args['cif']
     elif tool == 'crystal.predict':
-        reflection_data = read_json(artifact_path(ctx.root, args['reflections']))
-        reflections = reflection_data.get('reflections') if isinstance(reflection_data, dict) else reflection_data
-        result = predict([artifact_path(ctx.root, x) for x in args['cifs']], reflections, blocks=args.get('blocks'))
+        reflection_path = artifact_path(ctx.root, args['reflections'])
+        cif_paths = [artifact_path(ctx.root, x) for x in args['cifs']]
+
+        def evaluate_predictions():
+            data = read_json(reflection_path)
+            reflections = data.get('reflections') if isinstance(data, dict) else data
+            return predict(cif_paths, reflections, blocks=args.get('blocks'))
+
+        result = _cached_crystal(ctx, tool, [*args['cifs'], args['reflections']],
+                                 {'blocks': args.get('blocks')}, evaluate_predictions)
     elif tool == 'feedback.condition':
         problem = read_json(artifact_path(ctx.root, args['problem']))
         result = condition(problem['mean'], problem['independent_variance'], problem['factors'], problem['blocks'])

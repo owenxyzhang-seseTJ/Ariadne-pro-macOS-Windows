@@ -35,6 +35,7 @@ from .model import Reflections, Structure
 from .restraints import normalize_restraints, restraint_residuals
 from .scattering import calculated_intensities
 from .derivatives import DiffractionPredictor, physical_parameter_jacobian, right_singular_system
+from .block_jacobian import BlockJacobian
 
 
 @dataclass
@@ -50,8 +51,8 @@ class RefinementOptions:
     ``jacobian="finite_difference"`` comparison mode, SciPy's extra derivative
     evaluations are excluded from that budget and included in the reported
     ``objective_evaluations_total``. The default analytic mode avoids them.
-    ``reflection_block_size`` bounds complex diffraction work arrays; the
-    trust-region solver still stores a real observation-by-parameter Jacobian.
+    ``reflection_block_size`` bounds diffraction work arrays. The opt-in
+    ``jacobian_layout="operator"`` recomputes derivative blocks during LSMR.
     ``u_min`` and ``u_max`` bound Uiso and Cholesky diagonals/off-diagonals;
     for special sites they bound independent logarithmic modes. They do not
     impose eigenvalue-wise upper bounds on the final anisotropic tensor.
@@ -77,6 +78,7 @@ class RefinementOptions:
     verbose: int = 0
     jacobian: str = "analytic"
     reflection_block_size: int = 1024
+    jacobian_layout: str = "dense"
 
     def validate(self) -> None:
         if isinstance(self.max_nfev, bool) or not isinstance(self.max_nfev, Integral) or self.max_nfev < 1:
@@ -107,6 +109,10 @@ class RefinementOptions:
             raise ValueError("verbose must be 0, 1 or 2")
         if self.jacobian not in {"analytic", "finite_difference"}:
             raise ValueError("jacobian must be analytic or finite_difference")
+        if self.jacobian_layout not in {"dense", "operator"}:
+            raise ValueError("jacobian_layout must be dense or operator")
+        if self.jacobian_layout == "operator" and self.jacobian != "analytic":
+            raise ValueError("operator layout requires analytic derivatives")
         if (isinstance(self.reflection_block_size, bool)
                 or not isinstance(self.reflection_block_size, Integral)
                 or self.reflection_block_size < 1):
@@ -693,9 +699,10 @@ def refine(structure: Structure, reflections: Reflections, options: RefinementOp
     predictor = DiffractionPredictor(parameterization, hkl, twin_laws=laws,
                                     block_size=options.reflection_block_size)
     use_analytic = options.jacobian == "analytic"
+    use_operator = options.jacobian_layout == "operator" and npar > 1
 
     def predict(parameters):
-        model, calculated, _ = predictor.evaluate(parameters, jacobian=use_analytic)
+        model, calculated, _ = predictor.evaluate(parameters, jacobian=use_analytic and not use_operator)
         return model, calculated
 
     initial_model, initial_calc = predict(values)
@@ -718,12 +725,10 @@ def refine(structure: Structure, reflections: Reflections, options: RefinementOp
             data = (calculated - obs) * sqrt_weights
             return np.r_[data, restraint_residuals(model, restraints)]
 
-        def jacobian(parameters):
+        def restraint_jacobian(parameters):
             nonlocal restraint_derivative_evaluations
-            _, _, derivative = predictor.evaluate(parameters, jacobian=True)
-            data = derivative * sqrt_weights[:, None]
             if not restraints:
-                return data
+                return np.empty((0, npar))
             # Numerical differences are restricted to the small restraint
             # subsystem. No structure-factor calculation is performed here.
             columns = []
@@ -737,12 +742,39 @@ def refine(structure: Structure, reflections: Reflections, options: RefinementOp
                 right = restraint_residuals(parameterization.unpack(minus)[0], restraints)
                 columns.append((left - right) / (2 * step))
             restraint_derivative_evaluations += 2 * npar
-            return np.vstack((data, np.asarray(columns).T))
+            return np.asarray(columns).T
+
+        def jacobian(parameters):
+            geometric = restraint_jacobian(parameters)
+            if use_operator:
+                _, prepared = predictor.prepare_blocks(parameters, jacobian=True)
+                weights = sqrt_weights
+
+                def weighted_blocks():
+                    for rows, _, block in prepared():
+                        block *= weights[rows, None]
+                        yield rows, block
+
+                return BlockJacobian(weighted_blocks, nobs, npar, geometric)
+            _, _, derivative = predictor.evaluate(parameters, jacobian=True)
+            data = derivative * sqrt_weights[:, None]
+            return np.vstack((data, geometric)) if restraints else data
 
         if npar:
+            solver_options = {"x_scale": "jac"}
+            jac_callback = jacobian if use_analytic else "3-point"
+            if use_operator:
+                initial_operator = jacobian(values)
+                starting_point = values.copy()
+                solver_options = {"tr_solver": "lsmr", "x_scale": initial_operator.column_scaling(),
+                                  "tr_options": {"atol": 1e-10, "btol": 1e-10, "maxiter": 4 * npar}}
+
+                def jac_callback(parameters):
+                    return initial_operator if np.array_equal(parameters, starting_point) else jacobian(parameters)
+
             last_result = least_squares(residual, values,
-                                        jac=jacobian if use_analytic else "3-point", bounds=(lower, upper),
-                                        method="trf", loss="linear", x_scale="jac",
+                                        jac=jac_callback, bounds=(lower, upper),
+                                        method="trf", loss="linear", **solver_options,
                                         max_nfev=options.max_nfev, ftol=options.ftol,
                                         xtol=options.xtol, gtol=options.gtol, verbose=options.verbose)
             previous = values.copy()
@@ -770,8 +802,9 @@ def refine(structure: Structure, reflections: Reflections, options: RefinementOp
     restraint_vector = restraint_residuals(final_model, restraints)
     active = np.zeros(npar, dtype=int) if last_result is None else last_result.active_mask
     if npar:
-        jacobian = np.asarray(last_result.jac)
-        singular, vt = right_singular_system(jacobian, options.reflection_block_size)
+        final_jacobian = last_result.jac
+        singular, vt = (final_jacobian.right_basis() if use_operator else
+                        right_singular_system(final_jacobian, options.reflection_block_size))
         threshold = options.covariance_rcond * singular[0] if len(singular) else 0
         rank = int(np.count_nonzero(singular > threshold))
         estimable = vt[:rank].T
@@ -782,7 +815,8 @@ def refine(structure: Structure, reflections: Reflections, options: RefinementOp
             # 无约束残差时两者是同一矩阵，直接复用已计算的秩。
             work_rank = rank
         else:
-            work_singular, _ = right_singular_system(jacobian[:nobs], options.reflection_block_size)
+            work_singular, _ = (final_jacobian.right_basis(include_restraints=False) if use_operator else
+                                right_singular_system(final_jacobian[:nobs], options.reflection_block_size))
             work_threshold = options.covariance_rcond * work_singular[0] if len(work_singular) else 0
             work_rank = int(np.count_nonzero(work_singular > work_threshold))
         condition = float(singular[0] / singular[-1]) if rank == npar else None
@@ -819,9 +853,11 @@ def refine(structure: Structure, reflections: Reflections, options: RefinementOp
                     "restraint_parameter_evaluations": restraint_derivative_evaluations,
                     "diffraction_derivative_method": options.jacobian,
                     "numeric_backend": predictor.numeric_backend,
+                    "reflection_workers": predictor.reflection_workers,
                     "numeric_backend_requested": predictor.numeric_backend_requested,
                     "restraint_derivative_method": "central_difference" if restraints else "none",
                     "reflection_block_size": options.reflection_block_size,
+                    "jacobian_layout": "operator" if use_operator else "dense",
                     "rank_method": "streaming_QR_then_small_SVD",
                     "weighting": "sigma" if not (options.weight_a or options.weight_b) else "frozen_weight_IRLS",
                     "covariance_scaling": options.covariance_scale})

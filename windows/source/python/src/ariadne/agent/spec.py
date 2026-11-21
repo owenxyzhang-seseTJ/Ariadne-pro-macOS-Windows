@@ -75,7 +75,7 @@ def check_name(value: Any) -> str:
 
 def references(value: Any) -> set[str]:
     if isinstance(value, dict):
-        if {'path', 'sha256'} <= value.keys():
+        if 'path' in value and ('content_id' in value or 'sha256' in value):
             raise ValueError('literal artifact claims are forbidden; use $input or $ref')
         if '$ref' in value:
             if set(value) != {'$ref'} or not isinstance(value['$ref'], dict):
@@ -149,7 +149,7 @@ def validate_node(node: dict[str, Any]) -> dict[str, Any]:
 def validate_request(request: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(request, dict):
         raise ValueError('request must be an object')
-    allowed = {'schema', 'mode', 'inputs', 'nodes', 'budget', 'executables', 'planner', 'settings', 'experts', 'scheduler'}
+    allowed = {'schema', 'mode', 'inputs', 'nodes', 'budget', 'executables', 'planner', 'settings', 'experts', 'scheduler', 'cache'}
     if set(request)-allowed:
         raise ValueError('unknown request fields')
     if request.get('schema', 'ariadne-agent/1') != 'ariadne-agent/1':
@@ -200,6 +200,13 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
         raise ValueError('nodes must be a list')
     nodes = [validate_node(x) for x in request.get('nodes', [])]
     scheduler = validate_scheduler(request.get('scheduler'))
+    cache = request.get('cache')
+    if cache is not None:
+        if (not isinstance(cache, dict) or set(cache) - {'directory', 'max_mib'}
+                or not isinstance(cache.get('directory'), str) or not cache['directory']
+                or '\x00' in cache['directory']
+                or type(cache.get('max_mib', 64)) is not int or not 1 <= cache.get('max_mib', 64) <= 4096):
+            raise ValueError('cache requires a directory and an optional integer max_mib in 1..4096')
     for item in nodes:
         task_resources(item, scheduler)
     if mode == 'custom' and not nodes:

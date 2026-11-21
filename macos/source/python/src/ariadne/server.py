@@ -6,7 +6,7 @@ never accepted. A process result and a scientific acceptance are separate states
 from __future__ import annotations
 
 from contextlib import contextmanager
-import fcntl
+import argparse
 import json
 from datetime import datetime, timezone
 import math
@@ -23,6 +23,7 @@ from mcp.server.fastmcp import FastMCP
 from ariadne.contracts import (AcceptanceRecord, ArtifactText, Cancellation, Capabilities, CreatedJob,
                                Handoff, Hypothesis, JobInspection, OperationHandle, analysis_contracts, spec_for)
 from ariadne.errors import ToolError
+from ariadne.agent.util import LockBusy, exclusive_lock
 from ariadne.evidence import append_event, save_hypothesis
 
 mcp = FastMCP("Ariadne")
@@ -105,6 +106,8 @@ def worker_alive(pid):
     process = WORKERS.get(pid)
     if process is not None and process.poll() is not None:
         WORKERS.pop(pid, None)
+    if os.name == 'nt':
+        return pid_alive(pid)
     try:
         os.killpg(pid, 0)
     except ProcessLookupError:
@@ -123,6 +126,9 @@ def pid_alive(pid, group=False):
     A zombie still answers signal 0, but it is no longer doing work; treating it as
     alive would report a finished operation as running and block cancellation.
     """
+    if os.name == 'nt':
+        from .agent.windows_job import pid_alive as probe
+        return probe(pid)
     try:
         os.killpg(pid, 0) if group else os.kill(pid, 0)
     except ProcessLookupError:
@@ -150,7 +156,10 @@ def pid_alive(pid, group=False):
 
 def log_tail(path, lines=12, width=400):
     try:
-        text = path.read_text(errors='replace')
+        with path.open('rb') as stream:
+            size = stream.seek(0, os.SEEK_END)
+            stream.seek(max(0, size - max(4096, lines * width * 4)))
+            text = stream.read().decode('utf-8', errors='replace')
     except OSError:
         return []
     return [line[-width:] for line in text.rstrip().splitlines()[-lines:]]
@@ -197,26 +206,23 @@ MISSING_WORKER = {'status': 'worker_missing_requires_review',
 
 @contextmanager
 def job_lock(job):
-    with (job / '.ariadne.lock').open('a') as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise ToolError('E_BUSY', 'A worker or another mutation holds the job lock; inspect_job and retry later') from None
-        try:
+    try:
+        with exclusive_lock(job / '.ariadne.lock'):
             active = job / 'control/active.json'
             if active.exists():
                 operation = job / 'control' / read_json(active)['operation_id']
                 output = operation / 'result.json'
                 if not output.exists():
                     pid = read_json(operation / 'task.json').get('worker_pid')
-                    if not pid or worker_alive(pid) or output.exists():
+                    if not pid or worker_alive(pid):
                         raise ToolError('E_BUSY', 'A submitted operation is active; inspect its status before another mutation')
-                    # The worker died without a result: record that once so the job is not locked forever.
-                    atomic_json(output, {'operation_id': operation.name, **MISSING_WORKER})
-                    append_event(job, 'operation_worker_missing', {'operation_id': operation.name, 'worker_pid': pid})
+                    # Recheck completion after the liveness query.
+                    if not output.exists():
+                        atomic_json(output, {'operation_id': operation.name, **MISSING_WORKER})
+                        append_event(job, 'operation_worker_missing', {'operation_id': operation.name, 'worker_pid': pid})
             yield
-        finally:
-            fcntl.flock(lock, fcntl.LOCK_UN)
+    except LockBusy:
+        raise ToolError('E_BUSY', 'A worker or another mutation holds the job lock; inspect_job and retry later') from None
 
 
 @mcp.tool(annotations={'readOnlyHint': True})
@@ -282,9 +288,9 @@ are left on disk for inspection; this never deletes evidence and never accepts a
     if not isinstance(reason, str) or not reason.strip():
         raise ToolError('E_INPUT', 'Record why the operation is being cancelled')
     operation = path / 'control' / operation_id
-    with job_lock(path):
-        if not (operation / 'task.json').exists():
-            raise ToolError('E_NOT_FOUND', 'Unknown operation id for this job')
+    if not (operation / 'task.json').exists():
+        raise ToolError('E_NOT_FOUND', 'Unknown operation id for this job')
+    with exclusive_lock(operation / '.cancel.lock', blocking=True):
         if (operation / 'result.json').exists():
             raise ToolError('E_IMMUTABLE', 'Operation already finished; write a new attempt instead')
         marker = operation / TERMINAL
@@ -297,7 +303,7 @@ are left on disk for inspection; this never deletes evidence and never accepts a
         targets = [('worker', task.get('worker_pid')), ('stage', child.get('pid'))]
         signalled, warning = [], None
         for label, pid in targets:
-            if not pid:
+            if not pid or os.name == 'nt' or task.get('cancellation_mode') == 'marker':
                 continue
             try:
                 os.killpg(pid, signal.SIGTERM)
@@ -399,14 +405,16 @@ def submit_operation(path, stage, operation, argv, expected_outputs, timeout_sec
         atomic_json(control / 'command.json', command)
         task = {'schema': 'ariadne-operation/1', 'operation_id': token, 'job': str(path),
                 'stage': stage, 'workflow_script': str(script()), 'command_json': str(control / 'command.json'),
-                'timeout_seconds': timeout_seconds, 'status': 'submitted',
+                'timeout_seconds': timeout_seconds, 'status': 'submitted', 'cancellation_mode': 'marker',
                 'submitted_at': datetime.now(timezone.utc).isoformat()}
         atomic_json(control / 'task.json', task)
         atomic_json(path / 'control/active.json', {'operation_id': token})
         with (control / 'worker.log').open('wb') as log:
             try:
+                detached = ({'creationflags': subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP}
+                            if os.name == 'nt' else {'start_new_session': True})
                 process = subprocess.Popen([sys.executable, '-m', 'ariadne.worker', str(control / 'task.json')],
-                                           stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True)
+                                           stdin=subprocess.DEVNULL, stdout=log, stderr=log, **detached)
             except OSError as error:
                 atomic_json(control / 'result.json', {'status': 'launch_failed', 'error': str(error)})
                 raise
@@ -540,8 +548,17 @@ def propose_hypothesis(job: str, model_artifacts: list[str], evidence_artifacts:
                                      'relation_status': 'declared hypothesis; not independently validated'})
 
 
-def main():
-    mcp.run(transport='stdio')
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog='ariadne-mcp')
+    parser.add_argument('--transport', choices=['stdio', 'streamable-http'], default='stdio')
+    parser.add_argument('--port', type=int, default=8766)
+    args = parser.parse_args(argv)
+    if args.transport == 'streamable-http':
+        if not 1 <= args.port <= 65535:
+            parser.error('port must be in 1..65535')
+        mcp.settings.host = '127.0.0.1'
+        mcp.settings.port = args.port
+    mcp.run(transport=args.transport)
 
 
 from ariadne.agent.mcp_tools import register as _register_agent_tools

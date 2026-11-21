@@ -22,19 +22,27 @@ def propose(image, mask, *, gain, offset, readout_variance, noise_model,
         raise ValueError("Supply calibrated gain_adu_per_photon; gain is never inferred")
     if noise_model not in ("poisson", "poisson_gaussian"):
         raise ValueError("Unsupported pixel noise model")
-    if readout_variance < 0 or (noise_model == "poisson" and readout_variance != 0):
+    if not np.isfinite(offset):
+        raise ValueError("Supply a finite detector offset")
+    if not np.isfinite(readout_variance) or readout_variance < 0:
+        raise ValueError("Readout variance must be finite and nonnegative")
+    if noise_model == "poisson" and readout_variance != 0:
         raise ValueError("Readout noise requires poisson_gaussian approximation")
     if not scales or any(w < 1 or w % 2 != 1 for w in scales):
         raise ValueError("Use positive odd-pixel scales")
     if (background_width % 2 != 1 or exclusion_width % 2 != 1
             or background_width <= exclusion_width or exclusion_width < max(scales)):
         raise ValueError("Background annulus must exclude all candidate kernel supports")
-    if not 0 < min_valid_fraction <= 1 or background_iterations < 0 or score_threshold <= 0 or support_sigma < 0:
+    if (not np.isfinite([min_valid_fraction, score_threshold, support_sigma]).all()
+            or not 0 < min_valid_fraction <= 1 or background_iterations < 0
+            or score_threshold <= 0 or support_sigma < 0):
         raise ValueError("Invalid threshold settings")
-    data = (np.asarray(image, dtype=float) - offset) / gain
-    valid = np.asarray(mask, dtype=bool) & np.isfinite(data)
-    if data.ndim != 2 or valid.shape != data.shape:
+    image = np.asarray(image, dtype=float)
+    mask = np.asarray(mask, dtype=bool)
+    if image.ndim != 2 or mask.shape != image.shape:
         raise ValueError("A two-dimensional panel and matching mask are required")
+    data = (image - offset) / gain
+    valid = mask & np.isfinite(data)
     if noise_model == "poisson" and np.any(data[valid] < 0):
         raise ValueError("Negative corrected pixels contradict the selected Poisson model")
     readout = readout_variance / gain**2

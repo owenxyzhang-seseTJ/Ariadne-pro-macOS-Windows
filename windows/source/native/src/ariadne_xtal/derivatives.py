@@ -17,8 +17,10 @@ variable that changes when a trial coordinate happens to meet a special site.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from numbers import Integral
+import os
 from typing import Any
 
 import numpy as np
@@ -232,15 +234,20 @@ def _prepare_sites(model, orbits, tangents=None):
 
 
 class _StructureFactorPlan:
-    def __init__(self, structure, hkl):
+    def __init__(self, structure, hkl, cpp_block_size=None):
         self.hkl, _ = _indices(hkl)
         self.q = self.hkl @ structure.cell.reciprocal.T
         self.s2 = np.einsum("ij,ij->i", self.q, self.q) / 4
         elements = sorted({atom.element for atom in structure.atoms})
         self.element_indices = {element: i for i, element in enumerate(elements)}
-        self.form_table = (np.asarray([atomic_form_factor(element, self.s2) for element in elements])
-                           if elements else np.empty((0, len(self.hkl))))
-        self.form_factors = {element: self.form_table[i] for i, element in enumerate(elements)}
+        table = (np.asarray([atomic_form_factor(element, self.s2) for element in elements])
+                 if elements else np.empty((0, len(self.hkl))))
+        if cpp_block_size is None:
+            self.form_factors = {element: table[i] for i, element in enumerate(elements)}
+        else:
+            # Align each element-major table once for the checked native binding.
+            self.form_blocks = {start: np.ascontiguousarray(table[:, start:start + cpp_block_size])
+                                for start in range(0, len(self.hkl), cpp_block_size)}
 
     def block(self, model, sites, start, stop, npar, jacobian):
         hkl, q = self.hkl[start:stop], self.q[start:stop]
@@ -265,7 +272,7 @@ class _StructureFactorPlan:
     def intensity_block(self, model, sites, start, stop, npar, jacobian, packed=None):
         if packed is not None:
             intensity, derivative = cpp_intensity_block(
-                self.hkl[start:stop], self.q[start:stop], self.form_table[:, start:stop],
+                self.hkl[start:stop], self.q[start:stop], self.form_blocks[start],
                 packed, npar if jacobian else 0)
             return intensity, derivative if jacobian else None
         f, df = self.block(model, sites, start, stop, npar, jacobian)
@@ -300,8 +307,20 @@ class DiffractionPredictor:
         self.hkl = indices
         laws, _ = validate_twin_laws(twin_laws, parameterization.fractions,
                                      parameterization.base.cell)
-        self.plans = [_StructureFactorPlan(parameterization.base, indices @ law.T) for law in laws]
+        cpp_block_size = self.block_size if self.numeric_backend == "cpp" else None
+        self.plans = [_StructureFactorPlan(parameterization.base, indices @ law.T, cpp_block_size)
+                      for law in laws]
         self.orbits = _site_orbits(parameterization.base)
+        configured = os.environ.get("ARIADNE_CPU_THREADS")
+        if configured is None:
+            work = len(self.hkl) * len(self.plans) * sum(map(len, self.orbits))
+            budget = min(4, os.cpu_count() or 1) if work >= 350_000 else 1
+        else:
+            budget = int(configured) if configured.isascii() and configured.isdigit() and len(configured) <= 4 else 1
+        self.reflection_workers = (max(1, min(budget, (len(self.hkl) + self.block_size - 1) // self.block_size, 16))
+                                   if self.numeric_backend == "cpp" and len(self.hkl) >= 2 * self.block_size else 1)
+        self._pool = (ThreadPoolExecutor(max_workers=self.reflection_workers, thread_name_prefix="diffraction")
+                      if self.reflection_workers > 1 else None)
         self._last_values = None
         self._last_result = None
         self.evaluations = 0
@@ -323,14 +342,15 @@ class DiffractionPredictor:
                     "declare the new special-position model and restart refinement"
                 )
 
-    def evaluate(self, values, jacobian=True):
+    def _values(self, values):
         values = np.asarray(values, dtype=float)
         if values.shape != (len(self.parameterization.names),) or not np.isfinite(values).all():
             raise ValueError("native parameter vector has invalid shape or nonfinite values")
-        if (self._last_values is not None and np.array_equal(values, self._last_values)
-                and (not jacobian or self._last_result[2] is not None)):
-            return (self._last_result if jacobian else
-                    (self._last_result[0], self._last_result[1], None))
+        return values
+
+    def prepare_blocks(self, values, *, jacobian=True):
+        """Prepare one parameter point and return a callable yielding fresh reflection blocks."""
+        values = self._values(values)
         model, scale, fractions = self.parameterization.unpack(values)
         npar, nobs = len(values), len(self.hkl)
         derivatives = (parameter_differentials(self.parameterization, values, model, scale, fractions)
@@ -338,20 +358,19 @@ class DiffractionPredictor:
         sites = _prepare_sites(model, self.orbits, None if derivatives is None else derivatives.atoms)
         packed = (pack_sites(model, sites, self.plans[0].element_indices)
                   if self.numeric_backend == "cpp" else None)
-        intensity = np.zeros(nobs)
-        total_jacobian = np.zeros((nobs, npar)) if jacobian else None
         if jacobian:
             fraction_columns = [np.flatnonzero(direction) for direction in derivatives.fractions]
             scale_columns = np.flatnonzero(derivatives.scale)
-        for start in range(0, nobs, self.block_size):
+
+        def evaluate_block(start, output_jacobian):
             stop = min(start + self.block_size, nobs)
             mixture = np.zeros(stop - start)
+            dmixture = None
             if jacobian:
-                # Accumulate directly in the final real output, rather than
-                # retaining an additional B x P mixture and broadcast copies.
-                dmixture = total_jacobian[start:stop]
+                dmixture = (np.zeros((stop - start, npar)) if output_jacobian is None
+                            else output_jacobian[start:stop])
             for domain, (plan, fraction) in enumerate(zip(self.plans, fractions)):
-                if fraction == 0 and (not jacobian or not np.any(derivatives.fractions[domain])):
+                if fraction == 0 and (not jacobian or not len(fraction_columns[domain])):
                     continue
                 power, derivative = plan.intensity_block(model, sites, start, stop, npar, jacobian, packed)
                 mixture += fraction * power
@@ -361,13 +380,40 @@ class DiffractionPredictor:
                     columns = fraction_columns[domain]
                     if len(columns):
                         dmixture[:, columns] += power[:, None] * derivatives.fractions[domain, columns]
-            intensity[start:stop] = scale * mixture
             if jacobian:
                 dmixture *= scale
                 if len(scale_columns):
                     dmixture[:, scale_columns] += mixture[:, None] * derivatives.scale[scale_columns]
-        if not np.isfinite(intensity).all() or (jacobian and not np.isfinite(total_jacobian).all()):
-            raise ValueError("nonfinite native diffraction prediction or derivative")
+            mixture *= scale
+            if not np.isfinite(mixture).all() or (jacobian and not np.isfinite(dmixture).all()):
+                raise ValueError("nonfinite native diffraction prediction or derivative")
+            return slice(start, stop), mixture, dmixture
+
+        def blocks(output_jacobian=None):
+            stride = self.block_size * self.reflection_workers
+            for batch in range(0, nobs, stride):
+                starts = range(batch, min(batch + stride, nobs), self.block_size)
+                if self._pool is None:
+                    for start in starts:
+                        yield evaluate_block(start, output_jacobian)
+                else:
+                    futures = [self._pool.submit(evaluate_block, start, output_jacobian) for start in starts]
+                    for future in futures:
+                        yield future.result()
+
+        return model, blocks
+
+    def evaluate(self, values, jacobian=True):
+        values = self._values(values)
+        if (self._last_values is not None and np.array_equal(values, self._last_values)
+                and (not jacobian or self._last_result[2] is not None)):
+            return (self._last_result if jacobian else
+                    (self._last_result[0], self._last_result[1], None))
+        model, blocks = self.prepare_blocks(values, jacobian=jacobian)
+        intensity = np.empty(len(self.hkl))
+        total_jacobian = np.zeros((len(self.hkl), len(values))) if jacobian else None
+        for rows, power, _ in blocks(total_jacobian):
+            intensity[rows] = power
         self.evaluations += 1
         self.jacobian_evaluations += int(jacobian)
         self._last_values = values.copy()
@@ -394,9 +440,19 @@ def right_singular_system(jacobian, block_size=1024):
     if not nobs:
         return np.empty(0), np.eye(npar)
     block_size = max(int(block_size), npar)
+    return right_singular_blocks((jacobian[start:start + block_size]
+                                  for start in range(0, nobs, block_size)), npar)
+
+
+def right_singular_blocks(blocks, npar):
+    """Accumulate only QR factors, then determine the complete right basis."""
     triangular = np.empty((0, npar))
-    for start in range(0, nobs, block_size):
-        stacked = np.concatenate((triangular, jacobian[start:start + block_size]), axis=0)
+    for block in blocks:
+        if not len(block):
+            continue
+        stacked = np.concatenate((triangular, block), axis=0)
         triangular = qr(stacked, mode="r", overwrite_a=True, check_finite=False)[0][:npar].copy()
+    if not len(triangular):
+        return np.empty(0), np.eye(npar)
     _, singular, vt = np.linalg.svd(triangular, full_matrices=True)
     return singular, vt

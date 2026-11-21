@@ -111,6 +111,8 @@ def refine_observations(structure: Structure, groups, options=None, *,
     options = RefinementOptions() if options is None else (
         RefinementOptions(**options) if isinstance(options, dict) else copy.deepcopy(options))
     options.validate()
+    if options.jacobian_layout != "dense":
+        raise ValueError("joint refinement requires dense Jacobian layout")
     if options.twin_laws or options.refine_twin_fractions or options.twin_fractions is not None:
         raise ValueError("Explicit component domains replace merohedral twin_laws in this interface")
     if options.weight_a or options.weight_b or options.covariance_scale != "absolute":
@@ -137,13 +139,16 @@ def refine_observations(structure: Structure, groups, options=None, *,
     constraints = _validate_constraints(structure, constraints)
     restraints = normalize_restraints(restraints)
     hkl = np.concatenate([g.hkl for g in work])
-    slices, cursor = [], 0
+    layout, component_start, mode_start = [], 0, 0
     for g in work:
-        slices.append(slice(cursor, cursor+len(g.hkl)))
-        cursor += len(g.hkl)
+        component_stop = component_start + len(g.hkl)
+        mode_stop = mode_start + len(g.z)
+        layout.append((g, slice(component_start, component_stop), slice(mode_start, mode_stop)))
+        component_start, mode_start = component_stop, mode_stop
+    work_rows = mode_start
     base = calculated_intensities(structure, hkl)
     forward = np.concatenate([g.R @ (g.coefficients*fractions[g.domain_ids]*base[s])
-                              for g, s in zip(work, slices)])
+                              for g, s, _ in layout])
     target = np.concatenate([g.z for g in work])
     if options.scale is None:
         denominator = float(forward @ forward)
@@ -163,43 +168,50 @@ def refine_observations(structure: Structure, groups, options=None, *,
         lower, upper = np.r_[lower, np.full(ndomain-1, -30.)], np.r_[upper, np.full(ndomain-1, 30.)]
         names += [f"domain_logit[{i}]" for i in range(1, ndomain)]
     predictor = DiffractionPredictor(parameterization, hkl, block_size=options.reflection_block_size)
-    evaluations = 0
+    evaluations = cache_hits = 0
+    last_x = last_result = None
 
     def evaluate(x, with_jacobian=True):
-        nonlocal evaluations
+        nonlocal evaluations, cache_hits, last_x, last_result
+        if (last_x is not None and np.array_equal(x, last_x)
+                and (not with_jacobian or last_result[1] is not None)):
+            cache_hits += 1
+            return last_result if with_jacobian else (last_result[0], None)
         evaluations += 1
         model, prediction, derivative = predictor.evaluate(x[:nbase], jacobian=with_jacobian)
         alpha = softmax(np.r_[0., x[nbase:]]) if free_domains else fractions
-        dalpha = (np.diag(alpha)-np.outer(alpha, alpha))[:, 1:]
-        residuals, jacobians = [], []
-        for group, section in zip(work, slices):
-            multiplier = group.coefficients * alpha[group.domain_ids]
-            residuals.append(group.R @ (multiplier*prediction[section]) - group.z)
-            if with_jacobian:
-                jac = group.R @ (multiplier[:, None]*derivative[section])
-                if free_domains:
-                    other = group.R @ ((group.coefficients*prediction[section])[:, None]*dalpha[group.domain_ids])
-                    jac = np.column_stack([jac, other])
-                jacobians.append(jac)
+        dalpha = ((np.diag(alpha)-np.outer(alpha, alpha))[:, 1:]
+                  if free_domains and with_jacobian else None)
         restraint_vector = restraint_residuals(model, restraints)
-        residuals.append(restraint_vector)
+        nrows = work_rows + len(restraint_vector)
+        residual = np.empty(nrows)
+        residual[work_rows:] = restraint_vector
+        jacobian = np.empty((nrows, len(x))) if with_jacobian else None
+        for group, section, rows in layout:
+            multiplier = group.coefficients * alpha[group.domain_ids]
+            residual[rows] = group.R @ (multiplier*prediction[section]) - group.z
+            if with_jacobian:
+                jacobian[rows, :nbase] = group.R @ (multiplier[:, None]*derivative[section])
+                if free_domains:
+                    jacobian[rows, nbase:] = group.R @ (
+                        (group.coefficients*prediction[section])[:, None]*dalpha[group.domain_ids])
         if with_jacobian and len(restraint_vector):
             # Diffraction derivatives are exact. Geometric restraints retain
             # independent central differences in the constrained coordinates.
-            jr = np.zeros((len(restraint_vector), len(x)))
+            jacobian[work_rows:, nbase:] = 0.
             for j in range(nbase):
                 step = np.cbrt(np.finfo(float).eps)*max(1., abs(x[j]))
                 plus, minus = x[:nbase].copy(), x[:nbase].copy()
                 plus[j] += step
                 minus[j] -= step
-                jr[:, j] = (restraint_residuals(parameterization.unpack(plus)[0], restraints)
-                            - restraint_residuals(parameterization.unpack(minus)[0], restraints))/(2*step)
-            jacobians.append(jr)
-        return np.concatenate(residuals), (np.vstack(jacobians) if with_jacobian else None)
+                jacobian[work_rows:, j] = (restraint_residuals(parameterization.unpack(plus)[0], restraints)
+                                         - restraint_residuals(parameterization.unpack(minus)[0], restraints))/(2*step)
+        last_x, last_result = x.copy(), (residual, jacobian)
+        return last_result
 
-    initial = evaluate(values, False)[0]
+    analytic = options.jacobian == "analytic"
+    initial = evaluate(values, analytic and len(values) > 0)[0]
     if len(values):
-        analytic = options.jacobian == "analytic"
         fit = least_squares(lambda x: evaluate(x, analytic)[0], values,
                             jac=(lambda x: evaluate(x, True)[1]) if analytic else "3-point", bounds=(lower, upper),
                             method="trf", x_scale="jac", max_nfev=options.max_nfev,
@@ -211,7 +223,7 @@ def refine_observations(structure: Structure, groups, options=None, *,
     model, scale, _ = parameterization.unpack(values[:nbase])
     predictor.validate_site_multiplicities(model)
     alpha = softmax(np.r_[0., values[nbase:]]) if free_domains else fractions
-    singular, vt = right_singular_system(jacobian)
+    singular, vt = right_singular_system(jacobian, options.reflection_block_size)
     rank = int(np.count_nonzero(singular > options.covariance_rcond*singular[0])) if len(singular) else 0
     estimable = vt[:rank].T
     pseudo = (estimable/singular[:rank]**2) @ estimable.T if rank else np.zeros((len(values), len(values)))
@@ -238,14 +250,20 @@ def refine_observations(structure: Structure, groups, options=None, *,
         else:
             fraction_status.append("estimable")
             fraction_uncertainties.append(float(np.sqrt(max(gradient @ pseudo @ gradient, 0.))))
-    work_rows = sum(len(g.z) for g in work)
-    work_singular, _ = right_singular_system(jacobian[:work_rows])
-    work_rank = (int(np.count_nonzero(work_singular > options.covariance_rcond*work_singular[0]))
-                 if len(work_singular) else 0)
+    work_rank = rank
+    if work_rows != len(jacobian):
+        work_singular, _ = right_singular_system(jacobian[:work_rows], options.reflection_block_size)
+        work_rank = (int(np.count_nonzero(work_singular > options.covariance_rcond*work_singular[0]))
+                     if len(work_singular) else 0)
     scores = {role: {"chi_squared": 0., "compressed_modes": 0, "groups": 0} for role in ("work", "selection", "audit")}
     group_diagnostics = []
+    final_hkl = np.concatenate([group.hkl for group in groups])
+    all_intensities = calculated_intensities(model, final_hkl, scale=scale)
+    cursor = 0
     for group in groups:
-        intensity = calculated_intensities(model, group.hkl, scale=scale)
+        stop = cursor + len(group.hkl)
+        intensity = all_intensities[cursor:stop]
+        cursor = stop
         component_prediction = group.coefficients*alpha[group.domain_ids]*intensity
         difference = group.R @ component_prediction - group.z
         chi2 = float(difference @ difference + group.residual_constant)
@@ -277,6 +295,7 @@ def refine_observations(structure: Structure, groups, options=None, *,
                         "scores": scores, "groups": group_diagnostics,
                         "jacobian_rank": rank, "n_parameters": len(values),
                         "diffraction_jacobian_rank": work_rank,
+                        "joint_evaluation_cache_hits": cache_hits,
                         "identifiable": identifiable, "singular_values": singular,
                         "nullspace": vt[rank:], "covariance": covariance,
                         "normal_matrix_pseudoinverse": pseudo, "warnings": warnings,
@@ -284,6 +303,7 @@ def refine_observations(structure: Structure, groups, options=None, *,
                         "diffraction_evaluations": predictor.evaluations,
                         "diffraction_derivative_method": options.jacobian,
                         "numeric_backend": predictor.numeric_backend,
+                        "reflection_workers": predictor.reflection_workers,
                         "numeric_backend_requested": predictor.numeric_backend_requested,
                         "uncertainty_conditioning": "Fixed geometry, profiles, calibration, Gaussian variances and background basis",
                         "component_intensities_were_detwinned": False})

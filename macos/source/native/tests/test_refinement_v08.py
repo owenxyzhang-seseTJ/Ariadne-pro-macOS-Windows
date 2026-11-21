@@ -185,6 +185,50 @@ def test_noisy_restraint_and_diffraction_solution_matches_numeric_mode():
     assert exact.metrics["restraint_derivative_method"] == "central_difference"
 
 
+def test_block_operator_preserves_the_fitted_objective_and_rank(monkeypatch):
+    from ariadne_xtal.block_jacobian import BlockJacobian
+
+    generator = np.random.default_rng(113)
+    dense = generator.normal(size=(13, 4))
+    operator = BlockJacobian(lambda: iter([(slice(0, 5), dense[:5]), (slice(5, 11), dense[5:11])]),
+                             11, 4, dense[11:])
+    x, y = generator.normal(size=4), generator.normal(size=13)
+    assert y @ (operator @ x) == pytest.approx(x @ (operator.T @ y), abs=1e-13)
+    assert np.allclose(operator.right_basis()[0], np.linalg.svd(dense, compute_uv=False))
+
+    start, data = _operator_fixture()
+    options = dict(reflection_block_size=37, max_nfev=100)
+    dense_fit = refine(start, data, RefinementOptions(**options))
+    original = DiffractionPredictor.evaluate
+
+    def reject_dense(self, values, jacobian=True):
+        assert not jacobian, "operator refinement materialized a dense Jacobian"
+        return original(self, values, jacobian=False)
+
+    monkeypatch.setattr(DiffractionPredictor, "evaluate", reject_dense)
+    fit = refine(start, data, RefinementOptions(jacobian_layout="operator", **options))
+    assert dense_fit.success and fit.success
+    assert fit.metrics["jacobian_layout"] == "operator"
+    assert fit.metrics["jacobian_rank"] == dense_fit.metrics["jacobian_rank"]
+    assert fit.metrics["chi_squared"] == pytest.approx(dense_fit.metrics["chi_squared"], rel=1e-8, abs=1e-9)
+    assert np.allclose(fit.metrics["jacobian_condition"], dense_fit.metrics["jacobian_condition"], rtol=1e-5)
+
+
+def _operator_fixture():
+    truth = Structure(Cell(9., 10., 11., 81., 89., 101.), [
+        Atom("Zn1", "Zn", [.12, .17, .20], u_iso=.024),
+        Atom("O1", "O", [.30, .48, .54], u_iso=.032),
+        Atom("C1", "C", [.49, .64, .29], u_iso=.025),
+    ])
+    hkls = np.array([(h, k, l) for h in range(1, 4) for k in range(-3, 4) for l in range(-3, 4)])
+    signal = calculated_intensities(truth, hkls, scale=1.25)
+    generator = np.random.default_rng(922)
+    data = Reflections(hkls, signal + generator.normal(0, 4., len(signal)), np.full(len(signal), 4.))
+    start = copy.deepcopy(truth)
+    start.atoms[1].frac += [.02, -.01, .011]
+    return start, data
+
+
 def test_predictor_cache_and_option_validation():
     model, options, constraints = _case("oblique_anomalous")
     parameters, values, laws = _parameterization(model, options, constraints)

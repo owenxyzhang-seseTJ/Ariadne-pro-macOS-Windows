@@ -140,6 +140,25 @@ def test_joint_chain_rule_against_function_differences(monkeypatch):
     assert result["success"] and len(comparisons) == 1
 
 
+def test_joint_reuses_group_assembly_and_diffraction_rank(monkeypatch):
+    case = make_joint_case(limit=2)
+    real_qr = joint_refinement.right_singular_system
+    matrices = []
+
+    def track_qr(matrix, block_size=1024):
+        matrices.append(matrix.shape)
+        return real_qr(matrix, block_size)
+
+    monkeypatch.setattr(joint_refinement, "right_singular_system", track_qr)
+    fit = refine_observations(case["start"], case["groups"], domain_fractions=case["fractions"],
+                              refine_domain_fractions=True, phase_relation="same_phase_supported")
+    assert fit["success"]
+    assert fit["joint_evaluation_cache_hits"] >= 2
+    assert fit["evaluation_count"] == fit["diffraction_evaluations"]
+    assert len(matrices) == 1
+    assert fit["diffraction_jacobian_rank"] == fit["jacobian_rank"]
+
+
 def test_numerical_comparison_mode_converges_to_the_same_joint_objective():
     case = make_joint_case(limit=2)
     shared = dict(domain_fractions=[.55, .45], refine_domain_fractions=True,

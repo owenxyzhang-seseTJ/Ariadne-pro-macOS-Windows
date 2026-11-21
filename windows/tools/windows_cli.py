@@ -1,6 +1,8 @@
 """Ariadne pro Windows 的计算入口，直接调用原生数值 API。"""
 import argparse
 import json
+import importlib.util
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -9,6 +11,17 @@ import sys
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "python":
         return subprocess.call([sys.executable, *sys.argv[2:]])
+    if len(sys.argv) > 1 and sys.argv[1] in {"agent", "mcp"}:
+        os.environ.setdefault("ARIADNE_PLUGIN_ROOT", str(Path(__file__).resolve().parents[1] / "source"))
+        if sys.argv[1] == "agent":
+            from ariadne.agent.cli import main as agent_main
+            return agent_main(sys.argv[2:])
+        import site
+        overlay = Path(__file__).resolve().parents[1] / "overlay"
+        if overlay.is_dir():
+            site.addsitedir(str(overlay))
+        from ariadne.server import main as serve_mcp
+        return serve_mcp(sys.argv[2:])
     parser = argparse.ArgumentParser(prog="ariadne-pro-win", description="Ariadne pro Windows 0.8.0 原生计算版")
     commands = parser.add_subparsers(dest="command")
     commands.add_parser("capabilities", help="显示数值内核与 Windows 支持边界")
@@ -27,10 +40,10 @@ def main():
         result["product"] = "Ariadne pro Windows"
         result["variant"] = "win-x86_64-localopt1"
         result["numeric_kernel"] = kernel_status()
-        result["native"]["agent"] = "本 Windows 入口直接提供数值能力；POSIX 常驻调度与父层 MCP 尚未移植。"
         result["windows_support"] = {"native_numerical_core": True,
-            "persistent_agent": False, "parent_mcp_server": False,
-            "reason": "上层锁与任务进程管理仍依赖 POSIX；本入口提供原生 Windows 计算功能。"}
+            "persistent_agent": importlib.util.find_spec("ariadne") is not None,
+            "parent_mcp_server": importlib.util.find_spec("mcp") is not None,
+            "process_isolation": "Windows Job Objects"}
     else:
         if args.output.exists():
             raise FileExistsError(f"输出目录已存在，停止以保护已有结果：{args.output}")

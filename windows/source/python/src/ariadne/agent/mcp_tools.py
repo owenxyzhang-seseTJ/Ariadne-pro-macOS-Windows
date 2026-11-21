@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field
-from . import engine
+from . import async_runs, engine
 
 
 class Reply(BaseModel):
@@ -44,3 +44,23 @@ def register(mcp):
     @mcp.tool()
     def agent_export(session: str, destination: str, include_inputs: bool = False) -> Reply:
         return Reply(data=engine.export_session(session, destination, include_inputs=include_inputs))
+
+    @mcp.tool()
+    def agent_submit(session: str, request_key: str, max_steps: int | None = None) -> Reply:
+        """Start a detached bounded run. Reusing the same request_key returns its run id."""
+        return Reply(data=async_runs.submit(session, request_key, max_steps))
+
+    @mcp.tool(annotations={'readOnlyHint': True})
+    def agent_run_status(session: str, run_id: str) -> Reply:
+        """Read a detached run by its stable identifier."""
+        return Reply(data=async_runs.status(session, run_id))
+
+    @mcp.tool(annotations={'readOnlyHint': True})
+    def agent_events(session: str, after: int = 0, limit: int = 100) -> Reply:
+        """Read a bounded page of scientific state events from a session cursor."""
+        return Reply(data=async_runs.events(session, after, limit))
+
+    @mcp.tool()
+    def agent_cancel_run(session: str, run_id: str) -> Reply:
+        """Request cancellation only while the identified detached run is active."""
+        return Reply(data=async_runs.cancel(session, run_id))

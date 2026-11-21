@@ -9,7 +9,7 @@ import subprocess
 import time
 from typing import Callable
 
-from .util import atomic_json, now, file_hash
+from .util import atomic_json, content_id, now
 
 
 THREAD_VARIABLES = ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS',
@@ -29,6 +29,9 @@ def thread_environment(cpu_threads=1, *, base=None):
 
 def stop_process_group(child, *, grace=0.3):
     """Terminate a session-owned group, wait for its leader, kill stragglers."""
+    if os.name == 'nt':
+        child.stop()
+        return
     try:
         os.killpg(child.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -42,6 +45,16 @@ def stop_process_group(child, *, grace=0.3):
     except ProcessLookupError:
         pass
     child.wait()
+
+
+def spawn_owned(argv, *, own_tree=True, **kwargs):
+    """Start a group with an owning handle, or launch inside its existing owner."""
+    if os.name == 'nt':
+        if own_tree:
+            from .windows_job import OwnedProcess
+            return OwnedProcess(argv, **kwargs)
+        return subprocess.Popen(argv, stdin=subprocess.DEVNULL, **kwargs)
+    return subprocess.Popen(argv, stdin=subprocess.DEVNULL, start_new_session=own_tree, **kwargs)
 
 
 class Cancelled(RuntimeError):
@@ -73,13 +86,13 @@ def run_process(argv: list[str], directory: Path, timeout: float, cancelled: Cal
     managed = os.environ.get('ARIADNE_MANAGED_ACTION') == '1'
     atomic_json(directory/(label+'.command.json'), {'argv': argv, 'started': now(), 'timeout': timeout,
                 'cpu_threads': cpu_threads, 'thread_environment': {key: environment[key] for key in THREAD_VARIABLES},
-                'executable_sha256': file_hash(Path(argv[0]).resolve())})
+                'executable_content_id': content_id(Path(argv[0]).resolve())})
     stdout = directory/(label+'.stdout.log')
     stderr = directory/(label+'.stderr.log')
     started = time.monotonic()
     with stdout.open('wb') as out, stderr.open('wb') as err:
-        child = subprocess.Popen(argv, cwd=directory, stdout=out, stderr=err,
-                                 stdin=subprocess.DEVNULL, shell=False, start_new_session=not managed, env=environment)
+        child = spawn_owned(argv, cwd=directory, stdout=out, stderr=err,
+                            own_tree=not managed, env=environment)
         try:
             if on_pid:
                 on_pid(child.pid)

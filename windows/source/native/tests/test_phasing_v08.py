@@ -177,6 +177,22 @@ def test_hybrid_phases_do_not_depend_on_arbitrary_intensity_units():
         assert np.allclose(xyz_a, xyz_b, atol=1e-8)
 
 
+def test_screened_phasing_preserves_reference_data_and_rechecks_a_rejection():
+    from ariadne_xtal.screened_phasing import screened_phase_search
+
+    truth, data = _recovery_case().make_case()
+    before = data.to_dict()
+    options = PhasingOptions(algorithm="hybrid", trials=3, iterations=75, keep=1)
+    result = screened_phase_search(truth.cell, data, ["C"] * 4, options, coarse_iterations=15,
+                                   promoted=1, random_promotions=0, inspected_rejections=1)
+    assert len(result["screening"]) == 3
+    assert result["coarse_work_reflections"] < result["full_work_reflections"]
+    assert result["iteration_budget"] == 3*15 + 2*75
+    assert [x["promoted"] for x in result["trial_diagnostics"]] == [True, False]
+    assert all(x["backend"] == "cpu_float64" for x in result["trial_diagnostics"])
+    assert data.to_dict() == before
+
+
 def test_hybrid_blind_recovery_then_signed_f_squared_refinement():
     module = _recovery_case()
     truth, clean = module.make_case()

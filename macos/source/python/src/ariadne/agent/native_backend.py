@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .backends import invoke
 from .process import executable
-from .util import artifact, artifact_path, atomic_json, file_hash, read_json
+from .util import artifact, artifact_identity, artifact_path, atomic_json, content_id, read_json
 
 
 def run_native(ctx, args):
@@ -22,7 +22,8 @@ def run_native(ctx, args):
         if not isinstance(name, str) or not name or Path(name).name != name or name in {".", "..", "request.json", "runs"}:
             raise ValueError("Native input names must be ordinary flat filenames")
         shutil.copyfile(artifact_path(ctx.root, record), target/name)
-        if file_hash(target/name) != record["sha256"]:
+        identity = artifact_identity(record)
+        if content_id(target/name, identity.partition(':')[0]) != identity:
             raise RuntimeError("Native input changed while making its isolated snapshot")
     atomic_json(target/"request.json", request)
     python = executable("scientific_python", {

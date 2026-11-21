@@ -2,22 +2,22 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import fcntl
 import json
 from pathlib import Path
 import socket
 import uuid
+
+from .agent.util import exclusive_lock
 
 
 def append_event(job, kind, payload):
     record = {'schema': 'ariadne-event/1', 'id': uuid.uuid4().hex,
               'created': datetime.now(timezone.utc).isoformat(), 'kind': kind,
               'host': socket.gethostname(), 'software': 'Ariadne 0.8.0-native-20261108 / target DIALS 3.30.1', 'payload': payload}
-    with (Path(job) / 'events.jsonl').open('a') as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX)
-        handle.write(json.dumps(record, ensure_ascii=False, allow_nan=False) + '\n')
-        handle.flush()
-        fcntl.flock(handle, fcntl.LOCK_UN)
+    path = Path(job) / 'events.jsonl'
+    with exclusive_lock(path.with_suffix('.lock'), blocking=True):
+        with path.open('a', encoding='utf-8') as handle:
+            handle.write(json.dumps(record, ensure_ascii=False, allow_nan=False) + '\n')
     return record['id']
 
 

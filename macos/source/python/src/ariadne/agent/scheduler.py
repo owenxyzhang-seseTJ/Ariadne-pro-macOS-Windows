@@ -16,7 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .actions import collect_artifacts
-from .process import stop_process_group, thread_environment
+from .planner import choose as default_choose
+from .process import spawn_owned, stop_process_group, thread_environment
 from .spec import task_resources
 from .util import artifact_path, atomic_json, read_json
 
@@ -29,7 +30,7 @@ class ActiveAction:
     resources: dict
     started: float
     deadline: float
-    guardian: int
+    guardian: int | None
     stdout: object
     stderr: object
 
@@ -68,8 +69,11 @@ class PlannerCall:
                 self.mailbox.put((False, error))
         # Network timeouts remain bounded by planner config. A cancelled run
         # can discard its reply without letting a late decision launch work.
-        self.thread = threading.Thread(target=work, daemon=True)
-        self.thread.start()
+        self.inline = choose is default_choose and config.get('kind', 'deterministic') == 'deterministic'
+        if self.inline:
+            work()
+        else:
+            threading.Thread(target=work, daemon=True).start()
 
     def poll(self):
         try:
@@ -92,13 +96,15 @@ def _launch(store, node, arguments, resources, remaining):
         source = str(Path(__file__).resolve().parents[2])
         python_path = [source] + [str(Path(p).resolve()) for p in environment.get('PYTHONPATH', '').split(os.pathsep) if p]
         environment['PYTHONPATH'] = os.pathsep.join(dict.fromkeys(python_path))
-        reader, writer = os.pipe()
         stdout = (work/'worker.stdout.log').open('wb')
         stderr = (work/'worker.stderr.log').open('wb')
-        process = subprocess.Popen([sys.executable, '-m', 'ariadne.agent.action_worker',
-                                    str(work/'worker.input.json'), str(reader)], cwd=work,
-                                   stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
-                                   env=environment, start_new_session=True, pass_fds=(reader,))
+        argv = [sys.executable, '-m', 'ariadne.agent.action_worker', str(work/'worker.input.json')]
+        launch_options = {}
+        if os.name == 'posix':
+            reader, writer = os.pipe()
+            argv.append(str(reader))
+            launch_options['pass_fds'] = (reader,)
+        process = spawn_owned(argv, cwd=work, stdout=stdout, stderr=stderr, env=environment, **launch_options)
         store.db.execute('UPDATE attempts SET worker_pid=? WHERE node=? AND number=?',
                          (process.pid, node['id'], store.node(node['id'])['attempts']))
         store.event('resources_admitted', {'node': node['id'], 'worker_pid': process.pid,
@@ -141,20 +147,21 @@ def _settle(store, active, forced=None):
             store.finish(active.key, 'failed', time.monotonic()-active.started,
                          error=f'{type(error).__name__}: {error}')
     finally:
-        os.close(active.guardian)
+        if active.guardian is not None:
+            os.close(active.guardian)
         active.stdout.close()
         active.stderr.close()
 
 
 def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                  capabilities, experts, validate_inputs):
-    if os.name != 'posix':
-        raise RuntimeError('isolated local DAG scheduling requires Linux, macOS or WSL')
     request = store.get('request')
     budget = request['budget']
     pool = ResourcePool(configuration)
     active, planning, launched = {}, None, 0
     stopping = False
+    frontier_changed = True
+    ready_nodes = {}
     try:
         while True:
             now = time.monotonic()
@@ -174,8 +181,12 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                     _settle(store, action, forced)
                     pool.release(key)
                     del active[key]
-            expand(store)
-            store.propagate_failures()
+                    frontier_changed = True
+            if frontier_changed:
+                expand(store)
+                store.propagate_failures()
+                ready_nodes = {key: task_resources(store.node(key), configuration) for key in store.ready()}
+                frontier_changed = False
             if planning is not None:
                 reply = planning.poll()
                 if stopping or reply is not None:
@@ -197,6 +208,7 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                             if len(store.summaries()) >= budget['max_actions']:
                                 raise RuntimeError('proposed graph exceeds action budget')
                             store.add_nodes([proposed])
+                            frontier_changed = True
                         else:
                             key = decision.get('node')
                             if key not in store.ready():
@@ -215,25 +227,28 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                                 pool.acquire(key, resources)
                                 active[key] = action
                             launched += 1
+                            frontier_changed = True
             count_limit = ((max_steps is not None and launched >= max_steps)
                            or store.get('actions_used') >= budget['max_actions']
                            or store.get('decisions_used') >= budget['max_decisions'])
             if count_limit and planning is None:
                 stopping = True
-            if not stopping and planning is None:
-                observation = store.snapshot()
-                ready = [key for key in observation['ready'] if pool.fits(task_resources(store.node(key), configuration))]
+            if not stopping and planning is None and not frontier_changed:
+                ready = [key for key, resources in ready_nodes.items() if pool.fits(resources)]
                 if ready:
-                    observation['ready'] = ready
-                    observation['resource_reservations'] = dict(pool.allocations)
                     config = dict(request['planner'])
+                    observation = ({'ready': ready} if choose is default_choose and config.get('kind') == 'deterministic'
+                                   else {**store.snapshot(), 'ready': ready,
+                                         'resource_reservations': dict(pool.allocations)})
                     config['timeout_seconds'] = min(config.get('timeout_seconds', 45),
                                                     budget['wall_seconds']-store.wall_elapsed())
                     if config['timeout_seconds'] > 0:
                         planning = PlannerCall(choose, config, observation, capabilities, experts)
                         store.set('decisions_used', store.get('decisions_used')+1)
-            if not active and planning is None and (stopping or not store.ready()):
+            if not active and planning is None and (stopping or (not frontier_changed and not ready_nodes)):
                 break
+            if frontier_changed or (planning is not None and planning.inline):
+                continue
             time.sleep(.02)
     finally:
         if planning is not None:

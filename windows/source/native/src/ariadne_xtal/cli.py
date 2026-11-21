@@ -15,6 +15,10 @@ def main(argv=None):
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("capabilities", help="Print implemented capabilities and explicit boundaries")
+    counts = sub.add_parser("count-refine", help="Experimental refinement against calibrated Poisson pixel groups")
+    counts.add_argument("structure", type=Path)
+    counts.add_argument("groups", type=Path, help="JSON list of CountStructureGroup specifications")
+    counts.add_argument("--options", type=Path, help="JSON file containing native refinement options")
     run = sub.add_parser("run", help="Run one structured JSON job in a workspace")
     run.add_argument("request", help="JSON request file; '-' reads stdin")
     run.add_argument("--root", default=".")
@@ -40,6 +44,13 @@ def main(argv=None):
     try:
         if args.command == "capabilities":
             result = capabilities()
+        elif args.command == "count-refine":
+            from .count_refinement import refine_count_observations
+            from .io import read_structure
+
+            groups = json.loads(args.groups.read_text(encoding="utf-8"))
+            options = json.loads(args.options.read_text(encoding="utf-8")) if args.options else None
+            result = refine_count_observations(read_structure(args.structure), groups, options)
         else:
             legacy = {name: getattr(args, name) for name in ("shelxt", "shelxl") if getattr(args, name, None)}
             workspace = AgentWorkspace(args.root, legacy)
@@ -64,7 +75,7 @@ def main(argv=None):
                     request["scale"] = args.scale
             result = workspace.dispatch(request)
         print(json.dumps(json_safe(result), ensure_ascii=False, indent=2, allow_nan=False))
-        return 1 if result.get("ok") is False else 0
+        return 1 if result.get("ok") is False or (args.command == "count-refine" and not result["success"]) else 0
     except Exception as error:
         print(json.dumps({"ok": False, "error": {"type": type(error).__name__, "message": str(error)}}))
         return 1

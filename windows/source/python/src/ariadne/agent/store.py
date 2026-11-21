@@ -4,11 +4,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sqlite3
+import tempfile
 import time
 from typing import Any
 
 from .spec import TERMINAL, task_resources, validate_node, validate_scheduler
-from .util import digest, dumps, now
+from .util import CONTENT_ALGORITHM, digest, dumps, now
 
 
 class Store:
@@ -40,24 +41,31 @@ class Store:
             self.set('cancel_requested', False)
             self.set('actions_used', 0)
             self.set('decisions_used', 0)
+            self.set('digest_algorithm', CONTENT_ALGORITHM)
         if self.get('schema') != 'ariadne-agent-state/1':
             raise ValueError('unsupported state schema')
+        self.digest_algorithm = self.get('digest_algorithm', 'sha256')
         # Additive migration: old event definitions and result hashes stay valid.
-        self.db.execute('BEGIN IMMEDIATE')
-        try:
-            columns = {row['name'] for row in self.db.execute('PRAGMA table_info(nodes)')}
-            if 'resources' not in columns:
-                self.db.execute("ALTER TABLE nodes ADD COLUMN resources TEXT NOT NULL DEFAULT '{}'")
-            columns = {row['name'] for row in self.db.execute('PRAGMA table_info(attempts)')}
-            if 'worker_pid' not in columns:
-                self.db.execute('ALTER TABLE attempts ADD COLUMN worker_pid INTEGER')
-            self.db.execute('COMMIT')
-        except BaseException:
-            self.db.execute('ROLLBACK')
-            raise
+        if self.get('resource_columns') != 1:
+            self.db.execute('BEGIN IMMEDIATE')
+            try:
+                columns = {row['name'] for row in self.db.execute('PRAGMA table_info(nodes)')}
+                if 'resources' not in columns:
+                    self.db.execute("ALTER TABLE nodes ADD COLUMN resources TEXT NOT NULL DEFAULT '{}'")
+                columns = {row['name'] for row in self.db.execute('PRAGMA table_info(attempts)')}
+                if 'worker_pid' not in columns:
+                    self.db.execute('ALTER TABLE attempts ADD COLUMN worker_pid INTEGER')
+                self.set('resource_columns', 1)
+                self.db.execute('COMMIT')
+            except BaseException:
+                self.db.execute('ROLLBACK')
+                raise
 
     def close(self):
         self.db.close()
+
+    def digest(self, value):
+        return digest(value, self.digest_algorithm)
 
     def get(self, key: str, default=None):
         row = self.db.execute('SELECT value FROM metadata WHERE key=?', (key,)).fetchone()
@@ -75,7 +83,7 @@ class Store:
             previous = self.db.execute('SELECT hash FROM events ORDER BY seq DESC LIMIT 1').fetchone()
             previous = previous[0] if previous else '0'*64
             at = now()
-            h = digest(dict(at=at, kind=kind, payload=payload, previous=previous))
+            h = self.digest(dict(at=at, kind=kind, payload=payload, previous=previous))
             self.db.execute('INSERT INTO events(at,kind,payload,previous,hash) VALUES(?,?,?,?,?)',
                             (at, kind, dumps(payload), previous, h))
             if owned:
@@ -89,7 +97,7 @@ class Store:
         previous = '0'*64
         for row in self.db.execute('SELECT * FROM events ORDER BY seq'):
             payload = json.loads(row['payload'])
-            h = digest(dict(at=row['at'], kind=row['kind'], payload=payload, previous=previous))
+            h = self.digest(dict(at=row['at'], kind=row['kind'], payload=payload, previous=previous))
             if row['previous'] != previous or row['hash'] != h:
                 return False
             previous = h
@@ -184,6 +192,7 @@ class Store:
 
     def begin(self, key: str) -> Path:
         self.db.execute('BEGIN IMMEDIATE')
+        directory = None
         try:
             node = self.node(key)
             if key not in self.ready():
@@ -193,8 +202,15 @@ class Store:
                 raise RuntimeError('action/attempt budget exhausted')
             number = node['attempts']+1
             relative = f'attempts/{key}/{number:03d}'
-            directory = self.root/relative
-            directory.mkdir(parents=True, exist_ok=False)
+            intended = self.root/relative
+            intended.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                intended.mkdir()
+                directory = intended
+            except FileExistsError:
+                # A prior crash may have created the directory before committing.
+                directory = Path(tempfile.mkdtemp(prefix=intended.name + '-', dir=intended.parent))
+                relative = directory.relative_to(self.root).as_posix()
             self.db.execute('UPDATE nodes SET status="running",attempts=?,updated=? WHERE id=?', (number, now(), key))
             self.db.execute('INSERT INTO attempts(node,number,started,status,directory) VALUES(?,?,?,?,?)',
                             (key, number, now(), 'running', relative))
@@ -204,6 +220,11 @@ class Store:
             return directory
         except BaseException:
             self.db.execute('ROLLBACK')
+            if directory is not None:
+                try:
+                    directory.rmdir()
+                except OSError:
+                    pass
             raise
 
     def finish(self, key: str, status: str, elapsed: float, result=None, error=None):
@@ -217,7 +238,7 @@ class Store:
             self.db.execute('UPDATE attempts SET status=?,finished=? WHERE node=? AND number=?',
                             (status, now(), key, node['attempts']))
             self.event('attempt_finished', dict(node=key, status=status, elapsed=elapsed,
-                                               result_digest=digest(result) if result is not None else None, error=error))
+                                               result_digest=self.digest(result) if result is not None else None, error=error))
             self.db.execute('COMMIT')
         except BaseException:
             self.db.execute('ROLLBACK')

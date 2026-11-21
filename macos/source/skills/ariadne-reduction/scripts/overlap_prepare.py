@@ -7,12 +7,13 @@ No q-neighbour grouping, intensity duplication, or per-domain pixel double-count
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 import json
 from pathlib import Path
 import sys
 import numpy as np
 from scipy.ndimage import map_coordinates
+from byte_cache import ByteLRU
 from local_profiles import select_profile
 from profile_geometry import gaussian_voxels
 
@@ -121,6 +122,22 @@ def template_values(entry, load_template, centre, bounds, *, chunk_voxels=65536)
     return values.reshape(shape)
 
 
+def shared_pixel_noise(noises):
+    """Normalize the quantities that define a shared detector variance."""
+    def parameters(noise):
+        gain = float(noise['gain'])
+        readout = float(noise['readout_variance'])
+        floor = float(noise.get('variance_floor', gain))
+        if not np.isfinite([gain, readout, floor]).all() or gain <= 0 or readout < 0 or floor < 0:
+            raise ValueError('Invalid calibrated gain, readout variance or variance floor')
+        return gain, readout, floor
+
+    calibration = parameters(noises[0])
+    if any(parameters(noise) != calibration for noise in noises[1:]):
+        raise ValueError('Overlapping contributors on one detector must share the calibrated pixel-noise model')
+    return calibration
+
+
 def prepare(args):
     from dials.array_family import flex
     from dxtbx.model.experiment_list import ExperimentListFactory
@@ -138,21 +155,19 @@ def prepare(args):
     indices = np.asarray(predictions['miller_index'], dtype=int)
     args.output.mkdir(parents=True, exist_ok=False)
     entries = {(int(e['experiment_id']), int(e['panel'])): e for e in library['entries']}
-    template_cache = OrderedDict()
+    template_cache = ByteLRU(args.template_cache, getattr(args, 'template_cache_mib', 128) * 1024**2)
 
     def load_template(name):
         path = (args.library.parent / name).resolve()
         if not path.is_relative_to(args.library.parent.resolve()):
             raise ValueError('Template path escapes the profile library')
-        if name not in template_cache:
+        def decode():
             template = np.load(path, allow_pickle=False)
             if template.ndim != 3 or not np.all(np.isfinite(template)) or np.any(template < 0) or template.sum() <= 0:
                 raise ValueError('Invalid empirical profile template')
-            template_cache[name] = template / template.sum()
-            while len(template_cache) > args.template_cache:
-                template_cache.popitem(last=False)
-        template_cache.move_to_end(name)
-        return template_cache[name]
+            return template / template.sum()
+
+        return template_cache.get(path, decode, lambda template: template.nbytes)
     partitions = defaultdict(list)
     geometries = {}
     experiment_cache = {}
@@ -203,15 +218,16 @@ def prepare(args):
         records.append(record)
         partitions[key].append(len(records) - 1)
     groups = []
-    raw_cache = OrderedDict()
+    raw_cache = ByteLRU(args.frame_cache, getattr(args, 'frame_cache_mib', 256) * 1024**2)
 
     def frame(imageset, cache_key, frame_index):
-        if cache_key not in raw_cache:
-            raw_cache[cache_key] = (imageset.get_corrected_data(frame_index), imageset.get_mask(frame_index))
-            while len(raw_cache) > args.frame_cache:
-                raw_cache.popitem(last=False)
-        raw_cache.move_to_end(cache_key)
-        return raw_cache[cache_key]
+        def decode():
+            return imageset.get_corrected_data(frame_index), imageset.get_mask(frame_index)
+
+        def size_bytes(frame_and_masks):
+            return sum(panel.as_numpy_array().nbytes for panels in frame_and_masks for panel in panels)
+
+        return raw_cache.get(cache_key, decode, size_bytes)
 
     for key, selected in partitions.items():
         boxes = [records[i]['box'] for i in selected]
@@ -237,10 +253,7 @@ def prepare(args):
                 continue
             noises = [r['entry']['noise_model'] for r in chosen]
             noise = noises[0]
-            if float(noise['gain']) <= 0 or float(noise['readout_variance']) < 0:
-                raise ValueError('Invalid calibrated gain/readout variance')
-            if any(n['gain'] != noise['gain'] or n['readout_variance'] != noise['readout_variance'] for n in noises):
-                raise ValueError('Overlapping contributors on one detector must share the calibrated pixel-noise model')
+            gain, readout, floor = shared_pixel_noise(noises)
             data = np.empty(shape)
             valid = np.empty(shape, dtype=bool)
             for zi, absolute_frame in enumerate(range(z0, z1)):
@@ -251,8 +264,7 @@ def prepare(args):
             # Only union-support pixels belong to this observation; otherwise
             # global fitting would count shared raw noise more than once.
             valid &= support_union_mask(bounds, [r['box'] for r in chosen], args.background_margin)
-            variance = float(noise['gain']) * np.maximum(data, 0) + float(noise['readout_variance'])
-            variance = np.maximum(variance, float(noise.get('variance_floor', noise['gain'])))
+            variance = np.maximum(gain * np.maximum(data, 0) + readout, floor)
             profiles = np.empty((len(chosen), *shape))
             derivatives = np.empty((len(chosen), 3, *shape)) if args.position_derivatives else None
             for component_index, r in enumerate(chosen):
@@ -308,6 +320,7 @@ def prepare(args):
                                           'profile_sources': [r['entry']['provenance'] for r in chosen]}})
     manifest = {'schema': 'scxrd-pixel-patches/1', 'implementation_status': 'experimental_untested',
                 'groups': groups, 'retained_unprocessed_predictions': issues,
+                'cache': {'frames': raw_cache.statistics(), 'templates': template_cache.statistics()},
                 'support_sigma': args.support_sigma, 'background_margin': args.background_margin,
                 'complete_prediction_provenance': library['complete_prediction_provenance'],
                 'limitations': 'fixed regularized local profile interpolation; covariance conditional on calibration; no geometry refinement or absorption scaling inside this adapter'}
@@ -327,6 +340,8 @@ def main():
     p.add_argument('--max-components', type=int, default=32)
     p.add_argument('--frame-cache', type=int, default=8)
     p.add_argument('--template-cache', type=int, default=32)
+    p.add_argument('--frame-cache-mib', type=int, default=256)
+    p.add_argument('--template-cache-mib', type=int, default=128)
     p.add_argument('--position-derivatives', action='store_true', help='Store XYZ profile derivatives for signed-WLS position nuisance fitting')
     args = p.parse_args()
     try:

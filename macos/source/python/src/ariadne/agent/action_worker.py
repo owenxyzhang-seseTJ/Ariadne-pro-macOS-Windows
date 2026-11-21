@@ -1,4 +1,4 @@
-"""Internal POSIX action worker. Only the parent commits DAG state/results."""
+"""Internal isolated action worker. Only the parent commits DAG state/results."""
 from __future__ import annotations
 
 import os
@@ -22,9 +22,12 @@ def _watch_parent(descriptor):
 
 def main(argv=None):
     arguments = sys.argv[1:] if argv is None else argv
-    if len(arguments) != 2 or os.name != 'posix' or os.getpgrp() != os.getpid():
-        raise RuntimeError('internal worker requires its own POSIX process group and parent pipe')
-    threading.Thread(target=_watch_parent, args=(int(arguments[1]),), daemon=True).start()
+    if os.name == 'posix':
+        if len(arguments) != 2 or os.getpgrp() != os.getpid():
+            raise RuntimeError('internal worker requires its own process group and parent pipe')
+        threading.Thread(target=_watch_parent, args=(int(arguments[1]),), daemon=True).start()
+    elif len(arguments) != 1 or os.environ.get('ARIADNE_MANAGED_ACTION') != '1':
+        raise RuntimeError('internal worker requires its owning Windows Job')
     from .actions import Context, execute
     from .process import Cancelled, NeedsReview
     from .store import Store

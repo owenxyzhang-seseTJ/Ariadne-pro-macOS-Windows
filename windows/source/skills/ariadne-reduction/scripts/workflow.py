@@ -8,11 +8,11 @@ import json
 import os
 from pathlib import Path
 import re
-import signal
 import shutil
 import stat
 import subprocess
 import sys
+import time
 import uuid
 import zipfile
 
@@ -173,9 +173,8 @@ def run_stage(args):
     atomic_json(job / 'state.json', state)
     try:
         with (work / 'stdout.log').open('wb') as stdout, (work / 'stderr.log').open('wb') as stderr:
-            process = subprocess.Popen(argv, cwd=work, stdout=stdout, stderr=stderr, start_new_session=True)
-            # The child runs in its own session, so killing the worker does not reach it.
-            # Publish its pid for cancellation and progress; the parent may lack this dir.
+            from ariadne.agent.process import spawn_owned, stop_process_group
+            process = spawn_owned(argv, cwd=work, stdout=stdout, stderr=stderr)
             control = os.environ.get('ARIADNE_CONTROL_DIR')
             if control:
                 try:
@@ -183,16 +182,16 @@ def run_stage(args):
                                                                'attempt': number, 'work': str(work)})
                 except OSError:
                     pass
+            deadline = time.monotonic() + args.timeout
             try:
-                process.wait(timeout=args.timeout)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGTERM)
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    os.killpg(process.pid, signal.SIGKILL)
-                    process.wait()
-                raise
+                while process.poll() is None:
+                    if control and (Path(control) / 'cancel.json').exists():
+                        raise InterruptedError('operation cancellation requested')
+                    if time.monotonic() >= deadline:
+                        raise subprocess.TimeoutExpired(argv, args.timeout)
+                    time.sleep(.05)
+            finally:
+                stop_process_group(process, grace=.3)
         record['returncode'] = process.returncode
         missing = [x for x in expected if not inside(work, x).is_file() or inside(work, x).stat().st_size == 0]
         record['missing_outputs'] = missing

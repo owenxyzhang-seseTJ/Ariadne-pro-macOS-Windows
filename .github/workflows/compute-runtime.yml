@@ -1,0 +1,41 @@
+name: Compute and runtime
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  regressions:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: arm64
+          - runner: windows-2022
+            architecture: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: ${{ matrix.architecture }}
+      - name: Compare platform source trees
+        run: python tools/sync_platform_sources.py --check
+      - name: Compile and install Python packages
+        env:
+          ARIADNE_BUILD_CPP: "1"
+        run: python -m pip install ./macos/source/python ./macos/source/native pytest
+      - name: Regress compiled numerics and detached tasks
+        run: python tools/validate_upgrade.py --installed-native --junitxml compute-runtime.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compute-runtime-${{ matrix.architecture }}
+          path: compute-runtime.xml
