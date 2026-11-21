@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from scipy.linalg import block_diag, cholesky, solve_triangular
+from scipy.linalg import cholesky, get_lapack_funcs, qr, solve_triangular
 from scipy.optimize import nnls
 
 
@@ -67,6 +67,7 @@ class Observation:
     design: FloatArray
     values: FloatArray
     covariance: FloatArray
+    noise_factor: FloatArray
     raw_ids: tuple[str, ...] = ()
     equivalence_ids: tuple[str, ...] = ()
 
@@ -83,11 +84,11 @@ class Observation:
         R = finite_array(obj['covariance'], 2, 'covariance')
         if H.shape != (len(y), len(cols)) or R.shape != (len(y), len(y)) or not len(y):
             raise ValueError('observation dimensions disagree')
-        spd_factor(R, 'observation')
+        L = spd_factor(R, 'observation')
         key = str(obj['id'])
         if not key:
             raise ValueError('observation id must be nonempty')
-        return cls(key, cols, H, y, R, tuple(map(str, obj.get('raw_ids', []))),
+        return cls(key, cols, H, y, R, L, tuple(map(str, obj.get('raw_ids', []))),
                    tuple(map(str, obj.get('equivalence_ids', []))))
 
 
@@ -158,6 +159,27 @@ def _groups(blocks: list[Observation], n: int) -> list[tuple[list[int], list[Obs
     return [(indices, by_block.get(key, [])) for key, indices in cols.items()]
 
 
+def _profile_independent_prior(design, scale, residual, ensemble):
+    """Rotate [0; residual, ensemble] with the QR basis of [I; design * scale]."""
+    k = len(scale)
+    augmented = np.empty((k + len(design), k), order='F')
+    augmented[:k] = np.eye(k)
+    np.multiply(design, scale, out=augmented[k:])
+    (reflectors, tau), upper = qr(augmented, mode='raw', overwrite_a=True, check_finite=False)
+    targets = np.zeros((len(augmented), ensemble.shape[1] + 1), order='F')
+    targets[k:, 0] = residual
+    targets[k:, 1:] = ensemble
+    apply_q = get_lapack_funcs('ormqr', (reflectors,))
+    _, workspace, status = apply_q('L', 'T', reflectors, tau, targets, lwork=-1)
+    if status != 0:
+        raise RuntimeError(f'LAPACK ormqr workspace query failed ({status})')
+    rotated, _, status = apply_q('L', 'T', reflectors, tau, targets,
+                                 lwork=int(workspace[0]), overwrite_c=True)
+    if status != 0:
+        raise RuntimeError(f'LAPACK ormqr failed ({status})')
+    return upper, rotated[:k, 0], rotated[k:, 0], rotated[k:, 1:]
+
+
 def condition(mean: ArrayLike, independent_variance: ArrayLike, factors: ArrayLike,
               items: list[dict[str, Any]], *, max_local_elements: int = 4_000_000) -> dict[str, Any]:
     """Exact Gaussian conditioning with block-local and global low-rank factors.
@@ -185,7 +207,9 @@ def condition(mean: ArrayLike, independent_variance: ArrayLike, factors: ArrayLi
         idx = np.asarray(columns)
         k = len(idx)
         p = sum(len(b.values) for b in group)
-        if max(k*k, p*p, p*k, k*rank, p*rank) > max_local_elements:
+        largest = max((p+k)*k, (p+k)*(rank+1),
+                      max((b.covariance.size for b in group), default=0))
+        if largest > max_local_elements:
             raise MemoryError('connected overlap group exceeds explicit local-matrix budget')
         if not group:
             local.append(dict(columns=columns, mean=m[idx].copy(), base=np.diag(np.sqrt(d[idx])),
@@ -194,38 +218,33 @@ def condition(mean: ArrayLike, independent_variance: ArrayLike, factors: ArrayLi
             continue
         lookup = {j: i for i, j in enumerate(columns)}
         H = np.zeros((p, k))
+        residual = np.empty(p)
         cursor = 0
         for b in group:
-            H[cursor:cursor+len(b.values), [lookup[j] for j in b.columns]] = b.design
-            cursor += len(b.values)
-        y = np.concatenate([b.values for b in group])
-        R = block_diag(*[b.covariance for b in group])
-        LR = spd_factor(R, 'noise')
+            stop = cursor + len(b.values)
+            targets = np.column_stack((b.design, b.values-b.design@m[list(b.columns)]))
+            whitened = solve_triangular(b.noise_factor, targets, lower=True, check_finite=False)
+            H[cursor:stop, [lookup[j] for j in b.columns]] = whitened[:, :-1]
+            residual[cursor:stop] = whitened[:, -1]
+            logdet += 2*np.log(np.diag(b.noise_factor)).sum()
+            cursor = stop
         s = np.sqrt(d[idx])
-        T = solve_triangular(LR, H*s, lower=True, check_finite=False)
-        t = solve_triangular(LR, y-H@m[idx], lower=True, check_finite=False)
-        # QR of [I; R^-1/2 H D^1/2] preserves the prior precision square root.
-        _, upper = np.linalg.qr(np.vstack((np.eye(k), T)), mode='reduced')
+        # The orthogonal residuals give the marginal-noise Gram matrix
+        # without allocating covariance over the p observation rows.
+        upper, top, z, W = _profile_independent_prior(H, s, residual, H@U[idx])
         inv_upper = solve_triangular(upper, np.eye(k), lower=False, check_finite=False)
         base = s[:, None]*inv_upper
-        precision_solve = inv_upper @ inv_upper.T
-        conditional_mean = m[idx] + s*(precision_solve @ (T.T@t))
-        loading = s[:, None]*(precision_solve @ (U[idx]/s[:, None]))
-        # Marginalizing the independent prior produces only local observation blocks.
-        Q = R + (H*d[idx])@H.T
-        LQ = spd_factor(Q, 'marginal noise')
-        z = solve_triangular(LQ, y-H@m[idx], lower=True, check_finite=False)
-        W = solve_triangular(LQ, H@U[idx], lower=True, check_finite=False)
+        conditional_mean = m[idx] + base@top
+        loading = base@(inv_upper.T@(U[idx]/s[:, None]))
         A += W.T@W
         rhs += W.T@z
-        logdet += 2*np.log(np.diag(LQ)).sum()
+        logdet += 2*np.log(np.abs(np.diag(upper))).sum()
         num_observed += p
         # Column equilibration prevents measurement units deciding numerical rank.
-        Hw = solve_triangular(LR, H, lower=True, check_finite=False)
-        scales = np.linalg.norm(Hw, axis=0)
-        scaled = Hw/np.where(scales > 0, scales, 1.)
-        _, singular, vt = np.linalg.svd(scaled, full_matrices=True)
-        threshold = max(scaled.shape)*np.finfo(float).eps*(singular[0] if len(singular) else 0.)
+        scales = np.linalg.norm(H, axis=0)
+        H /= np.where(scales > 0, scales, 1.)
+        _, singular, vt = np.linalg.svd(H, full_matrices=p < k)
+        threshold = max(H.shape)*np.finfo(float).eps*(singular[0] if len(singular) else 0.)
         r = int(np.count_nonzero(singular > threshold))
         identifiable = (np.sum(vt[r:]**2, axis=0) < 1e-12).tolist()
         data_rank += r
@@ -318,9 +337,8 @@ def calibrate(prior: dict[str, Any], domains: list[int], train: list[dict[str, A
         J = np.zeros((len(b.columns), len(labels)))
         for i, j in enumerate(b.columns):
             J[i, positions[j]] = m[j]
-        L = spd_factor(b.covariance, 'calibration')
-        design_rows.append(solve_triangular(L, b.design@J, lower=True))
-        values.append(solve_triangular(L, b.values, lower=True))
+        design_rows.append(solve_triangular(b.noise_factor, b.design@J, lower=True))
+        values.append(solve_triangular(b.noise_factor, b.values, lower=True))
     if not design_rows:
         raise ValueError('calibration requires training observations')
     X, y = np.vstack(design_rows), np.concatenate(values)

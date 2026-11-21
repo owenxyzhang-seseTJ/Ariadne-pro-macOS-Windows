@@ -19,6 +19,8 @@ def main(argv=None):
     counts.add_argument("structure", type=Path)
     counts.add_argument("groups", type=Path, help="JSON list of CountStructureGroup specifications")
     counts.add_argument("--options", type=Path, help="JSON file containing native refinement options")
+    counts.add_argument("--profile-options", type=Path,
+                        help="Opt-in JSON bounds for shared Gaussian peak shifts and widths")
     run = sub.add_parser("run", help="Run one structured JSON job in a workspace")
     run.add_argument("request", help="JSON request file; '-' reads stdin")
     run.add_argument("--root", default=".")
@@ -50,7 +52,11 @@ def main(argv=None):
 
             groups = json.loads(args.groups.read_text(encoding="utf-8"))
             options = json.loads(args.options.read_text(encoding="utf-8")) if args.options else None
-            result = refine_count_observations(read_structure(args.structure), groups, options)
+            profiles = json.loads(args.profile_options.read_text(encoding="utf-8")) if args.profile_options else None
+            if args.profile_options and not isinstance(profiles, dict):
+                raise ValueError("profile-options must be a JSON object")
+            result = refine_count_observations(read_structure(args.structure), groups, options,
+                                               profile_refinement=profiles)
         else:
             legacy = {name: getattr(args, name) for name in ("shelxt", "shelxl") if getattr(args, name, None)}
             workspace = AgentWorkspace(args.root, legacy)

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import nullcontext
 import signal
 import sys
 import threading
@@ -28,11 +29,24 @@ def main(argv=None):
         threading.Thread(target=_watch_parent, args=(int(arguments[1]),), daemon=True).start()
     elif len(arguments) != 1 or os.environ.get('ARIADNE_MANAGED_ACTION') != '1':
         raise RuntimeError('internal worker requires its owning Windows Job')
+    from .util import read_json
+
+    payload = read_json(Path(arguments[0]))
+    reservation = payload.get('host_reservation')
+    if reservation:
+        from .host_budget import HostBudget
+        guard = HostBudget(reservation['configuration']).worker(reservation['token'])
+    else:
+        guard = nullcontext()
+    with guard:
+        return execute_payload(payload)
+
+
+def execute_payload(payload):
     from .actions import Context, execute
     from .process import Cancelled, NeedsReview
     from .store import Store
-    from .util import atomic_json, read_json
-    payload = read_json(Path(arguments[0]))
+    from .util import atomic_json
     directory = Path(payload['directory'])
     store = Store(Path(payload['root']))
     started = time.monotonic()

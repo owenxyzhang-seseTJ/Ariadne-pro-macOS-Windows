@@ -15,7 +15,7 @@ from .planner import choose
 from .process import Cancelled, NeedsReview
 from .spec import TOOLS, check_name, task_resources, validate_request, validate_scheduler
 from .store import Store
-from .util import artifact, artifact_path, atomic_json, content_id, dumps, exclusive_lock, pointer, read_json
+from .util import artifact, artifact_path, atomic_json, content_id, dumps, exclusive_lock, pointer, read_json, snapshot_input
 
 
 BUILD = '0.8.0-native-20261108'
@@ -72,10 +72,12 @@ def initial_plan(request: dict) -> list[dict]:
     if not settings.get('composition'):
         raise ValueError('reduce mode requires the chemical composition')
     configured = settings.get('dials_options', {})
+    spot_workers = min(4, request['scheduler']['cpu_threads'])
     plan = [node('import', 'dials.run', dict(operation='import', inputs=[input_ref(x) for x in sorted(inputs)],
                                            options=configured.get('import', {}))),
             node('find_spots', 'dials.run', dict(operation='find_spots', inputs=[ref('import', '/experiments')],
-                                                options=configured.get('find_spots', {})), ['import']),
+                                                options=configured.get('find_spots', {})), ['import'],
+                 resources={'cpu_threads': spot_workers}),
             node('index', 'dials.run', dict(operation='index', inputs=[ref('import', '/experiments'), ref('find_spots', '/reflections')],
                                            options=configured.get('index', {})), ['import', 'find_spots'])]
     previous = 'index'
@@ -131,12 +133,7 @@ def initialize(request: dict, directory: str | Path, *, base: str | Path = '.') 
             # Per-key directories turn a scan into unrelated one-frame imagesets.
             target = (root/'inputs'/'images'/source.relative_to(image_root) if image_root is not None
                       else root/'inputs'/key/source.name)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            before = content_id(source)
-            shutil.copy2(source, target)
-            if content_id(target) != before or content_id(source) != before:
-                raise RuntimeError('input changed during snapshot')
-            manifest[key] = artifact(root, target, 'input_snapshot')
+            manifest[key] = snapshot_input(root, source, target)
         store.set('request', request)
         store.set('request_digest', store.digest(request))
         store.set('inputs', manifest)
@@ -308,11 +305,13 @@ def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: 
             store.start_clock()
             clock_started = True
             configuration = validate_scheduler(store.get('request').get('scheduler'))
-            if configuration['isolate_actions'] or force_isolated:
+            from .host_budget import HostBudget
+            host = HostBudget.configured()
+            if configuration['isolate_actions'] or force_isolated or host is not None:
                 from .scheduler import run_isolated
                 run_isolated(store, configuration, max_steps=max_steps, choose=choose, resolve=resolve,
                              expand=_expand_solve, capabilities={'actions': capabilities()['actions']},
-                             experts=_experts(store.get('request')), validate_inputs=_validate_input_refs)
+                             experts=_experts(store.get('request')), validate_inputs=_validate_input_refs, host=host)
                 store.stop_clock()
                 clock_started = False
                 result = store.snapshot()

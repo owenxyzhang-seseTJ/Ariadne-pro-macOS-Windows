@@ -195,7 +195,10 @@ class Store:
         directory = None
         try:
             node = self.node(key)
-            if key not in self.ready():
+            allowed = TERMINAL if node['allow_failed'] else {'succeeded'}
+            if node['status'] != 'pending' or any(
+                    self.db.execute('SELECT status FROM nodes WHERE id=?', (dep,)).fetchone()[0] not in allowed
+                    for dep in node['dependencies']):
                 raise ValueError('node is not ready')
             budget = self.get('request')['budget']
             if node['attempts'] >= budget['max_attempts'] or self.get('actions_used') >= budget['max_actions']:

@@ -7,6 +7,7 @@ import errno
 import json
 import os
 from pathlib import Path
+import shutil
 import tempfile
 import time
 from typing import Any
@@ -47,6 +48,31 @@ def file_hash(path: Path, algorithm='sha256') -> str:
 
 def content_id(path: Path, algorithm=CONTENT_ALGORITHM) -> str:
     return f'{algorithm}:{file_hash(path, algorithm)}'
+
+
+def snapshot_input(root: Path, source: Path, target: Path) -> dict[str, Any]:
+    """Copy and identify the captured bytes in one pass over the input."""
+    def revision(stat):
+        return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    identity = _hasher(CONTENT_ALGORITHM)
+    copied = 0
+    path_revision = revision(source.stat())
+    with source.open('rb') as stream, target.open('wb') as output:
+        initial = os.fstat(stream.fileno())
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            output.write(chunk)
+            identity.update(chunk)
+            copied += len(chunk)
+        output.flush()
+        shutil.copystat(source, target)
+        if (copied != initial.st_size
+                or revision(os.fstat(stream.fileno())) != revision(initial)
+                or revision(source.stat()) != path_revision):
+            raise RuntimeError('input changed during snapshot')
+    return dict(path=target.relative_to(root).as_posix(), size_bytes=copied,
+                role='input_snapshot', content_id=f'{CONTENT_ALGORITHM}:{identity.hexdigest()}')
 
 
 def is_artifact(record) -> bool:

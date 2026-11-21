@@ -1,4 +1,4 @@
-"""Measure prediction, joint refinement, or the dense/operator memory trade-off."""
+"""Measure diffraction, refinement and correlated-observation kernels."""
 from __future__ import annotations
 
 import argparse
@@ -44,13 +44,30 @@ def make_model(atoms, rng):
 
 def workload(args):
     import numpy as np
+    rng = np.random.default_rng(15203)
+    if args.case == 'feedback':
+        from ariadne.feedback import condition
+
+        design = rng.normal(size=(args.reflections, 2, 3))
+        observations = rng.normal(size=(args.reflections, 2))
+        blocks = [dict(id=str(i), columns=[0, 1, 2], design=rows, values=values,
+                       covariance=[[2., .4], [.4, .8]])
+                  for i, (rows, values) in enumerate(zip(design, observations))]
+        mean, variances = [.2, -.7, .1], [1.2, 2., .6]
+        ensemble = rng.normal(size=(3, 2))*.2
+
+        def run():
+            result = condition(mean, variances, ensemble, blocks)
+            return {key: result[key] for key in ('mean', 'variance', 'predictive_nll', 'data_rank')}
+
+        return run
+
     from ariadne_xtal.derivatives import DiffractionPredictor
     from ariadne_xtal.joint_refinement import GaussianStructureGroup, refine_observations
     from ariadne_xtal.model import Reflections, Structure
     from ariadne_xtal.refinement import RefinementOptions, _Parameterization, refine
     from ariadne_xtal.scattering import calculated_intensities
 
-    rng = np.random.default_rng(15203)
     if args.case == 'predictor':
         if args.structure:
             from ariadne_xtal.io import read_reflections, read_structure
@@ -129,7 +146,7 @@ def workload(args):
 
 def main():
     cli = argparse.ArgumentParser(description=__doc__)
-    cli.add_argument('case', choices=['predictor', 'joint', 'layout'])
+    cli.add_argument('case', choices=['predictor', 'joint', 'layout', 'feedback'])
     cli.add_argument('--atoms', type=int, default=80)
     cli.add_argument('--reflections', type=int, default=8192)
     cli.add_argument('--block-size', type=int, default=1024)
@@ -163,7 +180,8 @@ def main():
         if result.get('success') is False:
             raise RuntimeError(f'Benchmark calculation did not converge: {result}')
         results.append(result)
-    payload = dict(case=args.case, atoms=3 if args.case == 'joint' else results[-1].get('atoms', args.atoms),
+    atoms = None if args.case == 'feedback' else 3 if args.case == 'joint' else results[-1].get('atoms', args.atoms)
+    payload = dict(case=args.case, atoms=atoms,
                    reflections_or_groups=args.reflections, backend=args.backend, threads=args.threads,
                    measured_inputs=bool(args.structure), d_min_angstrom=args.d_min,
                    block_size=args.block_size, layout=args.layout, wall_seconds=elapsed,

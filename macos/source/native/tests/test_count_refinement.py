@@ -6,6 +6,7 @@ from ariadne.reduction_native import PoissonObservation
 from ariadne_xtal.count_refinement import CountStructureGroup, count_objective, refine_count_observations
 from ariadne_xtal.derivatives import DiffractionPredictor
 from ariadne_xtal.model import Atom, Cell, Structure
+from ariadne_xtal.pixel_profiles import GaussianPixels
 from ariadne_xtal.refinement import RefinementOptions, _Parameterization
 from ariadne_xtal.scattering import calculated_intensities
 
@@ -55,3 +56,49 @@ def test_count_fit_uses_signed_phase_factors_and_a_separate_audit():
     wrong = CountStructureGroup([hkl[0]], groups[0].observation, role="audit", audit_background=[])
     with pytest.raises(ValueError, match="crosses"):
         refine_count_observations(start, [groups[0], wrong])
+
+
+@pytest.mark.parametrize("ndim", [1, 2, 3])
+def test_pixel_integrated_gaussian_gradient(ndim):
+    rng = np.random.default_rng(7)
+    lower = rng.uniform(-3., 3., (23, ndim))
+    pixels = GaussianPixels(lower, lower + 1., rng.uniform(-.5, .5, (2, ndim)), rng.uniform(.55, 1.3, (2, ndim)))
+    settings = np.r_[np.linspace(.13, -.21, ndim), .19]
+    fractions, gradient = pixels.evaluate(settings, derivatives=True)
+    perturbations = np.eye(ndim+1)*1e-5
+    difference = [(pixels.evaluate(settings+step)-pixels.evaluate(settings-step))/(2e-5)
+                  for step in perturbations]
+    assert np.all(fractions > 0.)
+    np.testing.assert_allclose(gradient, np.stack(difference, axis=2), atol=3e-11, rtol=3e-8)
+
+
+def test_profile_refinement_recovers_shift_and_improves_separate_pixels():
+    truth = Structure(Cell(8, 9, 10), [
+        Atom("Zn1", "Zn", [.12, .21, .30], u_iso=.028),
+        Atom("O1", "O", [.23, .49, .41], u_iso=.034),
+    ])
+    lower = np.arange(-5., 5.)[:, None]
+    profile = GaussianPixels(lower, lower+1, [[.1]], [[.75]])
+    shift, width = .43, 1.22
+    fractions = profile.evaluate([shift, np.log(width)])[:, 0]
+    hkl = [(h, k, l) for h in range(1, 3) for k in range(-2, 3) for l in range(-1, 2)]
+    powers = calculated_intensities(truth, hkl, scale=3.)
+    rng = np.random.default_rng(211)
+    groups = []
+    for i, (reflection, intensity) in enumerate(zip(hkl, powers)):
+        audit = i % 4 == 0
+        counts = rng.poisson(intensity*fractions + 2.5)
+        groups.append(CountStructureGroup([reflection], dict(data=counts, background=np.ones((len(lower), 1))),
+                                          role="audit" if audit else "work",
+                                          audit_background=[2.5] if audit else None,
+                                          profile_model=profile, profile_group="scan"))
+    start = Structure.from_dict(truth.to_dict())
+    start.atoms[1].frac += [.014, -.012, .009]
+    options = RefinementOptions(scale=2.5, max_nfev=160)
+    fixed = refine_count_observations(start, groups, options)
+    free = refine_count_observations(start, groups, options, profile_refinement={})
+    assert fixed["success"] and free["success"]
+    assert free["refined_profiles"]["scan"]["shift"] == pytest.approx([shift], abs=.025)
+    assert free["refined_profiles"]["scan"]["width_ratio"] == pytest.approx(width, abs=.04)
+    assert free["audit_nll"] < fixed["audit_nll"]
+    assert free["work_half_deviance"] < fixed["work_half_deviance"]

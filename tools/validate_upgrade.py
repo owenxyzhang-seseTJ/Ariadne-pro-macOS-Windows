@@ -14,16 +14,16 @@ NUMERICS = [
     "native/tests/test_refinement.py", "native/tests/test_refinement_v08.py",
     "native/tests/test_phasing_v08.py", "tests/test_calibrated_pixel_inputs.py",
     "native/tests/test_count_refinement.py", "tests_rebuild/test_reduction_v08.py",
-    "tests_rebuild/test_lattice_selection.py",
+    "tests_rebuild/test_lattice_selection.py", "tests_rebuild/test_feedback.py",
 ]
-RUNTIME = ["tests_rebuild/test_runtime_upgrade.py", "tests_rebuild/test_agent.py",
+RUNTIME = ["tests_rebuild/test_runtime_upgrade.py", "tests_rebuild/test_agent.py", "tests_rebuild/test_host_budget.py",
            "tests_rebuild/test_scheduler_v08.py"]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--installed-native", action="store_true")
-    parser.add_argument("--dependency-path", type=Path)
+    parser.add_argument("--dependency-path", type=Path, action="append", default=[])
     parser.add_argument("--backend", choices=["cpp", "python"], default="cpp")
     parser.add_argument("--junitxml", type=Path)
     parser.add_argument("--numerics-only", action="store_true")
@@ -32,8 +32,7 @@ def main():
     paths = [source / name for name in ("python/src", "skills/ariadne-reduction/scripts", "tests")]
     if not args.installed_native:
         paths.insert(0, source / "native/src")
-    if args.dependency_path:
-        paths.append(args.dependency_path.resolve())
+    paths.extend(path.resolve() for path in args.dependency_path)
     environment = dict(os.environ, PYTHONPATH=os.pathsep.join(map(str, paths)),
                        ARIADNE_PLUGIN_ROOT=str(source), ARIADNE_NUMERIC_BACKEND=args.backend,
                        PYTHONDONTWRITEBYTECODE="1", PYTEST_DISABLE_PLUGIN_AUTOLOAD="1",

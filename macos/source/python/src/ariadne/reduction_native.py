@@ -395,6 +395,33 @@ class PoissonObservation:
         self.scales = np.where(scales > 0, scales, 1.)
         self.evaluations = 0
 
+    def with_profiles(self, profiles):
+        """Replace signal fractions while sharing the already validated count data."""
+        from copy import copy
+
+        signal = np.asarray(profiles, dtype=float)
+        if signal.shape != self.profiles.shape:
+            raise ValueError("replacement profiles must preserve the pixel and component counts")
+        sums = np.zeros(self.k)
+        for section, selected in _rows(self.valid, self.chunk_rows):
+            values = signal[section][selected]
+            if not np.isfinite(values).all() or np.any(values < 0):
+                raise ValueError("replacement profile fractions must be finite and nonnegative")
+            counts = self.data[section][selected]
+            background = self.background[section][selected]
+            offset = self.offset[section][selected]
+            if np.any((counts > 0) & (offset == 0) & (values.sum(axis=1) + background.sum(axis=1) == 0)):
+                raise ValueError("replacement profiles remove support for a positive count")
+            sums += values.sum(axis=0)
+        observation = copy(self)
+        observation.profiles = signal
+        observation.scales = self.scales.copy()
+        observation.scales[:self.k] = np.where(sums > 0, sums, 1.)
+        observation.supported_columns = self.supported_columns.copy()
+        observation.supported_columns[:self.k] = sums > 0
+        observation.evaluations = 0
+        return observation
+
     def _block(self, section, selected):
         return (self.data[section][selected], self.profiles[section][selected],
                 self.background[section][selected], self.offset[section][selected])
@@ -532,6 +559,37 @@ class PoissonObservation:
         return PoissonFit(self, parameters[:self.k], parameters[self.k:], value, converged,
                           kkt, message, self.evaluations-before, geometry, covariance)
 
+    def _single_background(self, intensity):
+        """Solve the monotone scalar score in units of observed background counts."""
+        observations, intercepts = [], []
+        for section, selected in _rows(self.valid, self.chunk_rows):
+            y, p, basis, off = self._block(section, selected)
+            selected_rows = (y > 0) & (basis[:, 0] > 0)
+            if not np.any(selected_rows):
+                continue
+            observations.append(y[selected_rows])
+            with np.errstate(over="ignore", divide="ignore"):
+                intercepts.append((off[selected_rows] + p[selected_rows]@intensity)
+                                  / (basis[selected_rows, 0]/self.scales[-1]))
+        if not observations:
+            return 0., True, "background optimum is zero"
+        counts = np.concatenate(observations)
+        total = counts.sum()
+        intercept = np.concatenate(intercepts)/total
+        weights = counts/total
+
+        def score(fraction):
+            with np.errstate(divide="ignore", over="ignore"):
+                return 1. - np.sum(weights/(intercept+fraction))
+
+        if score(0.) >= 0.:
+            return 0., True, "background optimum is zero"
+        if score(1.) <= 0.:
+            return total/self.scales[-1], True, "background accounts for all supported counts"
+        fraction, fit = brentq(score, 0., 1., xtol=np.finfo(float).tiny,
+                               maxiter=self.max_iterations, full_output=True, disp=False)
+        return (fraction*total)/self.scales[-1], fit.converged, str(fit.flag)
+
     def profile_background(self, intensities, initial_background=None, *, include_mean=False):
         """Score a structural prediction while refitting only its background.
 
@@ -550,10 +608,25 @@ class PoissonObservation:
             if bg.shape != (self.nb,) or not np.isfinite(bg).all() or np.any(bg < 0):
                 raise ValueError("initial_background has invalid coefficients")
             start[self.k:] = bg*self.scales[self.k:]
-        fixed = {j: value*self.scales[j] for j, value in enumerate(intensity)}
-        x, value, success, kkt, message = self._minimize(fixed=fixed, start=start)
-        parameters = x/self.scales
-        _, gradient = self.value_gradient(parameters)
+        start[:self.k] = intensity*self.scales[:self.k]
+        if self.nb == 1 and self.supported_columns[-1]:
+            background, success, message = self._single_background(intensity)
+            parameters = np.r_[intensity, background]
+            value, gradient = self.value_gradient(parameters)
+            scale = self._solver_scales(start)[-1]
+            position = (background*self.scales[-1])/scale
+            score = (gradient[-1]/self.scales[-1])*scale
+            kkt = float(abs(min(position, score))) if np.isfinite(score) else np.inf
+            tolerance = max(2e-7, 8*np.finfo(float).eps*max(position, 1.))
+            success = bool(success and np.isfinite(value) and kkt <= tolerance)
+        elif not self.supported_columns[self.k:].any():
+            parameters = np.r_[intensity, np.zeros(self.nb)]
+            value, gradient = self.value_gradient(parameters)
+            success, kkt, message = bool(np.isfinite(value)), 0., "all available parameters fixed"
+        else:
+            x, value, success, kkt, message = self._minimize(fixed=dict(enumerate(start[:self.k])), start=start)
+            parameters = x/self.scales
+            _, gradient = self.value_gradient(parameters)
         result = {"half_deviance": value, "nll": value+self.nll_data_constant,
                   "gradient": gradient[:self.k],
                   "background_coefficients": parameters[self.k:],

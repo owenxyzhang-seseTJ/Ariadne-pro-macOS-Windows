@@ -75,6 +75,21 @@ def test_repeated_exposures_apply_prior_once():
     assert result['variance'][0]==pytest.approx(1/6)
 
 
+def test_many_correlated_blocks_fit_a_linear_observation_budget():
+    rng = np.random.default_rng(58)
+    m = np.array([.2, -.7, .1])
+    d = np.array([1.2, 2., .6])
+    U = rng.normal(size=(3, 2))*.2
+    blocks = [dict(id=str(i), columns=[0, 1, 2], design=rng.normal(size=(2, 3)),
+                   values=rng.normal(size=2), covariance=[[2., .4], [.4, .8]])
+              for i in range(90)]
+    result = condition(m, d, U, blocks, max_local_elements=700)
+    mu, covariance, nll = dense_reference(m, d, U, blocks)
+    np.testing.assert_allclose(result['mean'], mu, atol=3e-13)
+    np.testing.assert_allclose(dense_covariance(result), covariance, atol=3e-13)
+    assert result['predictive_nll'] == pytest.approx(nll, rel=1e-13)
+
+
 def test_unobserved_variables_keep_prior_and_correlations():
     m,d,U,b=problem();r=condition(m,d,U,b)
     assert r['data_identifiable'][-1] is False

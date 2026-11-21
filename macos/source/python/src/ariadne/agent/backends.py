@@ -21,6 +21,12 @@ DIALS_OUTPUTS = {
     'export': {'hkl': 'compound.hkl', 'ins': 'compound.ins'},
     'predict': {'reflections': 'predicted.refl'},
 }
+DIALS_PROCESS_OPTIONS = {
+    'find_spots': 'spotfinder.mp.nproc',
+    'integrate': 'integration.mp.nproc',
+    'index': 'indexing.nproc',
+    'scale': 'scaling_options.nproc',
+}
 DIALS_OPTIONS = {
     'import': {},
     'find_spots': {'spotfinder.threshold.algorithm': ('dispersion', 'dispersion_extended', 'radial_profile', 'ariadne'),
@@ -31,11 +37,14 @@ DIALS_OPTIONS = {
                    'spotfinder.threshold.ariadne.score_threshold': float,
                    'spotfinder.filter.min_spot_size': int},
     'index': {'indexing.method': ('fft3d', 'fft1d', 'real_space_grid_search'),
+              'indexing.joint_indexing': bool,
               'indexing.basis_vector_combinations.solution_scorer': ('weighted', 'filter', 'ariadne'),
               'indexing.basis_vector_combinations.ariadne.q_sigma': float,
               'indexing.multiple_lattice_search.max_lattices': int, 'indexing.max_cell': float},
     'refine': {'refinement.parameterisation.scan_varying': bool},
-    'integrate': {'profile.gaussian_rs.fitting.fit_method': ('reciprocal_space', 'detector_space'),
+    'integrate': {'integration.block.size': float, 'integration.profile.fitting': bool,
+                  'create_profile_model': bool, 'prediction.d_min': float,
+                  'profile.gaussian_rs.fitting.fit_method': ('reciprocal_space', 'detector_space'),
                   'profile.gaussian_rs.fitting.detector_space.deconvolution': bool},
     'scale': {'model': ('physical', 'array', 'KB'), 'physical.absorption_correction': bool},
     'export': {'intensity': ('scale', 'sum', 'profile'), 'shelx.composition': str},
@@ -86,13 +95,14 @@ def typed_options(options: dict, schema: dict) -> dict:
     return result
 
 
-def invoke(ctx, argv, label='process'):
+def invoke(ctx, argv, label='process', *, cpu_threads=None):
     def pid(value):
         ctx.store.db.execute('UPDATE attempts SET pid=? WHERE node=? AND number=?',
                              (value, ctx.node_id, ctx.store.node(ctx.node_id)['attempts']))
     return run_process(argv, ctx.directory, ctx.remaining(),
                        lambda: ctx.store.get('cancel_requested', False), pid, label,
-                       cpu_threads=(getattr(ctx, 'resources', None) or {}).get('cpu_threads', 1))
+                       cpu_threads=(getattr(ctx, 'resources', None) or {}).get('cpu_threads', 1)
+                       if cpu_threads is None else cpu_threads)
 
 
 def run_dials(ctx, args: dict) -> dict:
@@ -110,6 +120,9 @@ def run_dials(ctx, args: dict) -> dict:
         raise ValueError('wrong number of inputs for '+operation)
     paths = [artifact_path(ctx.root, value) for value in inputs]
     options = typed_options(args.get('options', {}), DIALS_OPTIONS[operation])
+    process_option = DIALS_PROCESS_OPTIONS.get(operation)
+    if process_option is not None:
+        options[process_option] = (ctx.resources or {}).get('cpu_threads', 1)
     argv = [executable('dials.'+operation, ctx.executables), *map(str, paths)]
     outputs = DIALS_OUTPUTS[operation]
     if operation == 'export':
@@ -121,7 +134,9 @@ def run_dials(ctx, args: dict) -> dict:
     else:
         argv += [f'output.{key}={name}' for key, name in outputs.items()]
     argv += [f'{key}={value}' for key, value in options.items()]
-    invoke(ctx, argv)
+    # DIALS owns process-level parallelism for these operations. Each child
+    # must use a single BLAS thread to stay within the reserved CPU slots.
+    invoke(ctx, argv, cpu_threads=1 if process_option else None)
     result = {role: artifact(ctx.root, ctx.directory/name, role) for role, name in outputs.items()}
     if operation in {'index', 'refine', 'integrate', 'scale'}:
         inspection = ctx.directory/'native_inspection.json'

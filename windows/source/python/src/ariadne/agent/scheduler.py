@@ -6,6 +6,7 @@ libraries; they are not a cgroup CPU quota. One parent owns graph mutations.
 """
 from __future__ import annotations
 
+from contextlib import ExitStack
 import os
 import queue
 import subprocess
@@ -16,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .actions import collect_artifacts
+from .host_budget import HostRequest
 from .planner import choose as default_choose
 from .process import spawn_owned, stop_process_group, thread_environment
 from .spec import task_resources
@@ -33,6 +35,17 @@ class ActiveAction:
     guardian: int | None
     stdout: object
     stderr: object
+    host_scope: ExitStack | None = None
+
+
+@dataclass
+class QueuedAction:
+    node: dict
+    arguments: dict
+    resources: dict
+    ticket: HostRequest
+    scope: ExitStack
+    next_poll: float = 0.
 
 
 class ResourcePool:
@@ -59,7 +72,7 @@ class ResourcePool:
 
 class PlannerCall:
     """One isolated decision over an immutable snapshot; no SQLite in thread."""
-    def __init__(self, choose, config, observation, capabilities, experts):
+    def __init__(self, choose, config, observation, capabilities, experts, wake):
         self.started = time.monotonic()
         self.mailbox = queue.Queue(maxsize=1)
         def work():
@@ -67,6 +80,8 @@ class PlannerCall:
                 self.mailbox.put((True, choose(config, observation, capabilities, experts)))
             except BaseException as error:  # noqa: BLE001 - A dead planner thread must not strand the runner.
                 self.mailbox.put((False, error))
+            finally:
+                wake.set()
         # Network timeouts remain bounded by planner config. A cancelled run
         # can discard its reply without letting a late decision launch work.
         self.inline = choose is default_choose and config.get('kind', 'deterministic') == 'deterministic'
@@ -82,7 +97,7 @@ class PlannerCall:
             return None
 
 
-def _launch(store, node, arguments, resources, remaining):
+def _launch(store, node, arguments, resources, remaining, *, queued=None):
     work = store.begin(node['id'])
     started = time.monotonic()
     deadline = started + min(store.get('request')['budget']['action_seconds'], remaining)
@@ -90,7 +105,8 @@ def _launch(store, node, arguments, resources, remaining):
     try:
         atomic_json(work/'worker.input.json', {'root': str(store.root), 'node': node['id'],
                     'tool': node['tool'], 'directory': str(work), 'args': arguments,
-                    'resources': resources, 'deadline': deadline})
+                    'resources': resources, 'deadline': deadline,
+                    'host_reservation': queued.ticket.worker_payload() if queued else None})
         environment = thread_environment(resources['cpu_threads'])
         environment['ARIADNE_MANAGED_ACTION'] = '1'
         source = str(Path(__file__).resolve().parents[2])
@@ -108,7 +124,8 @@ def _launch(store, node, arguments, resources, remaining):
         store.db.execute('UPDATE attempts SET worker_pid=? WHERE node=? AND number=?',
                          (process.pid, node['id'], store.node(node['id'])['attempts']))
         store.event('resources_admitted', {'node': node['id'], 'worker_pid': process.pid,
-                                          **resources, 'memory_semantics': 'declared reservation, not RSS enforcement'})
+                                          **resources, 'memory_semantics': 'declared reservation, not RSS enforcement',
+                                          'host_wait_seconds': started - queued.ticket.queued_at if queued else 0.})
     except BaseException as error:
         if process is not None:
             stop_process_group(process)
@@ -123,7 +140,8 @@ def _launch(store, node, arguments, resources, remaining):
     finally:
         if reader is not None:
             os.close(reader)
-    return ActiveAction(node['id'], process, work, resources, started, deadline, writer, stdout, stderr)
+    return ActiveAction(node['id'], process, work, resources, started, deadline, writer, stdout, stderr,
+                        queued.scope if queued else None)
 
 
 def _settle(store, active, forced=None):
@@ -151,10 +169,21 @@ def _settle(store, active, forced=None):
             os.close(active.guardian)
         active.stdout.close()
         active.stderr.close()
+        if active.host_scope is not None:
+            active.host_scope.close()
+
+
+def _wake_on_exit(action, wake):
+    def wait():
+        try:
+            action.process.wait()
+        finally:
+            wake.set()
+    threading.Thread(target=wait, daemon=True).start()
 
 
 def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
-                 capabilities, experts, validate_inputs):
+                 capabilities, experts, validate_inputs, host=None):
     request = store.get('request')
     budget = request['budget']
     pool = ResourcePool(configuration)
@@ -162,8 +191,11 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
     stopping = False
     frontier_changed = True
     ready_nodes = {}
+    waiting = None
+    wake = threading.Event()
     try:
         while True:
+            wake.clear()
             now = time.monotonic()
             cancelled = bool(store.get('cancel_requested'))
             wall_left = budget['wall_seconds']-store.wall_elapsed()
@@ -182,6 +214,23 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                     pool.release(key)
                     del active[key]
                     frontier_changed = True
+            if waiting is not None:
+                if stopping:
+                    waiting.scope.close()
+                    store.event('host_queue_left', {'node': waiting.node['id'], 'reason': 'run stopped'})
+                    waiting = None
+                elif now >= waiting.next_poll:
+                    waiting.next_poll = now + .05
+                    if waiting.ticket.try_admit():
+                        key = waiting.node['id']
+                        action = _launch(store, waiting.node, waiting.arguments, waiting.resources,
+                                         budget['wall_seconds']-store.wall_elapsed(), queued=waiting)
+                        pool.acquire(key, waiting.resources)
+                        active[key] = action
+                        _wake_on_exit(action, wake)
+                        waiting = None
+                        launched += 1
+                        ready_nodes.pop(key, None)
             if frontier_changed:
                 expand(store)
                 store.propagate_failures()
@@ -211,7 +260,7 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                             frontier_changed = True
                         else:
                             key = decision.get('node')
-                            if key not in store.ready():
+                            if key not in ready_nodes:
                                 raise ValueError('planner selected a node that is not ready')
                             node = store.node(key)
                             resources = task_resources(node, configuration)
@@ -222,18 +271,28 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                             except Exception as error:  # noqa: BLE001 - Resolution failures belong to this node.
                                 store.begin(key)
                                 store.finish(key, 'failed', 0., error=f'{type(error).__name__}: {error}')
+                                launched += 1
+                                frontier_changed = True
                             else:
-                                action = _launch(store, node, args, resources, budget['wall_seconds']-store.wall_elapsed())
-                                pool.acquire(key, resources)
-                                active[key] = action
-                            launched += 1
-                            frontier_changed = True
+                                if host is None:
+                                    action = _launch(store, node, args, resources, budget['wall_seconds']-store.wall_elapsed())
+                                    pool.acquire(key, resources)
+                                    active[key] = action
+                                    _wake_on_exit(action, wake)
+                                    launched += 1
+                                    ready_nodes.pop(key)
+                                else:
+                                    with ExitStack() as scope:
+                                        ticket = scope.enter_context(host.request(resources))
+                                        waiting = QueuedAction(node, args, resources, ticket, scope.pop_all())
+                                    store.event('host_queued', {'node': key, **resources,
+                                                                'budget': str(host.configuration)})
             count_limit = ((max_steps is not None and launched >= max_steps)
                            or store.get('actions_used') >= budget['max_actions']
                            or store.get('decisions_used') >= budget['max_decisions'])
-            if count_limit and planning is None:
+            if count_limit and planning is None and waiting is None:
                 stopping = True
-            if not stopping and planning is None and not frontier_changed:
+            if not stopping and planning is None and waiting is None and not frontier_changed:
                 ready = [key for key, resources in ready_nodes.items() if pool.fits(resources)]
                 if ready:
                     config = dict(request['planner'])
@@ -243,14 +302,21 @@ def run_isolated(store, configuration, *, max_steps, choose, resolve, expand,
                     config['timeout_seconds'] = min(config.get('timeout_seconds', 45),
                                                     budget['wall_seconds']-store.wall_elapsed())
                     if config['timeout_seconds'] > 0:
-                        planning = PlannerCall(choose, config, observation, capabilities, experts)
+                        planning = PlannerCall(choose, config, observation, capabilities, experts, wake)
                         store.set('decisions_used', store.get('decisions_used')+1)
-            if not active and planning is None and (stopping or (not frontier_changed and not ready_nodes)):
-                break
             if frontier_changed or (planning is not None and planning.inline):
                 continue
-            time.sleep(.02)
+            if not active and planning is None and waiting is None and (stopping or not ready_nodes):
+                break
+            # Worker exit and planner replies wake immediately. Other processes
+            # publish cancellation and host admissions through durable storage.
+            deadline = min((action.deadline for action in active.values()), default=float('inf'))
+            if waiting is not None:
+                deadline = min(deadline, waiting.next_poll)
+            wake.wait(max(0., min(.05, deadline-time.monotonic(), budget['wall_seconds']-store.wall_elapsed())))
     finally:
+        if waiting is not None:
+            waiting.scope.close()
         if planning is not None:
             store.set('planning_seconds', store.get('planning_seconds', 0.) + time.monotonic()-planning.started)
             store.event('planner_reply_discarded', {'reason': 'runner exited'})
