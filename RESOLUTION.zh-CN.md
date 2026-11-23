@@ -2,6 +2,8 @@
 
 Ariadne Pro 包含 `ariadne-reduction` 和 `solve-single-crystal`。还原 skill 交接原始观测、基底和匹配的 INS/HKL。解析 skill 依据实测反射、局部像素及化学证据比较空间群和孪晶模型。CLI、Pro MCP 与工作台共用持久候选图。
 
+一颗单晶衍射样品可以含多个晶畴。面网孪晶的倒易点阵可以完全重叠，需结合反射强度比较单畴和孪晶模型。对分裂或部分重叠的峰，则用独立斑点和探测器像素核查各畴。DIALS 指标化诊断中的 `n_crystal_models` 统计不同的晶格模型对象。`n_crystals` 保留同一计数以兼容旧接口。该阶段的物理畴数为待定，记为 `domain_count: null`。
+
 ## 校正强度与初始结构
 
 以下请求从同一晶胞和指数基底的模型、校正 HKLF 4 开始。空间群列表可包含候选子群、超群与设置。直接使用带 `free_flags` 的反射 JSON 时将 `reflection_format` 设为 `json`。结构因子 CIF 用 `cif-f2`，保留带符号的实测强度与标准不确定度。

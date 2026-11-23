@@ -7,7 +7,7 @@ description: Reduce Bruker or Rigaku single-crystal X-ray diffraction frames thr
 
 用简体中文沟通。以原始衍射证据决定还原路线。默认在交接就绪后继续 `solve-single-crystal`，除非用户要求停在还原阶段。本技能是 AI 决策流程，脚本承担确定性辅助；需要真实、适用的积分和吸收校正软件。
 
-从 `ariadne-pro` MCP 读取 `agent_capabilities` 和 `capabilities`，按分析的输入角色与适用选项提交任务。使用持久 DAG 时用 `agent_init → agent_submit → agent_run_status`。低层还原可用 `create_job → start_operation → inspect_job/read_artifact → record_acceptance` 管理。长任务取得运行标识后按需读取状态。复合重叠和分域使用下述脚本，DIALS 原生 scale/export 对应适用的单相分支。
+从 `ariadne-pro` MCP 读取 `agent_capabilities` 和 `capabilities`，按分析的输入角色与适用选项提交任务。使用持久 DAG 时用 `agent_init → agent_submit → agent_run_status`。低层还原可用 `create_job → start_operation → inspect_job/read_artifact → record_acceptance` 管理。长任务取得运行标识后按需读取状态。使用 DIALS 原生 scale/export 处理已完成归属的反射，共用像素或混合强度进入联合观测分支。
 
 运行前读取 [source-extensions.md](references/source-extensions.md)，选择 baseline 或 experimental 算法。`ariadne-env` 配置修改过的 DIALS Python 源码；`scxrd-env` 保留原始 DIALS。新算法需显式选择，未获实测证据时不得声称提高准确率或速度。MCP 未连接时通过启动器和现有 CLI 执行同一工作流。
 
@@ -43,7 +43,7 @@ python3 scripts/workflow.py init INPUT JOBS_ROOT --sample sample-name
 1. **Import**：确认波长、探测器几何、像素大小、增益/过载、测角仪轴与符号、扫描范围/连续性、温度和标定来源。缺失关键几何时先恢复元数据，不能猜仪器型号。
 2. **Harvest**：先保存全部寻峰结果和帧质量概览，再产生专供指标化的初馏子集与逐点剔除原因。冰环、低角区、SNR/帧宽筛选需证据，默认不删单帧/弱点、不设固定分辨率、不开 kNN 密度剪枝。保留未筛选分支核对小晶畴/卫星点。初馏不自动成为最终积分掩膜。
 3. **Index**：先无强制高对称性的指标化；依据几何、强度相关性、RMSD、约化晶胞、未指标化点与消光比较候选。记录每次基变换，并同步矩阵和 HKL。晶胞几何不能独自确定空间群。必要时校准光束中心；旋转轴反向需要元数据依据。
-4. **Domains**：读取 [twins.md](references/twins.md)。多 sweep 不等于多晶畴，低指标化率不自动等于孪晶。区分同相不同取向、非面网孪晶、面网/赝面网/反演孪晶、异相集合体、调制和无序。保留剩余点。多晶格搜索须比较每一晶畴的独立证据。对未知多相/多晶集合体，读取 [domain-finder.md](references/domain-finder.md)，可用本包的独立 DAFi-inspired 模块生成候选，逐组进入 DIALS 指标化与三维索引残差核验。它是未测试的实验实现，不等同官方 DAFi；候选晶列组不能直接当已接受晶畴。
+4. **Domains**：读取 [twins.md](references/twins.md)。一颗单晶衍射样品可以含多个晶畴，面网孪晶的多个畴可以共用一套倒易点阵。分别记录样品、DIALS 晶格模型、物相和晶畴证据。按取向与几何联系不同 sweep，把低指标化率用作复核线索。区分非面网、面网、赝面网和反演孪晶，以及异相集合体、调制和无序。保留剩余点。多晶格搜索须比较每一晶畴的独立证据。对未知多相/多晶集合体，读取 [domain-finder.md](references/domain-finder.md)，可用本包的独立 DAFi-inspired 模块生成候选，逐组进入 DIALS 指标化与三维索引残差核验。它是未测试的实验实现，不等同官方 DAFi；候选晶列组不能直接当已接受晶畴。
 5. **Integrate**：先静态精修；仅在连续漂移证据和覆盖足够时考虑 scan-varying，跳变分段。比较预测/观测质心、轮廓、背景、过载、峰宽和跨帧截断。涉及重叠时读取 [overlap-integration.md](references/overlap-integration.md)：DIALS 有原生 detector-space deconvolution；本版另实现从原始像素联合拟合、背景消除、完整协方差与可辨识总强度。不能以指标化或文件格式转换代替这些观测处理。
 6. **Correct**：检查缩放、吸收、衰减、按扫描角/晶畴/壳层统计，保留校正前后未合并数据、Friedel 对与拒绝记录。经验球谐/多扫描和面指数解析校正按可用证据选择；复合观测可先建几何侧表再运行全局共享尺度/吸收拟合，须核对 rank 与残差分布。不能默认 DIALS 等同 TWINABS，也不重复校正已校正数据。高 outlier 比例提示回看模型，不套用固定禁止阈值。分辨率以多项统计与信息量判断，不为降低 Rint 删弱点。
 7. **Export**：写同名 `.ins/.hkl` 和完整还原报告，保留 CELL/基变换/校正记录。未知化学式、Z、cell esd 不得编造；可先用明确标注的解析初始元素/UNIT 占位，必须下游替换，不能作为最终组成。优先厂商或 DIALS 原生导出，避免手拼/截断对称操作。

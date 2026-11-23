@@ -149,9 +149,11 @@ def run_dials(ctx, args: dict) -> dict:
         invoke(ctx, [py, str(helper), str(ctx.directory/outputs['experiments']),
                      str(ctx.directory/outputs['reflections']), str(inspection)], 'inspection')
         result['inspection'] = read_json(inspection)
-        if ctx.request['mode'] == 'reduce' and result['inspection']['n_crystals'] != 1:
+        models = result['inspection']['n_crystal_models']
+        if ctx.request['mode'] == 'reduce' and models != 1:
             atomic_json(ctx.directory/'needs_review.json', result)
-            raise NeedsReview('automatic single-crystal route cannot continue: use the joint overlap workflow')
+            raise NeedsReview(f'Automatic reduction expects one indexed crystal model. DIALS returned {models}. '
+                              'Review the indexing and overlap evidence before choosing an integration route.')
     result['scientific_acceptance'] = 'not_established'
     return result
 

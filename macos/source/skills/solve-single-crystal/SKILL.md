@@ -17,7 +17,7 @@ description: Solve and refine small-molecule, coordination-complex and MOF singl
 
 ## 执行候选比较
 
-- 对有初模的 HKLF 4，用 `resolve` 在同一基底上比较有物理支持的无孪晶模型、可完全重叠的孪晶律和可能的较高对称模型。必要时在 `spacegroup_candidates` 给出共同设置中的子群及超群。候选保留配对文件及变换来源。
+- 同一颗样品可含多个晶畴。即使只指标化出一套点阵，仍可用带符号强度检验完全重叠的孪晶。对有初模的 HKLF 4，用 `resolve` 在同一基底上比较单畴、孪晶和较高对称的候选。必要时在 `spacegroup_candidates` 给出共同设置中的子群及超群。候选保留配对文件及变换来源。
 - 对 `solver: shelxt` 每份经确认的 Laue 群控制文件只跑一次。主控制文件使用 `ins`，其他独立 Laue 群用 `laue_*`。原始观测和候选变换需要可追溯对应。SHELXT 的各组模型先过共同基底检查。
 - 检查工作集消光覆盖、奇偶类强度、候选短精修、选择集成组配对分数，以及冻结候选的独立审计状态。无判别力时保留并列解释。完全重叠且畴分数不可辨时保留可测的强度组合。定向像素回读从 `build_overlaps` 的 `target-frames` 预算开始。经校正的同相观测可在 `resolve` 中追加 `pixel_export_hklf5`，并检查导出映射。
 - 畴重叠接近完全且强度差很弱时，先从独立反射初始化。实验性的 `phase-twin` 支持同一晶胞、无需拆分强度的精确双畴模型。记录工作集、矩阵、Friedel 假设和预算，CPU 复算 GPU 晋级和抽查结果。

@@ -341,8 +341,8 @@ def start_operation(job: str, operation: Operation, inputs: list[str],
     """Start a fixed DIALS operation asynchronously in a new attempt with a time budget.
 
 Use only for an authorized real reduction task. Does not run installation tests.
-Scale/export are single-phase native routes; composite observations need the
-joint integration/correction scripts and their separate scientific acceptance.
+Scale and export use the native DIALS workflow for assigned reflections.
+Process composite observations with the joint integration and correction workflow.
 """
     if not 1 <= timeout_seconds <= 14400 or operation not in OPERATIONS:
         raise ToolError('E_INPUT', 'Invalid operation or time budget')

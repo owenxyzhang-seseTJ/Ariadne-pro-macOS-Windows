@@ -10,8 +10,9 @@ def inspect(expt_path, refl_path=None):
     from dxtbx.model.experiment_list import ExperimentListFactory
     from dials.array_family import flex
     experiments = ExperimentListFactory.from_json_file(str(expt_path), check_format=False)
-    crystals = {id(e.crystal) for e in experiments if e.crystal is not None}
-    result = {'n_experiments': len(experiments), 'n_crystals': len(crystals), 'native_backend': 'dxtbx/dials'}
+    count = sum(model is not None for model in experiments.crystals())
+    result = {'n_experiments': len(experiments), 'n_crystals': count, 'n_crystal_models': count,
+              'domain_count': None, 'native_backend': 'dxtbx/dials'}
     if refl_path:
         refs = flex.reflection_table.from_file(str(refl_path))
         result['n_reflections'] = len(refs)

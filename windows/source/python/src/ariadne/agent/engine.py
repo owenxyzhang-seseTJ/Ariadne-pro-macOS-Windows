@@ -341,7 +341,8 @@ def capabilities() -> dict:
                 executable_availability={name: shutil.which(name) for name in commands},
                 python_modules={name: importlib.util.find_spec(name) is not None for name in ['numpy', 'scipy', 'gemmi', 'dials', 'cctbx', 'mcp']},
                 analysis_wrappers=sorted(ANALYSES),
-                automatic_raw_route='single crystal; complex twins require explicit joint-analysis workflow',
+                automatic_raw_route=('Automatic reduction uses one indexed crystal model. '
+                                     'Assess domain count from diffraction evidence and use joint analysis for composite observations.'),
                 scientific_acceptance='not_established_by_execution')
 
 
