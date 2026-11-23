@@ -42,6 +42,14 @@ def completion_nodes(dependencies: list[str]):
             node('package', 'package', {'evidence': [ref('review')]}, ['review'])]
 
 
+def _resolution_nodes(prepare, seeds, depends_on=()):
+    seed_nodes = [node(key, 'resolve.seed', {'preparation': ref('evidence'), **args}, ['evidence'])
+                  for key, args in seeds.items()]
+    return [node('evidence', 'resolve.prepare', prepare, depends_on), *seed_nodes,
+            node('screen', 'resolve.screen', {'preparation': ref('evidence'), 'seeds': {'$results': list(seeds)}},
+                 ['evidence', *seeds], True)]
+
+
 def initial_plan(request: dict) -> list[dict]:
     mode, settings, inputs = request['mode'], request['settings'], request['inputs']
     if mode == 'custom':
@@ -62,19 +70,13 @@ def initial_plan(request: dict) -> list[dict]:
             prepare['structure'] = input_ref('structure')
         if controls:
             prepare['ins'] = input_ref('ins' if 'ins' in controls else controls[0])
-        plan = [node('evidence', 'resolve.prepare', prepare)]
-        seeds = []
+        seeds = {}
         if 'structure' in inputs or not controls or settings.get('solver') != 'shelxt':
-            seeds.append(node('seed', 'resolve.seed', {'preparation': ref('evidence')}, ['evidence']))
+            seeds['seed'] = {}
         if settings.get('solver') == 'shelxt':
             for i, control in enumerate(controls):
-                seeds.append(node(f'shelxt-{i}', 'resolve.seed', {'preparation': ref('evidence'), 'ins': input_ref(control)},
-                                  ['evidence']))
-        seed_ids = [n['id'] for n in seeds]
-        plan.extend(seeds)
-        plan.append(node('screen', 'resolve.screen',
-                         {'preparation': ref('evidence'), 'seeds': {'$results': seed_ids}},
-                         ['evidence', *seed_ids], True))
+                seeds[f'shelxt-{i}'] = {'ins': input_ref(control)}
+        plan = _resolution_nodes(prepare, seeds)
         probe = settings.get('pixel_probe')
         if probe is not None:
             roles = ('experiments', 'predictions', 'profiles')
@@ -146,7 +148,15 @@ def initial_plan(request: dict) -> list[dict]:
         plan.append(node(key, 'dials.run', dict(operation=operation, inputs=[ref(previous, '/experiments'), ref(previous, '/reflections')],
                                                options=options), [previous]))
         previous = key
-    plan.append(node('solve', 'structure.solve', dict(ins=ref('export', '/ins'), hkl=ref('export', '/hkl')), ['export']))
+    solver = settings.get('solver', 'native')
+    if solver == 'shelxt':
+        plan.append(node('solve', 'structure.solve', dict(ins=ref('export', '/ins'), hkl=ref('export', '/hkl')), ['export']))
+    elif solver == 'native':
+        resolution = {key: settings[key] for key in ('elements', 'seed') if key in settings}
+        plan.extend(_resolution_nodes({'ins': ref('export', '/ins'), 'hkl': ref('export', '/hkl'),
+                                       'settings': resolution}, {'seed': {}}, ['export']))
+    else:
+        raise ValueError('solver may be native or shelxt')
     return plan
 
 
@@ -249,8 +259,6 @@ def resolve(value: Any, store: Store, dependencies: list[str]) -> Any:
 
 def _expand_solve(store: Store):
     request = store.get('request')
-    if request['mode'] not in {'solve', 'reduce'}:
-        return
     solve = store.node('solve')
     if solve['status'] != 'succeeded' or solve['expanded']:
         return
@@ -290,11 +298,16 @@ def _install_expansion(store, producer, planned, event, details):
 
 
 def _expand_candidates(store):
-    _expand_solve(store)
     request = store.get('request')
-    if request['mode'] != 'resolve':
+    mode = request['mode']
+    if mode not in {'resolve', 'reduce', 'solve'}:
         return
     definitions = {n['id']: n for n in store.summaries()}
+    if mode in {'solve', 'reduce'} and 'solve' in definitions:
+        _expand_solve(store)
+        return
+    if 'screen' not in definitions:
+        return
     for producer, field, stage, next_id in (('screen', 'shortlist', 'short', 'promote'),
                                             ('promote', 'finalists', 'full', 'select')):
         if definitions.get(producer, {}).get('status') != 'succeeded':
@@ -316,6 +329,8 @@ def _expand_candidates(store):
         if stage == 'full':
             dependencies = ['screen', 'promote', 'select', 'final-audit',
                             *(key for key in definitions if key.startswith('shelxt-'))]
+            if mode == 'reduce':
+                dependencies.insert(0, 'export')
             dependencies.extend(key for key in ('pixel-fit', 'pixel-correct', 'pixel-export') if key in definitions)
             planned.append(node('final-audit', 'resolve.audit',
                                 {'preparation': ref('evidence'), 'selection': ref('select')}, ['evidence', 'select']))
@@ -336,6 +351,7 @@ def capabilities() -> dict:
     return dict(product='Ariadne', version='0.8.0', build=BUILD,
                 modes=['audit', 'solve', 'refine', 'reduce', 'feedback', 'resolve', 'custom'],
                 skills=['ariadne-reduction', 'solve-single-crystal'],
+                native_structure_engine={'name': 'AriadneXL', 'package': 'ariadne-xtal'},
                 actions={name: dict(required=sorted(spec.required), optional=sorted(spec.optional), description=spec.description)
                          for name, spec in TOOLS.items()},
                 executable_availability={name: shutil.which(name) for name in commands},

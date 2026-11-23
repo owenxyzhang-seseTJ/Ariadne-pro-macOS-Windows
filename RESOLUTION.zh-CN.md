@@ -2,6 +2,8 @@
 
 Ariadne Pro 包含 `ariadne-reduction` 和 `solve-single-crystal`。还原 skill 交接原始观测、基底和匹配的 INS/HKL。解析 skill 依据实测反射、局部像素及化学证据比较空间群和孪晶模型。CLI、Pro MCP 与工作台共用持久候选图。
 
+**AriadneXL** 是内置结构求解和精修引擎，Python 包名为 `ariadne-xtal`。DIALS 处理原始帧指标化、积分和缩放。AriadneXL 使用反射强度或重叠观测比较畴模型、求解相位并精修。
+
 一颗单晶衍射样品可以含多个晶畴。面网孪晶的倒易点阵可以完全重叠，需结合反射强度比较单畴和孪晶模型。对分裂或部分重叠的峰，则用独立斑点和探测器像素核查各畴。DIALS 指标化诊断中的 `n_crystal_models` 统计不同的晶格模型对象。`n_crystals` 保留同一计数以兼容旧接口。该阶段的物理畴数为待定，记为 `domain_count: null`。
 
 ## 校正强度与初始结构
@@ -37,6 +39,8 @@ Windows 对应 `windows\ariadne-pro-win.cmd agent init request.json sessions\com
 Pro MCP 的标准入口是 `agent_capabilities`、`agent_init`、`agent_submit`、`agent_run_status`、`agent_events` 和 `agent_result`。持久运行支持断连、复用提交键、取消与续跑。`agent_result` 可用 JSON Pointer 读取训练或选择阶段的局部结果，例如 `/preferred/fraction`。连接的服务器应声明 `resolve.prepare` 和 `resolve.screen`。源码 checkout 可用 macOS 启动器执行 `-m ariadne.server`，Windows 执行 `ariadne-pro-win.cmd mcp`。安装 Python 包的环境可使用 `ariadne-mcp`。如果科学包安装在源码树之外，用 `ARIADNE_PLUGIN_ROOT` 指向对应的平台 `source` 目录，以便定位 skill 脚本。
 
 新解初始模型也可提供 `settings.cell` 与全晶胞的 `settings.elements`，或声明 `solver: "shelxt"` 并传适用的 `ins`。其他经确认的 Laue 群控制文件以 `laue_*` 命名，逐个运行。SHELXT 生成的 RES/HKL 保留各自的配对。基底需用配对工作观测核实；需另行转换的候选在报告中列出。复杂 SHELXL 指令、约束与掩膜附档可继续用配对原件进入既有 SHELXL 路线。
+
+CLI 和 MCP 的 `mode: reduce` 在导出 INS/HKL 后默认交给 AriadneXL。自动求解需要在 `settings.elements` 中提供**整个晶胞**的元素清单。`request-from-images` 的 `--elements` 按晶胞中的原子逐项填写元素。只有导出使用的 `settings.composition` 时，流程保留 INS/HKL 和衍射证据，并提示补充求解输入。可显式设置 `settings.solver: "shelxt"` 调用原有 SHELX 求解和精修。`mode: solve` 与 `mode: refine` 对应既有外部程序入口。
 
 ## 判别与观测使用
 

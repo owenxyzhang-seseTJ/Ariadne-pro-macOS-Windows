@@ -4,9 +4,10 @@ import numpy as np
 import pytest
 
 from ariadne.agent import engine
+from ariadne.agent.backends import DIALS_OUTPUTS
 from ariadne.agent.resolve import _companion_scale, _shelxt_model
 from ariadne.agent.store import Store
-from ariadne.agent.util import read_json
+from ariadne.agent.util import artifact, read_json
 from ariadne_xtal.io import write_reflections, write_structure
 from ariadne_xtal.model import Atom, Cell, Reflections, Structure
 from ariadne_xtal.scattering import calculated_intensities
@@ -103,3 +104,52 @@ def test_resolution_reports_insufficient_independent_observations(tmp_path):
     with closing(Store(session)) as store:
         assert store.node('select')['result']['status'] == 'insufficient_independent_observations'
         assert store.node('final-audit')['result']['audit_evaluations'] == 0
+
+
+@pytest.mark.parametrize('elements', [None, ['Fe', 'Cl', 'O']])
+def test_reduce_handoff_uses_native_resolution_and_explicit_cell_composition(tmp_path, monkeypatch, elements):
+    cell = Cell(6.8, 7.9, 9.1)
+    atoms = [Atom('Fe1', 'Fe', [.13, .27, .66]), Atom('Cl1', 'Cl', [.32, .81, .53]),
+             Atom('O1', 'O', [.21, .44, .15])]
+    model = Structure(cell, atoms)
+    grid = np.array(list(np.ndindex(13, 13, 13)))-6
+    grid = grid[np.any(grid != 0, axis=1)]
+    indices = grid[cell.d_spacing(grid) >= .9]
+    values = calculated_intensities(model, indices)
+    observations = Reflections(indices, values, np.maximum(1., values*.03))
+    execute = engine.execute
+
+    def known_reduction_products(ctx, tool, args):
+        if tool != 'dials.run':
+            return execute(ctx, tool, args)
+        outputs = {}
+        for role, name in DIALS_OUTPUTS[args['operation']].items():
+            output = ctx.directory/name
+            if role == 'ins':
+                output.write_text('CELL 0.71073 6.8 7.9 9.1 90 90 90\nSFAC Fe Cl O\nUNIT 0 0 0\nHKLF 4\nEND\n')
+            elif role == 'hkl':
+                write_reflections(observations, output)
+            else:
+                output.touch()
+            outputs[role] = artifact(ctx.root, output, role)
+        return outputs
+
+    monkeypatch.setattr(engine, 'execute', known_reduction_products)
+    frame = tmp_path/'input.cbf'
+    frame.touch()
+    settings = {'composition': 'Fe Cl O'}
+    if elements is not None:
+        settings['elements'] = elements
+    root = tmp_path/'session'
+    engine.initialize(dict(mode='reduce', inputs={'image': str(frame)}, settings=settings), root)
+    result = engine.run(root)
+    assert all(item['status'] == 'succeeded' for item in result['nodes'])
+    assert 'solve' not in {item['id'] for item in result['nodes']}
+    with closing(Store(root)) as store:
+        assert store.node('evidence')['dependencies'] == ['export']
+        assert 'export' in store.node('review')['dependencies']
+        if elements is None:
+            assert store.node('select')['result']['status'] == 'supply_unit_cell_composition_or_paired_initial_model'
+        else:
+            assert any(seed['source'] == 'native P1 work-data initialization'
+                       for seed in store.node('seed')['result']['seeds'])

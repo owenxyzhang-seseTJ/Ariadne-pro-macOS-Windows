@@ -7,6 +7,8 @@ description: Solve and refine small-molecule, coordination-complex and MOF singl
 
 使用简体中文沟通。先读取 [输入与实验条件](references/data-gates.md)。对孪晶和空间群比较读取 [孪晶与对称判据](references/twinning.md)。对配体、无序、溶剂和限制条件读取 [精修规则](references/refinement-playbook.md)。交付采用 [验证和归档](references/validation-delivery.md)。
 
+默认用 AriadneXL（`ariadne-xtal`）求解和精修。DIALS 还原后交接反射和晶胞。`mode: reduce` 在 `settings.elements` 提供整个晶胞的元素清单后，可接续原生求解。依赖完整 SHELX 指令、外部档案或未受原生引擎支持的观测格式时，按配对输入选择对应外部程序。
+
 ## 选择运行入口与观测
 
 1. 调用 Ariadne Pro MCP 的 `agent_capabilities`，确认 `resolve.prepare`、`resolve.screen`、`resolve.select` 可用。通过 `agent_init(request, session)`、`agent_submit(session, request_key)`、`agent_run_status`、`agent_events` 运行。一次提交使用稳定键，断连后读取同一运行。CLI 可用 `python -m ariadne.agent.cli init REQUEST SESSION` 和 `python -m ariadne.agent.cli run SESSION`。

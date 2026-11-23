@@ -70,8 +70,8 @@ export default function ApexWorkspace(props:Props){
   const dockBottomHeight=Math.min(bottomHeight,Math.max(130,(size.height-140)*.42));
   const job=project.jobs?.[0];const running=job?.status==='running'||job?.status==='queued';
   const hasExports=project.artifacts?.some(file=>file.name==='result.json'||['.cif','.hkl','.ccp4','.res','.mtz'].some(ext=>file.name.endsWith(ext)));
-  const shelx=!!project.structure&&/\.(ins|res)$/i.test(project.structure);
-  const action=stage==='refine'&&shelx?'legacy:shelxl':stage==='integrate'&&project.pixels?'integrate-pixels':stage==='data'&&!project.frames.length?'inspect':ACTIONS[stage];
+  const shelxlDefault=!!project.structure&&/\.(ins|res)$/i.test(project.structure)&&project.structureCompatibility?.nativeCompatible!==true;
+  const action=stage==='refine'&&shelxlDefault?'legacy:shelxl':stage==='integrate'&&project.pixels?'integrate-pixels':stage==='data'&&!project.frames.length?'inspect':ACTIONS[stage];
   const tool=props.tools.find(t=>t.id===action);const missing=tool?.requires.filter(key=>{const value=project[key as keyof Project];return !value||(Array.isArray(value)&&!value.length);})||[];
   const nativeBlocked=project.structureCompatibility?.nativeCompatible===false&&['refine','maps','symmetry','absolute','joint-refine','solve-observations'].includes(action);
   const runnable=!!tool?.available&&!missing.length&&!running&&!props.busy&&!nativeBlocked;

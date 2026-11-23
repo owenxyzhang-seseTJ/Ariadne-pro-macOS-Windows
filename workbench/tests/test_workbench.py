@@ -85,6 +85,29 @@ def test_structure_reflections_and_real_refinement(client):
     assert client.post(f'/api/projects/{project_id}/jobs/{job["id"]}',json={'action':'cancel'}).status_code==400
 
 
+def test_compatible_shelx_input_defaults_to_ariadnexl_without_stored_compatibility(client, tmp_path, monkeypatch):
+    from ariadne_xtal.io import read_structure, write_structure
+
+    source = server.SOURCE/'examples/v08'
+    res = tmp_path/'compatible.res'
+    write_structure(read_structure(source/'fen4_start.json'), res)
+    monkeypatch.setenv('ARIADNE_SHELXL_PATH', str(tmp_path/'unavailable-shelxl'))
+    project = client.post('/api/projects', files=[
+        ('files', ('compatible.res', res.read_bytes())),
+        ('files', ('intensities.json', (source/'fen4_measured.json').read_bytes())),
+    ]).json()
+    assert project['structureCompatibility']['nativeCompatible'] is True
+    metadata = server.PROJECTS/project['id']/'project.json'
+    saved = json.loads(metadata.read_text())
+    del saved['structureCompatibility']
+    metadata.write_text(json.dumps(saved))
+    response = client.post(f"/api/projects/{project['id']}/jobs", json={'action':'automatic'})
+    assert response.status_code == 202, response.text
+    assert [step['action'] for step in response.json()['steps']] == ['refine', 'maps']
+    _, job = finished(client, project['id'])
+    assert job['status'] == 'completed', job.get('logTail')
+
+
 def test_calibrated_pixel_job_and_input_validation(client):
     project=client.post('/api/demo',json={'kind':'pixels'}).json();pid=project['id']
     profile=client.get(f'/api/projects/{pid}/view/profile').json()

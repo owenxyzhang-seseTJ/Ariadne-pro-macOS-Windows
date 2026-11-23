@@ -41,6 +41,8 @@ def main(argv=None):
     image_request.add_argument('output', type=Path)
     image_request.add_argument('--glob', default='*.cbf')
     image_request.add_argument('--composition', required=True)
+    image_request.add_argument('--elements', nargs='+', help='Element symbol for each atom in the complete unit cell')
+    image_request.add_argument('--solver', choices=('native', 'shelxt'))
     args = parser.parse_args(argv)
     try:
         if args.command == 'capabilities':
@@ -78,8 +80,13 @@ def main(argv=None):
             images = sorted(p.resolve() for p in args.directory.glob(args.glob) if p.is_file())
             if not images or len(images) > 10000 or args.output.exists():
                 raise ValueError('require 1..10000 images and a new request path')
+            settings = {'composition': args.composition}
+            if args.elements:
+                settings['elements'] = args.elements
+            if args.solver:
+                settings['solver'] = args.solver
             result = dict(schema='ariadne-agent/1', mode='reduce', inputs={f'image_{i:06d}': str(p) for i, p in enumerate(images)},
-                          settings={'composition': args.composition})
+                          settings=settings)
             atomic_json(args.output, result)
             result = {'output': str(args.output), 'images': len(images)}
         print(dumps(result))

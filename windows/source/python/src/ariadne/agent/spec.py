@@ -193,8 +193,11 @@ def validate_request(request: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
     settings = request.get('settings', {})
     if not isinstance(settings, dict):
         raise ValueError('workflow settings must be an object')
-    if mode != 'resolve' and set(settings)-{'cycles', 'composition', 'dials_options', 'expected_elements',
-                                           'seed', 'models', 'absolute_sd', 'relative_sd'}:
+    settings_keys = {'cycles', 'composition', 'dials_options', 'expected_elements',
+                     'seed', 'models', 'absolute_sd', 'relative_sd'}
+    if mode == 'reduce':
+        settings_keys.update(('solver', 'elements'))
+    if mode != 'resolve' and set(settings)-settings_keys:
         raise ValueError('unknown workflow setting')
     planner = request.get('planner', {'kind': 'deterministic'})
     if not isinstance(planner, dict) or planner.get('kind') not in {'deterministic', 'chat-completions'}:

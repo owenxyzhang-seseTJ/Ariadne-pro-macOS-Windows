@@ -32,6 +32,7 @@ _OPTIONAL = {'cell', 'spacegroup', 'spacegroup_candidates', 'elements', 'reflect
              'negative_batch_is_free', 'extra_laws', 'coverage_hkl', 'links', 'phasing_options',
              'direct_twin', 'refinement_options', 'solver', 'crosscheck', 'shortlist_band',
              'allow_friedel_averaging', 'anomalous_wavelength', 'pixel_probe', 'pixel_export_hklf5'}
+_NEED_SEED_INPUT = 'supply_unit_cell_composition_or_paired_initial_model'
 
 
 def validate_settings(values):
@@ -339,7 +340,7 @@ def seed(ctx, args):
     if preparation.get('structure'):
         return {'seeds': [{'model': preparation['structure'], 'source': 'provided initial model'}]}
     if not settings.get('elements'):
-        return {'seeds': [], 'status': 'supply_unit_cell_composition_or_paired_initial_model'}
+        return {'seeds': [], 'status': _NEED_SEED_INPUT}
     if settings['anomalous'] and not settings.get('allow_friedel_averaging', False):
         raise ValueError('Native phase initialization needs declared Friedel averaging or a supplied model')
     from ariadne_xtal.phasing import PhasingOptions, solve_p1
@@ -377,8 +378,10 @@ def screen(ctx, args):
     if preparation['status'] != 'ready':
         return {'status': preparation['status'], 'shortlist': []}
     settings = preparation['settings']
-    work = read_reflections(_path(ctx, preparation['work']))
     seeds = [s for stage in args['seeds'] for s in stage.get('seeds', [])]
+    if not seeds and any(stage.get('status') == _NEED_SEED_INPUT for stage in args['seeds']):
+        return {'status': _NEED_SEED_INPUT, 'shortlist': [], 'diagnostic': preparation['diagnostic']}
+    work = read_reflections(_path(ctx, preparation['work']))
     model_cache = {}
     projected = []
     for i, entry in enumerate(seeds):
@@ -525,7 +528,7 @@ def select(ctx, args):
         return {'status': preparation['status'], 'reason': preparation['partition'].get('reason'),
                 'candidates': []}
     screen = args.get('screen')
-    if screen is not None and screen.get('status') == 'no_common_basis_initial_model':
+    if screen is not None and screen.get('status') in {'no_common_basis_initial_model', _NEED_SEED_INPUT}:
         return {'status': screen['status'], 'candidates': []}
     settings = preparation['settings']
     valid = [row for row in args['fits'] if not row.get('execution_failed')]

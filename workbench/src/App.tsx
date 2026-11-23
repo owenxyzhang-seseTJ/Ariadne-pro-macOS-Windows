@@ -16,7 +16,8 @@ const fileURL=(id:string,path:string)=>`/api/projects/${id}/files/${path.split('
 
 const RESOLUTION_STATUS:Record<string,string>={audited_hypothesis:'已完成独立审计',indistinguishable:'现有观测支持并列候选',
   no_converged_identifiable_model:'当前候选尚无可判定的模型',comparison_incomplete:'部分候选需复核',
-  insufficient_independent_observations:'独立观测不足',no_common_basis_initial_model:'需要共同基底的初始模型'};
+  insufficient_independent_observations:'独立观测不足',no_common_basis_initial_model:'需要共同基底的初始模型',
+  supply_unit_cell_composition_or_paired_initial_model:'需要整个晶胞的元素组成或配对初始模型'};
 
 function RouteState(){const hash=window.location.hash;const match=hash.match(/^#\/project\/([a-z0-9-]+)/);return {id:match?.[1]||null,expert:hash.includes('expert=1')};}
 
@@ -119,7 +120,8 @@ function ProjectSettings({project,busy,onClose,onSave}:{project:Project;busy:boo
 
 function ToolDialog({project,tools,initial,onChange,onClose,onRun,busy}:{project:Project;tools:Tool[];initial:string;onChange:(id:string)=>void;onClose:()=>void;onRun:(id:string,settings:Record<string,unknown>)=>Promise<void>;busy:boolean}){
   const shelx=!!project.structure&&/\.(ins|res)$/i.test(project.structure);
-  const [chosen,setChosen]=useState(shelx&&initial==='refine'?'legacy:shelxl':shelx&&initial==='maps'?'legacy:shelxl-maps':initial);const tool=tools.find(t=>t.id===chosen)||tools[0];const [advanced,setAdvanced]=useState('{}');const [inputs,setInputs]=useState<string[]>([]);const [error,setError]=useState('');
+  const shelxlDefault=shelx&&project.structureCompatibility?.nativeCompatible!==true;
+  const [chosen,setChosen]=useState(shelxlDefault&&initial==='refine'?'legacy:shelxl':shelxlDefault&&initial==='maps'?'legacy:shelxl-maps':initial);const tool=tools.find(t=>t.id===chosen)||tools[0];const [advanced,setAdvanced]=useState('{}');const [inputs,setInputs]=useState<string[]>([]);const [error,setError]=useState('');
   const [structure,setStructure]=useState(shelx?project.structure!:'');const [reflections,setReflections]=useState(project.reflections&&/\.hkl$/i.test(project.reflections)?project.reflections:'');
   const [resolutionData,setResolutionData]=useState(project.reflections||'');
   const files=[...new Map([...project.files,...(project.artifacts||[])].map(f=>[f.path,f])).values()];const groups=[...new Set(tools.map(t=>t.group))];const official=tool.id.startsWith('legacy:');
@@ -127,7 +129,7 @@ function ToolDialog({project,tools,initial,onChange,onClose,onRun,busy}:{project
   const missing=tool.requires.filter(key=>{const value=official&&key==='structure'?structure:official&&key==='reflections'?reflections:tool.id==='resolve'&&key==='reflections'?resolutionData:project[key as keyof Project];return !value||(Array.isArray(value)&&!value.length);});
   useEffect(()=>{setInputs([]);setAdvanced(tool.id==='refine'?'{"options":{"max_nfev":200}}':tool.id==='symmetry'?`{"candidates":[${JSON.stringify(project.spacegroup||'P 1')}]}`:'{}');setError('');},[tool.id]);
   async function start(){try{const settings=JSON.parse(advanced);if(!settings||Array.isArray(settings)||typeof settings!=='object')throw Error('专业参数应是 JSON 对象。');if(tool.id.startsWith('analysis:'))settings.inputs=inputs;if(official){settings.shelx_structure=structure;settings.shelx_reflections=reflections;}if(tool.id==='resolve'&&resolutionData&&resolutionData!==project.reflections)settings.resolution_inputs={hkl:resolutionData,...settings.resolution_inputs};await onRun(tool.id,settings);}catch(error){setError((error as Error).message);}}
-  return <Modal title="专业操作与设置" onClose={onClose} wide><div className="tool-layout"><aside className="tool-nav">{groups.map(group=><div key={group}><h4>{group}</h4>{tools.filter(t=>t.group===group&&!(shelx&&['refine','maps'].includes(t.id))).map(t=><button key={t.id} className={tool.id===t.id?'selected':''} onClick={()=>{setChosen(t.id);onChange(t.id);}}>{t.name}{!t.available&&<span>需配置</span>}</button>)}</div>)}</aside><div className="tool-detail">
+  return <Modal title="专业操作与设置" onClose={onClose} wide><div className="tool-layout"><aside className="tool-nav">{groups.map(group=><div key={group}><h4>{group}</h4>{tools.filter(t=>t.group===group&&!(shelxlDefault&&['refine','maps'].includes(t.id))).map(t=><button key={t.id} className={tool.id===t.id?'selected':''} onClick={()=>{setChosen(t.id);onChange(t.id);}}>{t.name}{!t.available&&<span>需配置</span>}</button>)}</div>)}</aside><div className="tool-detail">
     <h3>{tool.name}</h3><p>{tool.description}</p>
     <div className="requirement-list">{tool.requires.map(key=><span className={missing.includes(key)?'missing':'ready'} key={key}>{missing.includes(key)?'○':'✓'} {ROLE[key]||({frames:'原始帧',cell:'晶胞参数',elements:'晶胞组成'} as Record<string,string>)[key]||key}</span>)}</div>
     {tool.id==='resolve'&&<label className="form-field">实测强度<select value={resolutionData} onChange={e=>setResolutionData(e.target.value)}><option value="">选择项目中的强度表</option>{files.filter(f=>f.role==='reflections'||/\.(hkl|fcf)$/i.test(f.path)).map(f=><option key={f.path} value={f.path}>{f.path}</option>)}</select></label>}

@@ -1,5 +1,6 @@
 """Machine-readable capability boundaries; no implicit backend substitution."""
 CAPABILITIES = {
+    "display_name": "AriadneXL",
     "package": "ariadne-xtal", "version": "0.8.0", "native_full_shelx_parity": False,
     "native": {
         "crystal_geometry": "General positive-definite cells; exact periodic closest image",

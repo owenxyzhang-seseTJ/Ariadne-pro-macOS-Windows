@@ -113,10 +113,10 @@ def read_jobs(folder):
 
 NATIVE_TOOLS=[
  ('inspect','结构检查','结构与晶胞检查',['structure'],'检查晶胞、对称性、原子与配位显示。'),
- ('refine','结构精修','结构求解与精修',['structure','reflections'],'使用带符号 F² 观测进行原生精修。'),
+ ('refine','结构精修','结构求解与精修',['structure','reflections'],'AriadneXL 使用带符号 F² 观测进行结构精修。'),
  ('autosolve','自动求解与精修','结构求解与精修',['reflections','cell','elements'],'生成候选结构、精修并独立比较；需要整个晶胞组成。'),
  ('solve','多起点相位求解','结构求解与精修',['reflections','cell','elements'],'电荷翻转、原子投影与 hybrid 相位路径。'),
- ('resolve','孪晶与空间群比较','孪晶与高级分析',['reflections'],'共用观测划分、候选筛选、精修与留出比较。'),
+ ('resolve','孪晶与空间群比较','孪晶与高级分析',['reflections'],'AriadneXL 筛选和精修候选，并用共同的留出观测比较。'),
  ('symmetry','空间群候选检查','结构求解与精修',['structure','reflections'],'比较声明的空间群候选和原点。'),
  ('maps','电子密度与 Patterson 图','结构与密度',['structure','reflections'],'导出 Fo−Fc、计算密度、Patterson 与 CCP4 文件。'),
  ('absolute','绝对结构诊断','结构求解与精修',['structure','reflections'],'基于固定模型的 Friedel 商诊断，附实际适用条件。'),
@@ -313,10 +313,21 @@ def _submit_job(folder,project,body,catalog):
         raise ValueError('screening 参数用于多起点相位求解。')
     requested_action=action
     shelx=bool(project.get('structure') and Path(project['structure']).suffix.lower() in {'.ins','.res'})
-    # The generic refinement entry follows the source format. Explicit native
-    # requests remain strict; an official run never rewrites SHELX directives.
-    if action=='refine' and shelx and settings.get('engine')!='native':action='legacy:shelxl'
-    if action=='maps' and shelx and settings.get('engine')!='native':action='legacy:shelxl-maps'
+    engine = settings.get('engine')
+    use_shelxl = False
+    if shelx and engine != 'native' and action in {'refine', 'maps', 'automatic'}:
+        explicit_shelxl = engine == 'shelxl' or any(key in settings for key in ('shelx_structure', 'shelx_reflections'))
+        native_compatible = (project.get('structureCompatibility') or {}).get('nativeCompatible')
+        if native_compatible is None and not explicit_shelxl:
+            from .structure_input import native_model
+            try:
+                native_model(folder/project['structure'])
+                native_compatible = True
+            except (OSError, ValueError):
+                native_compatible = False
+        use_shelxl = explicit_shelxl or native_compatible is not True
+    if action=='refine' and use_shelxl:action='legacy:shelxl'
+    if action=='maps' and use_shelxl:action='legacy:shelxl-maps'
     selected=next((t for t in catalog if t['id']==action),None)
     if action!='automatic':
         if selected is None:raise ValueError('动作未注册。')
@@ -333,7 +344,7 @@ def _submit_job(folder,project,body,catalog):
     if needs_model and shelx:
         from .structure_input import native_model
         native_model(folder/project['structure'])
-    official=action if action.startswith('legacy:') else 'legacy:shelxl' if action=='automatic' and shelx and not project.get('frames') and not project.get('pixels') else None
+    official=action if action.startswith('legacy:') else 'legacy:shelxl' if action=='automatic' and use_shelxl and not project.get('frames') and not project.get('pixels') else None
     if official:
         from .shelx_engine import engine_info,input_plan
         engine=official.split(':')[1].removesuffix('-maps');info=engine_info(engine)
