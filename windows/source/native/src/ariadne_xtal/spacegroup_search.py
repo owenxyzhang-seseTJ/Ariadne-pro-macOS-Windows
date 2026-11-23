@@ -32,7 +32,7 @@ def _distance(cell, left, right):
 
 def phase_origin_search(model: Structure, hkl, spacegroup: str, *,
                         max_reflections=384, grid_size=4, keep_starts=6,
-                        max_nfev=100):
+                        max_nfev=100, _factor_cache=None):
     """Minimize |F(hR) exp(2πi[h.t+(hR-h).o])-F(h)|² over an origin o.
 
     The intensities of the candidate P1 model supply bounded phase weights.
@@ -64,11 +64,19 @@ def phase_origin_search(model: Structure, hkl, spacegroup: str, *,
                 "phase_discrepancy": 0., "origin_rank": 0, "n_reflections": len(h),
                 "n_operations": len(ops), "evaluation_count": 0,
                 "interpretation": "Identity symmetry has no discriminating phase test"}
-    f = structure_factors(model, h)
+    cache = {} if _factor_cache is None else _factor_cache
+
+    def factors(indices):
+        key = indices.tobytes()
+        if key not in cache:
+            cache[key] = structure_factors(model, indices)
+        return cache[key]
+
+    f = factors(h)
     rhs = np.tile(f, len(transforms))
     q = np.concatenate([h @ r - h for r, _ in transforms])
     ht = np.concatenate([h @ t for _, t in transforms])
-    transformed = np.concatenate([structure_factors(model, np.rint(h @ r).astype(int))
+    transformed = np.concatenate([factors(np.rint(h @ r).astype(int))
                                   for r, _ in transforms])
     normalizer = np.sqrt(max(np.sum(np.abs(rhs)**2 + np.abs(transformed)**2), 1e-30))
     def residual(origin):
@@ -89,7 +97,11 @@ def phase_origin_search(model: Structure, hkl, spacegroup: str, *,
             if a.element == b.element:
                 delta = b.frac - rotation @ a.frac - translation
                 starts.append((inverse @ delta) % 1)
-    ranked_starts = sorted(starts, key=lambda x: float(residual(x) @ residual(x)))[:keep_starts]
+    def discrepancy(origin):
+        vector = residual(origin)
+        return float(vector @ vector)
+
+    ranked_starts = sorted(starts, key=discrepancy)[:keep_starts]
     fits = [least_squares(residual, x, jac=jacobian, max_nfev=max_nfev,
                           ftol=1e-10, xtol=1e-10, gtol=1e-10) for x in ranked_starts]
     best = min(fits, key=lambda x: float(x.fun @ x.fun))
@@ -202,9 +214,10 @@ def propose_spacegroups(model, hkl, candidates, *, tolerance=0.18, phase_limit=0
     if not np.isfinite(phase_limit) or phase_limit < 0:
         raise ValueError("phase_limit must be finite and nonnegative")
     result = []
+    factor_cache = {}
     for name in dict.fromkeys(candidates):
         try:
-            diagnostic = phase_origin_search(model, hkl, name)
+            diagnostic = phase_origin_search(model, hkl, name, _factor_cache=factor_cache)
             if diagnostic["phase_discrepancy"] > phase_limit:
                 result.append({**diagnostic, "eligible": False, "reason": "phase discrepancy"})
                 continue

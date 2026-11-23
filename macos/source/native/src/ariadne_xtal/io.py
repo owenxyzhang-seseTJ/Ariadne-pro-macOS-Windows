@@ -293,6 +293,8 @@ def read_hkl(path: str | Path, *, negative_batch_is_free: bool = False) -> Refle
                 parsed = None
         if parsed is None:
             parts = raw.split()
+            if parts == ["0", "0", "0"]:
+                break
             if len(parts) not in (5,6):
                 raise ValueError(f"HKLF4 line {lineno}: expected five or six fields")
             try:

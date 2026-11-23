@@ -16,6 +16,7 @@ from scipy.ndimage import map_coordinates
 from byte_cache import ByteLRU
 from local_profiles import select_profile
 from profile_geometry import gaussian_voxels
+from targeted_windows import choose_windows, preview_information
 
 
 def connected_boxes(boxes):
@@ -174,6 +175,16 @@ def prepare(args):
     frame_owners, registered_partitions = {}, set()
     records = []
     issues = []
+    frame_budget = getattr(args, 'target_frames', None)
+    geometry_diagnostics = frame_budget is not None or getattr(args, 'geometry_diagnostics', False)
+    orientation = [np.asarray(e.crystal.get_A()).reshape(3, 3) if e.crystal else np.zeros((3, 3))
+                   for e in expts] if geometry_diagnostics else None
+    reciprocal_squared = np.zeros(len(indices))
+    if orientation is not None:
+        for exp_id, matrix in enumerate(orientation):
+            known = ids == exp_id
+            q = indices[known] @ matrix.T
+            reciprocal_squared[known] = np.einsum('ij,ij->i', q, q)
     for i, (exp_id, panel_id, centre) in enumerate(zip(ids, panels, positions)):
         if exp_id < 0 or exp_id >= len(expts) or not np.any(indices[i]) or not np.all(np.isfinite(centre)):
             issues.append({'prediction_row': i, 'reason': 'invalid_prediction'})
@@ -213,8 +224,12 @@ def prepare(args):
         x0, y0, z0 = np.floor(centre - radius).astype(int)
         x1, y1, z1 = np.ceil(centre + radius).astype(int)
         box = (int(x0), int(x1), int(y0), int(y1), int(z0), int(z1))
+        mapping = library.get('experiment_to_domain', {}).get(str(exp_id))
+        if mapping is None:
+            raise ValueError('Provide explicit experiment_to_domain mapping; sweep id is not domain id')
+        domain = int(mapping)
         record = {'row': i, 'experiment_id': int(exp_id), 'panel': int(panel_id), 'centre': centre,
-                  'box': box, 'entry': entry, 'partition': key}
+                  'box': box, 'entry': entry, 'partition': key, 'domain': domain, 'reciprocal_sq': float(reciprocal_squared[i])}
         records.append(record)
         partitions[key].append(len(records) - 1)
     groups = []
@@ -229,7 +244,10 @@ def prepare(args):
 
         return raw_cache.get(cache_key, decode, size_bytes)
 
+    windows = []
+    scans = {}
     for key, selected in partitions.items():
+        scan = scans.setdefault(key[0], len(scans))
         boxes = [records[i]['box'] for i in selected]
         margin = args.background_margin
         expanded_boxes = [(b[0]-margin, b[1]+margin, b[2]-margin, b[3]+margin, b[4]-margin, b[5]+margin) for b in boxes]
@@ -251,75 +269,99 @@ def prepare(args):
             if min(shape) <= 0 or np.prod(shape) > args.max_voxels or len(chosen) > args.max_components:
                 issues.append({'prediction_rows': [r['row'] for r in chosen], 'reason': 'patch_or_component_budget_or_detector_extent'})
                 continue
-            noises = [r['entry']['noise_model'] for r in chosen]
-            noise = noises[0]
-            gain, readout, floor = shared_pixel_noise(noises)
-            data = np.empty(shape)
-            valid = np.empty(shape, dtype=bool)
-            for zi, absolute_frame in enumerate(range(z0, z1)):
-                raw, masks = frame(expt.imageset, (key, absolute_frame), absolute_frame - start)
-                data[zi] = raw[chosen[0]['panel']].as_numpy_array()[y0:y1, x0:x1]
-                valid[zi] = masks[chosen[0]['panel']].as_numpy_array()[y0:y1, x0:x1]
-            # A rectangular hull can contain another disconnected group.
-            # Only union-support pixels belong to this observation; otherwise
-            # global fitting would count shared raw noise more than once.
-            valid &= support_union_mask(bounds, [r['box'] for r in chosen], args.background_margin)
-            variance = np.maximum(gain * np.maximum(data, 0) + readout, floor)
-            profiles = np.empty((len(chosen), *shape))
-            derivatives = np.empty((len(chosen), 3, *shape)) if args.position_derivatives else None
-            for component_index, r in enumerate(chosen):
-                if args.position_derivatives and not r['entry'].get('template'):
-                    from profile_geometry import gaussian_voxels_with_derivatives
-                    covariance = np.asarray(r['entry']['covariance_px_xyz']).reshape(3, 3)
-                    gaussian_voxels_with_derivatives(covariance, r['centre'], bounds,
-                        out=profiles[component_index], derivative_out=derivatives[component_index])
-                else:
-                    profiles[component_index] = template_values(r['entry'], load_template, r['centre'], bounds)
-                    if args.position_derivatives:
-                        # Empirical templates retain their existing piecewise
-                        # interpolation model and symmetric local derivative.
-                        for axis in range(3):
-                            delta = np.eye(3)[axis] * .001
-                            plus = template_values(r['entry'], load_template, r['centre'] + delta, bounds)
-                            minus = template_values(r['entry'], load_template, r['centre'] - delta, bounds)
-                            derivatives[component_index, axis] = (plus-minus) / .002
-            group_id = f'pixel-group-{len(groups) + 1:06d}'
-            patch_name = group_id + '.npz'
-            arrays = {'data': data, 'variance': variance, 'valid': valid, 'profiles': profiles}
-            if args.position_derivatives:
-                arrays['position_derivatives_xyz'] = derivatives
-            np.savez_compressed(args.output / patch_name, **arrays)
-            contributors = []
-            derivative_methods = []
-            for r in chosen:
-                mapping = library.get('experiment_to_domain', {}).get(str(r['experiment_id']))
-                if mapping is None:
-                    raise ValueError('Provide explicit experiment_to_domain mapping; sweep id is not domain id')
-                contributors.append({'domain': int(mapping), 'hkl': indices[r['row']].tolist(),
-                                     'experiment_id': r['experiment_id'], 'prediction_row': r['row'],
-                                     'phase_id': library.get('experiment_to_phase', {}).get(str(r['experiment_id']), 'unknown')})
+            classification, information, separation = preview_information(chosen) if geometry_diagnostics else (None, None, None)
+            windows.append(dict(key=key, scan=scan, chosen=chosen, bounds=bounds, shape=shape, start=start,
+                                frames=set(key[0][z0-start:z1-start]), voxels=int(np.prod(shape)),
+                                classification=classification, separation=separation, information=information,
+                                domain=chosen[0]['domain'], reciprocal_sq=max(r['reciprocal_sq'] for r in chosen)))
+    if frame_budget is not None:
+        selected, selection = choose_windows(windows, frame_budget, seed=getattr(args, 'selection_seed', 1729),
+                                             random_fraction=getattr(args, 'random_fraction', .15),
+                                             frame_seconds=getattr(args, 'frame_seconds', .03),
+                                             seconds_per_voxel=getattr(args, 'seconds_per_voxel', 5e-7))
+        for i, window in enumerate(windows):
+            if i not in selected:
+                issues.append({'prediction_rows': [r['row'] for r in window['chosen']],
+                               'reason': 'targeted_frame_budget', 'classification': window['classification']})
+    else:
+        selected, selection = set(range(len(windows))), None
+    for i in sorted(selected, key=lambda index: (windows[index]['scan'], windows[index]['bounds'][4])):
+        window = windows[i]
+        key, chosen, bounds, shape, start = (window[k] for k in ('key', 'chosen', 'bounds', 'shape', 'start'))
+        x0, x1, y0, y1, z0, z1 = bounds
+        expt = expts[chosen[0]['experiment_id']]
+        noises = [r['entry']['noise_model'] for r in chosen]
+        noise = noises[0]
+        gain, readout, floor = shared_pixel_noise(noises)
+        data = np.empty(shape)
+        valid = np.empty(shape, dtype=bool)
+        for zi, absolute_frame in enumerate(range(z0, z1)):
+            raw, masks = frame(expt.imageset, key[0][absolute_frame-start], absolute_frame-start)
+            data[zi] = raw[chosen[0]['panel']].as_numpy_array()[y0:y1, x0:x1]
+            valid[zi] = masks[chosen[0]['panel']].as_numpy_array()[y0:y1, x0:x1]
+        # A rectangular hull can contain another disconnected group.
+        # Only union-support pixels belong to this observation; otherwise
+        # global fitting would count shared raw noise more than once.
+        valid &= support_union_mask(bounds, [r['box'] for r in chosen], args.background_margin)
+        variance = np.maximum(gain * np.maximum(data, 0) + readout, floor)
+        profiles = np.empty((len(chosen), *shape))
+        derivatives = np.empty((len(chosen), 3, *shape)) if args.position_derivatives else None
+        for component_index, r in enumerate(chosen):
+            if args.position_derivatives and not r['entry'].get('template'):
+                from profile_geometry import gaussian_voxels_with_derivatives
+                covariance = np.asarray(r['entry']['covariance_px_xyz']).reshape(3, 3)
+                gaussian_voxels_with_derivatives(covariance, r['centre'], bounds,
+                    out=profiles[component_index], derivative_out=derivatives[component_index])
+            else:
+                profiles[component_index] = template_values(r['entry'], load_template, r['centre'], bounds)
                 if args.position_derivatives:
-                    empirical = bool(r['entry'].get('template'))
-                    derivative_methods.append({
-                        'method': ('empirical_template_central_difference' if empirical
-                                   else 'gaussian_boundary_flux'),
-                        'finite_difference_step_px': .001 if empirical else None})
-            groups.append({'observation_id': group_id, 'patch': patch_name, 'contributors': contributors,
-                           'pixel_ownership': 'disjoint support unions; canonical file/frame/panel identities audited across partitions',
-                           'variance_source': 'gain*max(observed_corrected_ADU,0)+readout_variance with floor; data-dependent plug-in weights',
-                           'basis': library['basis'], 'bounds_xyz': list(bounds), 'noise_model': noise,
-                           'position_derivatives': {'available': args.position_derivatives, 'units': 'per_pixel_xyz',
-                                                    'finite_difference_step_px': .001 if any(
-                                                        m['finite_difference_step_px'] is not None for m in derivative_methods) else None,
-                                                    'finite_difference_step_scope': 'empirical-template contributors only',
-                                                    'per_contributor': derivative_methods},
-                           'provenance': {'raw_first_path': experiment_cache[chosen[0]['experiment_id']][1][0],
-                                          'raw_last_path': experiment_cache[chosen[0]['experiment_id']][1][-1],
-                                          'expt': str(args.expt.resolve()), 'predictions': str(args.predictions.resolve()),
-                                          'library': str(args.library.resolve()), 'panel': key[2],
-                                          'profile_sources': [r['entry']['provenance'] for r in chosen]}})
+                    # Empirical templates retain their existing piecewise
+                    # interpolation model and symmetric local derivative.
+                    for axis in range(3):
+                        delta = np.eye(3)[axis] * .001
+                        plus = template_values(r['entry'], load_template, r['centre'] + delta, bounds)
+                        minus = template_values(r['entry'], load_template, r['centre'] - delta, bounds)
+                        derivatives[component_index, axis] = (plus-minus) / .002
+        group_id = f'pixel-group-{i+1:06d}'
+        patch_name = group_id + '.npz'
+        arrays = {'data': data, 'variance': variance, 'valid': valid, 'profiles': profiles}
+        if args.position_derivatives:
+            arrays['position_derivatives_xyz'] = derivatives
+        np.savez_compressed(args.output / patch_name, **arrays)
+        contributors = []
+        derivative_methods = []
+        for r in chosen:
+            contributors.append({'domain': r['domain'], 'hkl': indices[r['row']].tolist(),
+                                 'experiment_id': r['experiment_id'], 'prediction_row': r['row'],
+                                 'phase_id': library.get('experiment_to_phase', {}).get(str(r['experiment_id']), 'unknown')})
+            if args.position_derivatives:
+                empirical = bool(r['entry'].get('template'))
+                derivative_methods.append({
+                    'method': ('empirical_template_central_difference' if empirical
+                               else 'gaussian_boundary_flux'),
+                    'finite_difference_step_px': .001 if empirical else None})
+        groups.append({'observation_id': group_id, 'patch': patch_name, 'contributors': contributors,
+                       'geometry_selection': {'window': i, 'scan': window['scan'], 'classification': window['classification'],
+                                              'profile_contrast': window['information'],
+                                              'separation_in_profile_widths': window['separation'],
+                                              'reason': None if selection is None else selection['reason_by_window'][i]},
+                       'pixel_ownership': 'disjoint support unions; canonical file/frame/panel identities audited across partitions',
+                       'variance_source': 'gain*max(observed_corrected_ADU,0)+readout_variance with floor; data-dependent plug-in weights',
+                       'basis': library['basis'], 'bounds_xyz': list(bounds), 'noise_model': noise,
+                       'position_derivatives': {'available': args.position_derivatives, 'units': 'per_pixel_xyz',
+                                                'finite_difference_step_px': .001 if any(
+                                                    m['finite_difference_step_px'] is not None for m in derivative_methods) else None,
+                                                'finite_difference_step_scope': 'empirical-template contributors only',
+                                                'per_contributor': derivative_methods},
+                       'provenance': {'raw_first_path': experiment_cache[chosen[0]['experiment_id']][1][0],
+                                      'raw_last_path': experiment_cache[chosen[0]['experiment_id']][1][-1],
+                                      'expt': str(args.expt.resolve()), 'predictions': str(args.predictions.resolve()),
+                                      'library': str(args.library.resolve()), 'panel': key[2],
+                                      'profile_sources': [r['entry']['provenance'] for r in chosen]}})
     manifest = {'schema': 'scxrd-pixel-patches/1', 'implementation_status': 'experimental_untested',
                 'groups': groups, 'retained_unprocessed_predictions': issues,
+                'targeted_selection': selection,
+                'eligible_windows_by_scan': {str(scan): sum(w['scan'] == scan for w in windows) for scan in scans.values()},
                 'cache': {'frames': raw_cache.statistics(), 'templates': template_cache.statistics()},
                 'support_sigma': args.support_sigma, 'background_margin': args.background_margin,
                 'complete_prediction_provenance': library['complete_prediction_provenance'],
@@ -342,6 +384,11 @@ def main():
     p.add_argument('--template-cache', type=int, default=32)
     p.add_argument('--frame-cache-mib', type=int, default=256)
     p.add_argument('--template-cache-mib', type=int, default=128)
+    p.add_argument('--target-frames', type=int, help='Maximum distinct frames in complete selected windows')
+    p.add_argument('--selection-seed', type=int, default=1729)
+    p.add_argument('--random-fraction', type=float, default=.15)
+    p.add_argument('--frame-seconds', type=float, default=.03)
+    p.add_argument('--seconds-per-voxel', type=float, default=5e-7)
     p.add_argument('--position-derivatives', action='store_true', help='Store XYZ profile derivatives for signed-WLS position nuisance fitting')
     args = p.parse_args()
     try:

@@ -15,9 +15,10 @@ NUMERICS = [
     "native/tests/test_phasing_v08.py", "tests/test_calibrated_pixel_inputs.py",
     "native/tests/test_count_refinement.py", "tests_rebuild/test_reduction_v08.py",
     "tests_rebuild/test_lattice_selection.py", "tests_rebuild/test_feedback.py",
+    "native/tests/test_twin_resolution.py", "tests/test_targeted_windows.py",
 ]
 RUNTIME = ["tests_rebuild/test_runtime_upgrade.py", "tests_rebuild/test_agent.py", "tests_rebuild/test_host_budget.py",
-           "tests_rebuild/test_scheduler_v08.py"]
+           "tests_rebuild/test_scheduler_v08.py", "tests_rebuild/test_resolution_dag.py"]
 
 
 def main():

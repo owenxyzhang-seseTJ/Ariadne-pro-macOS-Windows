@@ -20,7 +20,7 @@ from .symmetry import get_operations, operation_parts
 
 
 def evidence_partition(reflections: Reflections, *, rotations=(), links=(), seed=1729,
-                       selection_fraction=0.15, audit_fraction=0.10):
+                       selection_fraction=0.15, audit_fraction=0.10, close_rotations=False):
     """Return orbit/overlap-connected work/selection/audit roles.
 
     Existing True free flags are reserved as the audit set. Mixed flags in one
@@ -52,13 +52,32 @@ def evidence_partition(reflections: Reflections, *, rotations=(), links=(), seed
             merge(i, buckets[key])
         else:
             buckets[key] = i
+    matrices = []
     for raw in rotations:
         rotation = np.asarray(raw, dtype=float)
         if (rotation.shape != (3, 3) or not np.isfinite(rotation).all()
                 or not np.allclose(rotation, np.rint(rotation), atol=1e-10, rtol=0)
                 or not np.isclose(abs(np.linalg.det(rotation)), 1., atol=1e-8, rtol=0)):
             raise ValueError("Evidence rotations must be integral unimodular reciprocal transformations")
-        for i, mapped in enumerate(hkl @ np.rint(rotation).astype(int)):
+        matrices.append(np.rint(rotation).astype(np.int64))
+    if close_rotations and matrices:
+        identity = np.eye(3, dtype=np.int64)
+        closed = {tuple((-identity).ravel()): identity}
+        frontier = [identity]
+        while frontier:
+            current = frontier.pop()
+            for matrix in matrices:
+                combined = current @ matrix
+                # -h is already grouped with h.
+                key = min(tuple(combined.ravel()), tuple((-combined).ravel()))
+                if key not in closed and not np.array_equal(combined, -identity):
+                    if len(closed) >= 96 or np.max(np.abs(combined)) > 100_000:
+                        raise ValueError("Candidate rotations do not close in one finite reciprocal group")
+                    closed[key] = combined
+                    frontier.append(combined)
+        matrices = list(closed.values())
+    for rotation in matrices:
+        for i, mapped in enumerate(hkl @ rotation):
             key = min(tuple(mapped), tuple(-mapped))
             if key in buckets:
                 merge(i, buckets[key])

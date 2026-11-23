@@ -97,7 +97,16 @@ def analysis(action,project,folder,out,settings,log):
         argv += ['--estimator',settings.get('estimator','signed-wls'),'--confidence-level',str(settings.get('confidence_level',.95))]
         if settings.get('fit_positions'):argv+=['--fit-positions']
     if action=='joint_refine':argv+=['--method',method]
-    if action=='build_overlaps' and settings.get('position_derivatives'):argv+=['--position-derivatives']
+    if action=='build_overlaps':
+        from ariadne.agent.backends import ANALYSES, typed_options
+
+        keys = ('target_frames', 'selection_seed', 'random_fraction', 'frame_seconds', 'seconds_per_voxel',
+                'support_sigma', 'max_voxels', 'max_components', 'frame_cache_mib')
+        options = {key.replace('_', '-'): settings[key] for key in keys if key in settings}
+        for key, value in typed_options(options, ANALYSES[action][3]).items():
+            argv += ['--'+key, str(value)]
+        if settings.get('position_derivatives'):
+            argv+=['--position-derivatives']
     command(argv,out,log);return {}
 
 

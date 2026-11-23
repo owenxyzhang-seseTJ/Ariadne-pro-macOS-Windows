@@ -57,10 +57,18 @@ TOOLS = {
     'feedback.condition': ToolSpec(frozenset({'problem'}), frozenset(), 'Signed Gaussian structure-assisted posterior'),
     'feedback.loop': ToolSpec(frozenset({'observations', 'models'}), frozenset({'seed', 'absolute_sd', 'relative_sd'}), 'Training/validation/frozen final test'),
     'dials.run': ToolSpec(frozenset({'operation', 'inputs'}), frozenset({'options'}), 'Fixed DIALS command with typed PHIL'),
-    'analysis.run': ToolSpec(frozenset({'analysis', 'inputs'}), frozenset({'options'}), 'Run a registered R2 scientific analysis'),
+    'analysis.run': ToolSpec(frozenset({'analysis', 'inputs'}), frozenset({'options', 'attachments'}), 'Run a registered reduction analysis'),
     'structure.solve': ToolSpec(frozenset({'ins', 'hkl'}), frozenset(), 'Run SHELXT and discover actual paired candidate files'),
     'structure.refine': ToolSpec(frozenset({'res', 'hkl'}), frozenset({'cycles'}), 'Run SHELXL with paired data, then audit CIF'),
     'native.run': ToolSpec(frozenset({'request'}), frozenset({'inputs'}), 'Run typed native integrate, solve-observations, solve, autosolve, symmetry or joint-refine in a bounded isolated process'),
+    'resolve.prepare': ToolSpec(frozenset({'hkl', 'settings'}), frozenset({'structure', 'ins'}), 'Freeze evidence roles and compare coverages and lattice operators'),
+    'resolve.seed': ToolSpec(frozenset({'preparation'}), frozenset({'ins'}), 'Create initial models from work data only'),
+    'resolve.screen': ToolSpec(frozenset({'preparation', 'seeds'}), frozenset(), 'Batch fixed-structure twin and space-group screening'),
+    'resolve.fit': ToolSpec(frozenset({'preparation', 'candidate', 'stage'}), frozenset(), 'Bounded per-candidate common-observation refinement'),
+    'resolve.promote': ToolSpec(frozenset({'preparation', 'fits'}), frozenset(), 'Promote supported structural hypotheses'),
+    'resolve.select': ToolSpec(frozenset({'preparation', 'fits'}), frozenset({'screen'}), 'Compare candidates on paired held-out components'),
+    'resolve.audit': ToolSpec(frozenset({'preparation', 'selection'}), frozenset(), 'Score a frozen hypothesis on its reserved observations'),
+    'resolve.crosscheck': ToolSpec(frozenset({'selection'}), frozenset({'fcf', 'fcf_control'}), 'Cross-check a hypothesis using local PLATON'),
     'candidates.compare': ToolSpec(frozenset({'candidates'}), frozenset(), 'Descriptive comparison; not automatic space-group acceptance'),
     'review': ToolSpec(frozenset({'evidence'}), frozenset(), 'Summarize actual preceding results'),
     'package': ToolSpec(frozenset({'evidence'}), frozenset(), 'Archive referenced results and scientific artifacts'),
@@ -130,7 +138,7 @@ def validate_node(node: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
         if not (isinstance(evidence, dict) and set(evidence) == {'$results'} or isinstance(evidence, list) and evidence and all(isinstance(x, dict) and set(x) == {'$ref'} for x in evidence)):
             raise ValueError('evidence aggregation accepts producer references only')
     failed = node.get('allow_failed_dependencies', False)
-    if not isinstance(failed, bool) or failed and node['tool'] not in {'candidates.compare', 'review', 'package'}:
+    if not isinstance(failed, bool) or failed and node['tool'] not in {'candidates.compare', 'review', 'package', 'resolve.screen', 'resolve.promote', 'resolve.select'}:
         raise ValueError('only evidence aggregation may consume failed dependencies')
     output = dict(id=node['id'], tool=node['tool'], args=args, depends_on=dependencies,
                   allow_failed_dependencies=failed)
@@ -155,7 +163,7 @@ def validate_request(request: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
     if request.get('schema', 'ariadne-agent/1') != 'ariadne-agent/1':
         raise ValueError('unsupported request schema')
     mode = request.get('mode')
-    if mode not in {'audit', 'solve', 'refine', 'reduce', 'feedback', 'custom'}:
+    if mode not in {'audit', 'solve', 'refine', 'reduce', 'feedback', 'resolve', 'custom'}:
         raise ValueError('unsupported mode')
     inputs = request.get('inputs', {})
     if not isinstance(inputs, dict):
@@ -175,7 +183,7 @@ def validate_request(request: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
             raise ValueError('invalid positive budget')
         if key in {'max_actions', 'max_attempts', 'max_decisions'} and not isinstance(value, int):
             raise ValueError('count budgets must be integers')
-    executable_names = {'shelxt', 'shelxl', 'scientific_python'} | {'dials.'+x for x in
+    executable_names = {'shelxt', 'shelxl', 'platon', 'scientific_python'} | {'dials.'+x for x in
                         ['import', 'find_spots', 'index', 'refine', 'integrate', 'scale', 'export', 'predict']}
     executable_config = request.get('executables', {})
     if not isinstance(executable_config, dict) or set(executable_config)-executable_names:
@@ -183,7 +191,10 @@ def validate_request(request: dict[str, Any], *, tools=TOOLS) -> dict[str, Any]:
     if any(not isinstance(v, str) or not v or '\x00' in v for v in executable_config.values()):
         raise ValueError('executable values are file paths, not shell commands')
     settings = request.get('settings', {})
-    if not isinstance(settings, dict) or set(settings)-{'cycles', 'composition', 'dials_options', 'expected_elements', 'seed', 'models', 'absolute_sd', 'relative_sd'}:
+    if not isinstance(settings, dict):
+        raise ValueError('workflow settings must be an object')
+    if mode != 'resolve' and set(settings)-{'cycles', 'composition', 'dials_options', 'expected_elements',
+                                           'seed', 'models', 'absolute_sd', 'relative_sd'}:
         raise ValueError('unknown workflow setting')
     planner = request.get('planner', {'kind': 'deterministic'})
     if not isinstance(planner, dict) or planner.get('kind') not in {'deterministic', 'chat-completions'}:

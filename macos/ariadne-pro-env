@@ -9,6 +9,7 @@ if [ -d "$ROOT/overlay" ]; then
 fi
 export PYTHONNOUSERSITE=1
 export PYTHONPATH="$PATHS${PYTHONPATH:+:$PYTHONPATH}"
+export ARIADNE_PLUGIN_ROOT="${ARIADNE_PLUGIN_ROOT:-$ROOT/source}"
 if [ "$#" -eq 0 ]; then
   cat <<'EOF'
 Ariadne pro macOS 0.8.0（arm64）

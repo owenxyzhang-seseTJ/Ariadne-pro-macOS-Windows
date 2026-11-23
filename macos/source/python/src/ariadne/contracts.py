@@ -193,7 +193,7 @@ ANALYSIS_SPECS: dict[tuple[str, str], AnalysisSpec] = {
         stage='integrate', executable='overlap_prepare.py',
         inputs=['model EXPT', 'full predictions REFL', 'profile library JSON'],
         expected_output='analysis/patches.json',
-        options={'position_derivatives': ['true']}),
+        options={'position_derivatives': ['true'], 'target_frames': ['1..100000']}),
     ('joint_fit', ''): AnalysisSpec(
         stage='integrate', executable='overlap_integrator.py',
         inputs=['patches manifest JSON'], expected_output='analysis/integrated_groups.jsonl',

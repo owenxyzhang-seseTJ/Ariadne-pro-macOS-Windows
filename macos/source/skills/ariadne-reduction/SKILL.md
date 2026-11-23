@@ -7,7 +7,7 @@ description: Reduce Bruker or Rigaku single-crystal X-ray diffraction frames thr
 
 用简体中文沟通。以原始衍射证据决定还原路线。默认在交接就绪后继续 `solve-single-crystal`，除非用户要求停在还原阶段。本技能是 AI 决策流程，脚本承担确定性辅助；需要真实、适用的积分和吸收校正软件。
 
-优先读取 `ariadne` MCP 的 `capabilities`，据 `analyses` 的输入角色与适用选项决定调用，并用 `create_job → start_operation → inspect_job/read_artifact → record_acceptance` 管理真实任务。长任务返回 operation id 后再读取状态，避免同步等待整轮积分。MCP 不运行安装测试，不自动接受计算结果。复合重叠和分域使用下述脚本；MCP 的 native scale/export 仅用于适用的单相分支。
+从 `ariadne-pro` MCP 读取 `agent_capabilities` 和 `capabilities`，按分析的输入角色与适用选项提交任务。使用持久 DAG 时用 `agent_init → agent_submit → agent_run_status`。低层还原可用 `create_job → start_operation → inspect_job/read_artifact → record_acceptance` 管理。长任务取得运行标识后按需读取状态。复合重叠和分域使用下述脚本，DIALS 原生 scale/export 对应适用的单相分支。
 
 运行前读取 [source-extensions.md](references/source-extensions.md)，选择 baseline 或 experimental 算法。`ariadne-env` 配置修改过的 DIALS Python 源码；`scxrd-env` 保留原始 DIALS。新算法需显式选择，未获实测证据时不得声称提高准确率或速度。MCP 未连接时通过启动器和现有 CLI 执行同一工作流。
 
@@ -81,6 +81,6 @@ python3 scripts/workflow.py handoff JOB --solution-ins SOLVE.ins --solution-hkl 
 
 有非面网孪晶时另传 `--refinement-ins TWIN.ins --refinement-hkl TWIN.hkl`。HKLF 5 本身不当成 SHELXT 解析数据。缺可信解析强度时输出阻碍与中间结果，不伪造 HKLF 4。进入下游后保留分域、吸收、基变换和化学不确定性；下游提出孪晶/高对称性疑问时按证据回退上游，建立新工作区分支。
 
-完整解析授权范围内，交接接受后直接读取可用的 `solve-single-crystal` 并继续其求解/精修流程。找不到该技能或相应软件时，保留可用交接包并说明缺少的依赖。用户要求不测试时，只编写/打包，不运行脚本、示例任务或独立评审测试。禁止执行 SHA-256 校验；现有下游要求此操作时当前用户规则优先。
+交接就绪后读取同包的 [solve-single-crystal](../solve-single-crystal/SKILL.md)，以配对强度提交 `mode: resolve` 或使用相应的多畴观测模型。赝度量或部分重叠优先用 `analysis.run` 的 `build_overlaps` 和 `target-frames` 预算回读已有帧，再决定扩展范围。用户要求不测试时，只编写/打包，不运行脚本、示例任务或独立评审测试。禁止执行 SHA-256 校验；现有下游要求此操作时当前用户规则优先。
 
 设计依据、附件保留项与纠正项见 [sources.md](references/sources.md)。

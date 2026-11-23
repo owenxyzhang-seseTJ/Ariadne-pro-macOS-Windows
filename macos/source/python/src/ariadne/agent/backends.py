@@ -56,9 +56,13 @@ ANALYSES = {
                    'confidence-level': float, 'max-components': int}),
     'global_scale': ('global_scale.py', 2, 'scaling',
                      {'optimizer': ('alternating', 'profiled'), 'max-iterations': int, 'max-seconds': float}),
+    'correct_groups': ('correct_overlap_groups.py', 2, 'correction', {}),
     'export_hklf5': ('export_hklf5.py', 1, 'compound.hkl', {}),
     'learn_profiles': ('learn_profile_library.py', 2, 'profiles', {'min-references': int}),
-    'build_overlaps': ('overlap_prepare.py', 3, 'patches', {'position-derivatives': bool, 'max-voxels': int}),
+    'build_overlaps': ('overlap_prepare.py', 3, 'patches', {'position-derivatives': bool, 'max-voxels': int, 'max-components': int,
+                       'support-sigma': float, 'frame-cache-mib': int,
+                       'target-frames': int, 'selection-seed': int, 'random-fraction': 'nonnegative',
+                       'frame-seconds': float, 'seconds-per-voxel': float}),
     'soft_assign': ('soft_multi_indexer.py', 5, 'compatibility', {'max-candidates-per-spot': int}),
     'joint_refine': ('joint_geometry_refine.py', 3, 'geometry', {'method': ('anchors',), 'max-iterations': int}),
     'scaling_geometry': ('scaling_geometry.py', 4, 'geometry', {}),
@@ -172,6 +176,18 @@ def run_analysis(ctx, args: dict) -> dict:
         raise ValueError('wrong analysis input count')
     paths = [artifact_path(ctx.root, x) for x in args['inputs']]
     options = typed_options(args.get('options', {}), option_schema)
+    attachments = args.get('attachments', [])
+    if attachments:
+        if name != 'build_overlaps' or not isinstance(attachments, list):
+            raise ValueError('Only the overlap profile library accepts template attachments')
+        folder = ctx.directory/'profile-library'
+        folder.mkdir()
+        for source in [paths[2], *[artifact_path(ctx.root, item) for item in attachments]]:
+            target_file = folder/source.name
+            if target_file.exists():
+                raise ValueError('Duplicate profile-library filename')
+            shutil.copyfile(source, target_file)
+        paths[2] = folder/paths[2].name
     target = ctx.directory/output
     py = executable('scientific_python', {'scientific_python': ctx.executables.get('scientific_python', sys.executable)})
     argv = [py, str(plugin_root()/'skills/ariadne-reduction/scripts'/script), *map(str, paths)]
@@ -191,6 +207,14 @@ def run_analysis(ctx, args: dict) -> dict:
             raise RuntimeError('HKLF5 export must include its observation mapping sidecar')
     result = dict(artifacts=[artifact(ctx.root, p, 'analysis') for p in files if p.is_file()],
                   scientific_acceptance='not_established')
+    if name in {'correct_groups', 'global_scale'}:
+        corrected = (target if name == 'correct_groups' else target/'corrected')/'corrected_observations.jsonl'
+        if corrected.is_file():
+            result['corrected_groups'] = artifact(ctx.root, corrected, 'scaled_observation_groups')
+    if name == 'build_overlaps':
+        result['manifest'] = artifact(ctx.root, target/'patches.json', 'pixel_patches')
+    elif name == 'joint_fit' and (target/'integrated_groups.jsonl').is_file():
+        result['groups'] = artifact(ctx.root, target/'integrated_groups.jsonl', 'pixel_observation_groups')
     if not result['artifacts']:
         raise RuntimeError('analysis produced no output files')
     return result

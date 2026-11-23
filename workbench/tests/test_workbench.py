@@ -32,6 +32,31 @@ def test_catalog_exposes_real_boundaries(client):
     assert data['native']['native_full_shelx_parity'] is False
 
 
+def test_resolution_job_uses_shared_dag(client):
+    project = client.post('/api/demo', json={'kind':'fen4'}).json()
+    pid = project['id']
+    folder = server.PROJECTS/pid
+    original = json.loads((folder/project['reflections']).read_text())
+    alternate = 'input/structure-factors.hkl'
+    columns = ('index_h', 'index_k', 'index_l', 'F_squared_meas', 'F_squared_sigma')
+    records = [' '.join(map(str, (*h, intensity, sigma))) for h, intensity, sigma
+               in zip(original['hkl'], original['intensity'], original['sigma'])]
+    (folder/alternate).write_text('\n'.join(['data_test', 'loop_', *['_refln_'+x for x in columns], *records])+'\n')
+    response = client.post(f'/api/projects/{pid}/jobs', json={
+        'action': 'resolve', 'settings': {'spacegroup_candidates': [], 'inspect_rejections': 0,
+                                          'resolution_inputs': {'hkl': alternate}}})
+    assert response.status_code == 202, response.text
+    result, job = finished(client, pid)
+    assert job['status'] == 'completed', job
+    steps = {step['nodeId']: step for step in job['steps']}
+    assert {'evidence', 'screen', 'select', 'final-audit', 'package'} <= steps.keys()
+    evidence_file = next(path for path in steps['evidence']['artifacts'] if path.endswith('symmetry-evidence.json'))
+    evidence = client.get(f'/api/projects/{pid}/files/{evidence_file}').json()
+    assert evidence['schema'] == 'ariadne-symmetry-evidence/1'
+    assert evidence['reflections'] > 0
+    assert result['structure'] == project['structure']
+
+
 def test_import_blocks_traversal_and_cross_origin(client):
     result=client.post('/api/projects',files={'files':('../../outside.cif',b'data_x')})
     assert result.status_code==400

@@ -14,6 +14,10 @@ type Dialog='examples'|'help'|'settings'|'tools'|'projects'|'source'|null;
 const composition=(elements:string[]|undefined)=>{const counts:Record<string,number>={};elements?.forEach(e=>counts[e]=(counts[e]||0)+1);return Object.entries(counts).map(([e,n])=>`${e}${n===1?'':n}`).join(' ');};
 const fileURL=(id:string,path:string)=>`/api/projects/${id}/files/${path.split('/').map(encodeURIComponent).join('/')}`;
 
+const RESOLUTION_STATUS:Record<string,string>={audited_hypothesis:'已完成独立审计',indistinguishable:'现有观测支持并列候选',
+  no_converged_identifiable_model:'当前候选尚无可判定的模型',comparison_incomplete:'部分候选需复核',
+  insufficient_independent_observations:'独立观测不足',no_common_basis_initial_model:'需要共同基底的初始模型'};
+
 function RouteState(){const hash=window.location.hash;const match=hash.match(/^#\/project\/([a-z0-9-]+)/);return {id:match?.[1]||null,expert:hash.includes('expert=1')};}
 
 export default function App(){
@@ -117,14 +121,16 @@ function ToolDialog({project,tools,initial,onChange,onClose,onRun,busy}:{project
   const shelx=!!project.structure&&/\.(ins|res)$/i.test(project.structure);
   const [chosen,setChosen]=useState(shelx&&initial==='refine'?'legacy:shelxl':shelx&&initial==='maps'?'legacy:shelxl-maps':initial);const tool=tools.find(t=>t.id===chosen)||tools[0];const [advanced,setAdvanced]=useState('{}');const [inputs,setInputs]=useState<string[]>([]);const [error,setError]=useState('');
   const [structure,setStructure]=useState(shelx?project.structure!:'');const [reflections,setReflections]=useState(project.reflections&&/\.hkl$/i.test(project.reflections)?project.reflections:'');
+  const [resolutionData,setResolutionData]=useState(project.reflections||'');
   const files=[...new Map([...project.files,...(project.artifacts||[])].map(f=>[f.path,f])).values()];const groups=[...new Set(tools.map(t=>t.group))];const official=tool.id.startsWith('legacy:');
   const nativeBlocked=project.structureCompatibility?.nativeCompatible===false&&['refine','maps','symmetry','absolute','joint-refine','solve-observations'].includes(tool.id);
-  const missing=tool.requires.filter(key=>{const value=official&&key==='structure'?structure:official&&key==='reflections'?reflections:project[key as keyof Project];return !value||(Array.isArray(value)&&!value.length);});
+  const missing=tool.requires.filter(key=>{const value=official&&key==='structure'?structure:official&&key==='reflections'?reflections:tool.id==='resolve'&&key==='reflections'?resolutionData:project[key as keyof Project];return !value||(Array.isArray(value)&&!value.length);});
   useEffect(()=>{setInputs([]);setAdvanced(tool.id==='refine'?'{"options":{"max_nfev":200}}':tool.id==='symmetry'?`{"candidates":[${JSON.stringify(project.spacegroup||'P 1')}]}`:'{}');setError('');},[tool.id]);
-  async function start(){try{const settings=JSON.parse(advanced);if(!settings||Array.isArray(settings)||typeof settings!=='object')throw Error('专业参数应是 JSON 对象。');if(tool.id.startsWith('analysis:'))settings.inputs=inputs;if(official){settings.shelx_structure=structure;settings.shelx_reflections=reflections;}await onRun(tool.id,settings);}catch(error){setError((error as Error).message);}}
+  async function start(){try{const settings=JSON.parse(advanced);if(!settings||Array.isArray(settings)||typeof settings!=='object')throw Error('专业参数应是 JSON 对象。');if(tool.id.startsWith('analysis:'))settings.inputs=inputs;if(official){settings.shelx_structure=structure;settings.shelx_reflections=reflections;}if(tool.id==='resolve'&&resolutionData&&resolutionData!==project.reflections)settings.resolution_inputs={hkl:resolutionData,...settings.resolution_inputs};await onRun(tool.id,settings);}catch(error){setError((error as Error).message);}}
   return <Modal title="专业操作与设置" onClose={onClose} wide><div className="tool-layout"><aside className="tool-nav">{groups.map(group=><div key={group}><h4>{group}</h4>{tools.filter(t=>t.group===group&&!(shelx&&['refine','maps'].includes(t.id))).map(t=><button key={t.id} className={tool.id===t.id?'selected':''} onClick={()=>{setChosen(t.id);onChange(t.id);}}>{t.name}{!t.available&&<span>需配置</span>}</button>)}</div>)}</aside><div className="tool-detail">
     <h3>{tool.name}</h3><p>{tool.description}</p>
     <div className="requirement-list">{tool.requires.map(key=><span className={missing.includes(key)?'missing':'ready'} key={key}>{missing.includes(key)?'○':'✓'} {ROLE[key]||({frames:'原始帧',cell:'晶胞参数',elements:'晶胞组成'} as Record<string,string>)[key]||key}</span>)}</div>
+    {tool.id==='resolve'&&<label className="form-field">实测强度<select value={resolutionData} onChange={e=>setResolutionData(e.target.value)}><option value="">选择项目中的强度表</option>{files.filter(f=>f.role==='reflections'||/\.(hkl|fcf)$/i.test(f.path)).map(f=><option key={f.path} value={f.path}>{f.path}</option>)}</select></label>}
     {official&&<div className="shelx-inputs"><label className="form-field">精修指令 · INS / RES<select aria-label="SHELX 结构输入" value={structure} title={structure} onChange={e=>setStructure(e.target.value)}><option value="">选择 INS / RES</option>{files.filter(f=>/\.(ins|res)$/i.test(f.path)).map(f=><option key={f.path} value={f.path}>{f.path}</option>)}</select></label><label className="form-field">反射数据 · HKL<select aria-label="SHELX 反射输入" value={reflections} title={reflections} onChange={e=>setReflections(e.target.value)}><option value="">选择 HKL</option>{files.filter(f=>/\.hkl$/i.test(f.path)).map(f=><option key={f.path} value={f.path}>{f.path}</option>)}</select></label><p className="caption">{tool.id==='legacy:shelxl-maps'?'独立副本设置 L.S. 0 / LIST 6，并跳过 ACTA 报告生成；原文件与调整记录保留。':'按此配对复制到独立运行目录，保留全部原始指令。精修循环、约束与权重使用 INS / RES 中的设置。'}</p>{tool.available&&<p className="caption">已找到本机 {tool.id.includes('shelxl')?'SHELXL':'SHELXT'}<br/><span className="engine-path">{tool.executable}</span></p>}</div>}
     {nativeBlocked&&<p className="form-error">此操作需要原生模型；当前 SHELX 精修请在左侧选择 SHELXL 精修。</p>}
     {tool.id==='legacy:shelxl'&&project.structureCompatibility?.displayOnly&&<details><summary>SHELX 指令兼容性</summary><p className="caption">ZERR、ANIS、L.S. 等由 SHELXL 直接执行。</p><pre className="log">{project.structureCompatibility.issues.join('\n')}</pre></details>}
@@ -150,7 +156,8 @@ function TaskPanel({job,busy,onCancel,onResume}:{job?:Job;busy:boolean;onCancel:
     <div className="task-steps">{job.steps.map((step,i)=>
       <div className={step.status} key={step.nodeId||i}>
         <span>{step.status==='completed'?<Check size={17}/>:step.status==='running'?<LoaderCircle size={17} className="spin"/>:i+1}</span>
-        <strong>{LABELS[step.action]||step.action.replace('analysis:','')}</strong>
+        <strong>{LABELS[step.action]||step.action.replace('short-model-','短精修 ').replace('full-model-','精修 ').replace('analysis:','')}</strong>
+        {step.scientificStatus&&RESOLUTION_STATUS[step.scientificStatus]&&<small>{RESOLUTION_STATUS[step.scientificStatus]}</small>}
         <small>{step.error||stepStatus[step.status]||step.status}{step.attempt&&step.attempt>1?` · 第 ${step.attempt} 次执行`:''}</small>
       </div>)}</div>
     {job.message&&<p className={job.status==='failed'?'form-error':'caption'}>{job.message}</p>}

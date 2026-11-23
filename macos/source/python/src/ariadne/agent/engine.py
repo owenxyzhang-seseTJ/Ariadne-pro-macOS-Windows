@@ -18,7 +18,7 @@ from .store import Store
 from .util import artifact, artifact_path, atomic_json, content_id, dumps, exclusive_lock, pointer, read_json, snapshot_input
 
 
-BUILD = '0.8.0-native-20261108'
+BUILD = '0.8.0-resolution'
 DEFAULT_ACTION_WORKER = 'ariadne.agent.action_worker'
 
 
@@ -46,6 +46,62 @@ def initial_plan(request: dict) -> list[dict]:
     mode, settings, inputs = request['mode'], request['settings'], request['inputs']
     if mode == 'custom':
         return request['nodes']
+    if mode == 'resolve':
+        from .resolve import validate_settings
+
+        settings = validate_settings(settings)
+        if 'hkl' not in inputs:
+            raise ValueError('resolve requires a typed reflection input named hkl')
+        controls = [key for key in inputs if key == 'ins' or key.startswith('laue_')]
+        if len(controls) > 8:
+            raise ValueError('At most eight predeclared Laue-group controls')
+        if settings.get('solver') == 'shelxt' and not controls:
+            raise ValueError('SHELXT initialization requires a paired control file')
+        prepare = dict(hkl=input_ref('hkl'), settings=settings)
+        if 'structure' in inputs:
+            prepare['structure'] = input_ref('structure')
+        if controls:
+            prepare['ins'] = input_ref('ins' if 'ins' in controls else controls[0])
+        plan = [node('evidence', 'resolve.prepare', prepare)]
+        seeds = []
+        if 'structure' in inputs or not controls or settings.get('solver') != 'shelxt':
+            seeds.append(node('seed', 'resolve.seed', {'preparation': ref('evidence')}, ['evidence']))
+        if settings.get('solver') == 'shelxt':
+            for i, control in enumerate(controls):
+                seeds.append(node(f'shelxt-{i}', 'resolve.seed', {'preparation': ref('evidence'), 'ins': input_ref(control)},
+                                  ['evidence']))
+        seed_ids = [n['id'] for n in seeds]
+        plan.extend(seeds)
+        plan.append(node('screen', 'resolve.screen',
+                         {'preparation': ref('evidence'), 'seeds': {'$results': seed_ids}},
+                         ['evidence', *seed_ids], True))
+        probe = settings.get('pixel_probe')
+        if probe is not None:
+            roles = ('experiments', 'predictions', 'profiles')
+            if not all(role in inputs for role in roles):
+                raise ValueError('pixel_probe requires experiments, predictions and profiles inputs')
+            plan.append(node('targeted-pixels', 'analysis.run',
+                             {'analysis': 'build_overlaps', 'inputs': [input_ref(role) for role in roles],
+                              'attachments': [input_ref(key) for key in sorted(inputs) if key.startswith('template_')],
+                              'options': probe}, ['evidence']))
+            plan.append(node('pixel-fit', 'analysis.run',
+                             {'analysis': 'joint_fit', 'inputs': [ref('targeted-pixels', '/manifest')]},
+                             ['targeted-pixels']))
+            corrections = [role for role in ('corrections', 'scale_geometry') if role in inputs]
+            if len(corrections) > 1:
+                raise ValueError('Supply corrections or a global-scale geometry recipe for the selected groups')
+            if settings.get('pixel_export_hklf5') and not corrections:
+                raise ValueError('HKLF 5 export requires corrected observation groups with same-phase evidence')
+            if corrections:
+                role = corrections[0]
+                plan.append(node('pixel-correct', 'analysis.run',
+                                 {'analysis': 'correct_groups' if role == 'corrections' else 'global_scale',
+                                  'inputs': [ref('pixel-fit', '/groups'), input_ref(role)]}, ['pixel-fit']))
+            if settings.get('pixel_export_hklf5'):
+                plan.append(node('pixel-export', 'analysis.run',
+                                 {'analysis': 'export_hklf5', 'inputs': [ref('pixel-correct', '/corrected_groups')]},
+                                 ['pixel-correct']))
+        return plan
     required = {'audit': ['cif'], 'solve': ['ins', 'hkl'], 'refine': ['res', 'hkl'],
                 'feedback': ['observations'], 'reduce': []}[mode]
     if not all(x in inputs for x in required):
@@ -214,23 +270,72 @@ def _expand_solve(store: Store):
         planned += completion_nodes(['compare'])
     else:
         planned += completion_nodes(['solve'])
+    _install_expansion(store, 'solve', planned, 'candidate_graph_expanded',
+                       dict(actual_candidates=len(candidates), refinement_nodes=ids))
+
+
+def _install_expansion(store, producer, planned, event, details):
     present = {x['id'] for x in store.summaries()}
     for intended in planned:
         if intended['id'] in present:
             current = store.node(intended['id'])
-            if (current['tool'] != intended['tool'] or current['args'] != intended['args'] or current['dependencies'] != intended['depends_on']):
+            if (current['tool'] != intended['tool'] or current['args'] != intended['args']
+                    or current['dependencies'] != intended['depends_on']):
                 raise ValueError('candidate expansion conflicts with an existing node definition')
     remaining = [x for x in planned if x['id'] not in present]
     if remaining:
         store.add_nodes(remaining)
-    store.db.execute('UPDATE nodes SET expanded=1 WHERE id="solve"')
-    store.event('candidate_graph_expanded', dict(actual_candidates=len(candidates), refinement_nodes=ids))
+    store.db.execute('UPDATE nodes SET expanded=1 WHERE id=?', (producer,))
+    store.event(event, details)
+
+
+def _expand_candidates(store):
+    _expand_solve(store)
+    request = store.get('request')
+    if request['mode'] != 'resolve':
+        return
+    definitions = {n['id']: n for n in store.summaries()}
+    for producer, field, stage, next_id in (('screen', 'shortlist', 'short', 'promote'),
+                                            ('promote', 'finalists', 'full', 'select')):
+        if definitions.get(producer, {}).get('status') != 'succeeded':
+            continue
+        upstream = store.node(producer)
+        if upstream['expanded']:
+            continue
+        values = upstream['result'][field]
+        ids = [f"{stage}-{value['id']}" for value in values]
+        planned = [node(key, 'resolve.fit', {'preparation': ref('evidence'),
+                        'candidate': ref(producer, f'/{field}/{i}'), 'stage': stage},
+                        ['evidence', producer]) for i, key in enumerate(ids)]
+        arguments = {'preparation': ref('evidence'), 'fits': {'$results': ids}}
+        upstream_ids = ['evidence', producer, *ids]
+        if stage == 'full':
+            arguments['screen'] = ref('screen')
+            upstream_ids.append('screen')
+        planned.append(node(next_id, f'resolve.{next_id}', arguments, upstream_ids, True))
+        if stage == 'full':
+            dependencies = ['screen', 'promote', 'select', 'final-audit',
+                            *(key for key in definitions if key.startswith('shelxt-'))]
+            dependencies.extend(key for key in ('pixel-fit', 'pixel-correct', 'pixel-export') if key in definitions)
+            planned.append(node('final-audit', 'resolve.audit',
+                                {'preparation': ref('evidence'), 'selection': ref('select')}, ['evidence', 'select']))
+            if request['settings'].get('crosscheck'):
+                checks = {'selection': ref('select')}
+                for role in ('fcf', 'fcf_control'):
+                    if role in request['inputs']:
+                        checks[role] = input_ref(role)
+                planned.append(node('crosscheck', 'resolve.crosscheck', checks, ['select']))
+                dependencies.append('crosscheck')
+            planned.extend(completion_nodes(dependencies))
+        _install_expansion(store, producer, planned, 'resolution_candidates_expanded',
+                           {'stage': stage, 'candidates': ids})
 
 
 def capabilities() -> dict:
-    commands = ['shelxt', 'shelxl'] + ['dials.'+op for op in DIALS_OPTIONS]
+    commands = ['shelxt', 'shelxl', 'platon'] + ['dials.'+op for op in DIALS_OPTIONS]
     return dict(product='Ariadne', version='0.8.0', build=BUILD,
-                modes=['audit', 'solve', 'refine', 'reduce', 'feedback', 'custom'],
+                modes=['audit', 'solve', 'refine', 'reduce', 'feedback', 'resolve', 'custom'],
+                skills=['ariadne-reduction', 'solve-single-crystal'],
                 actions={name: dict(required=sorted(spec.required), optional=sorted(spec.optional), description=spec.description)
                          for name, spec in TOOLS.items()},
                 executable_availability={name: shutil.which(name) for name in commands},
@@ -318,7 +423,7 @@ def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: 
                     or worker_module != DEFAULT_ACTION_WORKER):
                 from .scheduler import run_isolated
                 run_isolated(store, configuration, max_steps=max_steps, choose=choose, resolve=resolve,
-                             expand=_expand_solve, capabilities={'actions': capabilities()['actions']},
+                             expand=_expand_candidates, capabilities={'actions': capabilities()['actions']},
                              experts=_experts(store.get('request')), validate_inputs=_validate_input_refs,
                              host=host, worker_module=worker_module)
                 store.stop_clock()
@@ -328,7 +433,7 @@ def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: 
                 return result
             steps = 0
             while True:
-                _expand_solve(store)
+                _expand_candidates(store)
                 store.propagate_failures()
                 request = store.get('request')
                 budget = request['budget']
@@ -393,7 +498,7 @@ def run(directory: str | Path, *, max_steps: int | None = None, force_isolated: 
                 except Exception as exc:
                     store.finish(key, 'failed', time.monotonic()-started, error=f'{type(exc).__name__}: {exc}')
                 steps += 1
-            _expand_solve(store)
+            _expand_candidates(store)
             store.propagate_failures()
             store.stop_clock()
             clock_started = False

@@ -88,10 +88,24 @@ TOOLS = [
     {"name": "integrate", "description": "Fit calibrated supplied pixel profiles and retain the observable likelihood", "required": ["problem"]},
     {"name": "joint-refine", "description": "Refine a structure and domain fractions against compressed overlapping pixel likelihoods", "required": ["structure", "observations"]},
     {"name": "symmetry", "description": "Search candidate symmetry origins and form exact asymmetric-unit hypotheses", "required": ["structure", "hkl", "candidates"]},
+    {"name": "symmetry-evidence", "description": "Report work-only lattice operators and absence coverage", "required": ["cell", "spacegroup", "hkl"]},
+    {"name": "twin-screen", "description": "Batch work-only fixed-model twin-law comparison", "required": ["structure", "hkl"]},
+    {"name": "phase-twin", "description": "Phase an exact two-domain intensity mixture on a declared work set", "required": ["cell", "elements", "hkl", "law"]},
     {"name": "maps", "description": "Compute diagnostic Fourier maps and an offline dashboard", "required": ["structure", "hkl"]},
     {"name": "absolute", "description": "Estimate a conditional fixed-model Friedel-quotient parameter", "required": ["structure", "hkl"]},
     {"name": "legacy", "description": "Run an explicitly allowlisted installed SHELXT/SHELXL backend", "required": ["engine", "input"]},
 ]
+
+
+RESOLUTION_ACTIONS = {"symmetry-evidence", "twin-screen", "phase-twin"}
+
+
+def _resolution_content_id(path):
+    digest = hashlib.blake2b(digest_size=32)
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024*1024), b""):
+            digest.update(chunk)
+    return "blake2b-256:"+digest.hexdigest()
 
 
 class AgentWorkspace:
@@ -128,6 +142,9 @@ class AgentWorkspace:
             "integrate": {"problem"},
             "joint-refine": {"structure", "observations", "options", "domain_fractions", "refine_domain_fractions", "phase_relation", "constraints", "restraints"},
             "symmetry": {"structure", "hkl", "candidates", "tolerance", "phase_limit"},
+            "symmetry-evidence": {"cell", "spacegroup", "hkl", "reflection_format", "control", "candidates", "options"},
+            "twin-screen": {"structure", "hkl", "reflection_format", "control", "laws", "options"},
+            "phase-twin": {"cell", "elements", "hkl", "reflection_format", "control", "law", "options", "screening"},
             "maps": {"structure", "hkl", "scale"},
             "absolute": {"structure", "hkl", "options"},
             "legacy": {"engine", "input", "timeout", "extra_args", "auxiliary_paths"},
@@ -153,9 +170,11 @@ class AgentWorkspace:
                                     "numpy": np.__version__, "scipy": scipy.__version__, "gemmi": gemmi.__version__},
                     "inputs": [], "outputs": []}
         input_paths = {}
+        digest_file = _resolution_content_id if action in RESOLUTION_ACTIONS else sha256
+        identity_field = "content_id" if action in RESOLUTION_ACTIONS else "sha256"
         write_json(run/"manifest.json", manifest)
         try:
-            for key in ("structure", "hkl", "input", "problem", "observations"):
+            for key in ("structure", "hkl", "input", "problem", "observations", "control"):
                 if key in request:
                     p = self._input(request[key])
                     snapshot = run/"inputs"/(key+p.suffix)
@@ -164,17 +183,24 @@ class AgentWorkspace:
                     input_paths[key] = p if action == "legacy" else snapshot
                     manifest["inputs"].append({"role": key, "path": str(p.relative_to(self.root)),
                                                "snapshot": str(snapshot.relative_to(run)),
-                                               "sha256": sha256(snapshot), "bytes": snapshot.stat().st_size})
+                                               identity_field: digest_file(snapshot), "bytes": snapshot.stat().st_size})
             with warnings.catch_warnings(record=True) as import_warnings:
                 warnings.simplefilter("always")
                 s = read_structure(input_paths["structure"]) if "structure" in input_paths else None
-                r = read_reflections(input_paths["hkl"]) if "hkl" in input_paths else None
+                if action in RESOLUTION_ACTIONS:
+                    from .twin_diagnostics import read_intensities
+                    control = input_paths.get("control")
+                    if control is None and input_paths.get("structure") and input_paths["structure"].suffix.lower() in {".ins", ".res"}:
+                        control = input_paths["structure"]
+                    r = read_intensities(input_paths["hkl"], request.get("reflection_format"), control)
+                else:
+                    r = read_reflections(input_paths["hkl"]) if "hkl" in input_paths else None
             manifest["import_diagnostics"] = [str(w.message) for w in import_warnings]
             if s is not None and len(s.atoms) > self.atom_limit:
                 raise ValueError("Model exceeds agent atom budget")
             if r is not None and len(r) > self.reflection_limit:
                 raise ValueError("Data exceed agent reflection budget")
-            if action in {"solve", "autosolve", "solve-observations"}:
+            if action in {"solve", "autosolve", "solve-observations", "phase-twin"}:
                 elements = request["elements"]
                 if not isinstance(elements, list) or not 1 <= len(elements) <= self.atom_limit:
                     raise ValueError("Cell composition exceeds the agent atom budget or is not a nonempty element list")
@@ -188,7 +214,8 @@ class AgentWorkspace:
                 if r is not None:
                     result.update(n_reflections=len(r), negative_intensities=int(np.sum(r.intensity < 0)))
                     if request.get("spacegroup_candidates"):
-                        result["spacegroup_diagnostics"] = rank_spacegroups(s.cell, r, request["spacegroup_candidates"])
+                        work = r if r.free_flags is None else r.subset(~r.free_flags)
+                        result["spacegroup_diagnostics"] = rank_spacegroups(s.cell, work, request["spacegroup_candidates"])
             elif action == "refine":
                 from .refinement import RefinementOptions, refine
                 options = _refinement_options(request.get("options"))
@@ -222,12 +249,10 @@ class AgentWorkspace:
                     write_structure(model, run/"selected.cif")
                 write_json(run/"partition.json", result["partition"])
             elif action == "solve-observations":
-                from .evidence_solver import solve_observations
+                from .evidence_solver import observation_solve_options, solve_observations
                 from .model import Structure
                 groups = _observation_groups(input_paths["observations"], self.reflection_limit)
-                fields = {key: request[key] for key in (
-                    "phasing_options", "spacegroup_candidates", "options", "domain_fractions",
-                    "refine_domain_fractions", "phase_relation", "restraints", "constraints") if key in request}
+                fields = observation_solve_options(request)
                 result = solve_observations(
                     Cell(**request["cell"]), request["elements"], groups, initial_model=s,
                     refinement_options=_refinement_options(request.get("refinement_options"), 200), **fields)
@@ -252,6 +277,27 @@ class AgentWorkspace:
                 model = Structure.from_dict(result["structure"])
                 write_structure(model, run/"refined.json")
                 write_structure(model, run/"refined.cif")
+            elif action in RESOLUTION_ACTIONS:
+                from .twin_diagnostics import model_group, symmetry_evidence, twin_laws, twin_screen
+
+                if action == "symmetry-evidence":
+                    result = symmetry_evidence(Cell(**request["cell"]), r, request["spacegroup"],
+                                                candidates=request.get("candidates", ()), **request.get("options", {}))
+                elif action == "twin-screen":
+                    laws = request["laws"] if "laws" in request else twin_laws(
+                        s.cell, model_group(s), anomalous=any(a.f_double_prime != 0 for a in s.atoms))
+                    result = twin_screen(s, r, laws, **request.get("options", {}))
+                else:
+                    from .twin_phasing import direct_twin_phasing
+
+                    result = direct_twin_phasing(Cell(**request["cell"]), r, request["elements"],
+                                                 request["law"], request.get("options"), **request.get("screening", {}))
+                    for field in ("candidates", "audited_rejections"):
+                        for candidate in result[field]:
+                            structure = candidate.pop("structure")
+                            path = run/f'{field}-{candidate["trial"]:03d}.cif'
+                            write_structure(structure, path)
+                            candidate["structure_file"] = path.name
             elif action == "symmetry":
                 from .spacegroup_search import propose_spacegroups
                 proposals = propose_spacegroups(s, r.hkl if r.free_flags is None else r.hkl[~r.free_flags],
@@ -294,11 +340,11 @@ class AgentWorkspace:
                     write_json(run/"result.json", result)
                     raise RuntimeError(f"Official process ended with {result.get('status')}; see saved backend manifest")
             for entry in manifest["inputs"]:
-                if sha256(self.root/entry["path"]) != entry["sha256"]:
+                if digest_file(self.root/entry["path"]) != entry[identity_field]:
                     raise RuntimeError("An input file changed during the run")
             write_json(run/"result.json", result)
             manifest["status"] = "completed"
-            manifest["outputs"] = [{"path": str(p.relative_to(run)), "sha256": sha256(p),
+            manifest["outputs"] = [{"path": str(p.relative_to(run)), identity_field: digest_file(p),
                                     "bytes": p.stat().st_size}
                                    for p in sorted(run.rglob("*"))
                                    if not p.is_symlink() and p.is_file() and p.name != "manifest.json"]

@@ -1,10 +1,14 @@
 """Optional MCP bridge. CLI/numerical kernels do not require an MCP runtime."""
 from __future__ import annotations
 
+from contextlib import closing
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
 from . import async_runs, engine
+from .store import Store, scientific_summary
+from .util import dumps, pointer
 
 
 class Reply(BaseModel):
@@ -59,6 +63,25 @@ def register(mcp):
     def agent_events(session: str, after: int = 0, limit: int = 100) -> Reply:
         """Read a bounded page of scientific state events from a session cursor."""
         return Reply(data=async_runs.events(session, after, limit))
+
+    @mcp.tool(annotations={'readOnlyHint': True})
+    def agent_result(session: str, node: str, json_pointer: str | None = None, max_chars: int = 12000) -> Reply:
+        """Read one persisted node's scientific summary or a bounded selected result."""
+        if not 1 <= max_chars <= 20000:
+            raise ValueError('max_chars must be in 1..20000')
+        with closing(Store(Path(session))) as store:
+            item = store.node(node)
+        result = item['result']
+        details = {'node': node, 'state': item['status'], 'error': item['error'],
+                   'summary': scientific_summary(result)}
+        if result is not None and json_pointer is not None:
+            value = pointer(result, json_pointer)
+            serialized = dumps(value)
+            if len(serialized) <= max_chars:
+                details['result'] = value
+            else:
+                details.update(preview=serialized[:max_chars], truncated=True)
+        return Reply(data=details)
 
     @mcp.tool()
     def agent_cancel_run(session: str, run_id: str) -> Reply:

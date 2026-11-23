@@ -12,7 +12,7 @@ import uuid
 from ariadne.agent import async_runs, engine
 from ariadne.agent.backends import DIALS_PROCESS_OPTIONS
 from ariadne.agent.host_budget import HostBudget, validate_resources
-from ariadne.agent.spec import ToolSpec
+from ariadne.agent.spec import TOOLS, ToolSpec
 from ariadne.agent.store import Store
 from ariadne.agent.util import artifact, artifact_path, atomic_json, exclusive_lock, read_json
 
@@ -55,8 +55,77 @@ def submit(jobfolder):
                              import_root=Path(__file__).resolve().parents[1])
 
 
+def _initialize_resolution(jobfolder, project, job, host):
+    from ariadne.agent.resolve import validate_settings
+    from .shelx_engine import engine_info
+
+    folder = jobfolder.parents[1]
+    supplied = dict(job['settings'])
+    resource = _resources('resolve', supplied, host)
+    cache = supplied.pop('cache', None)
+    resolution_inputs = supplied.pop('resolution_inputs', {})
+    supplied.pop('resources', None)
+    workers = supplied.pop('max_workers', min(4, resource['cpu_threads']))
+    inputs = {}
+
+    def path(relative):
+        if not isinstance(relative, str) or not relative or Path(relative).is_absolute():
+            raise ValueError('解析输入须使用项目内的相对路径。')
+        file = (folder/relative).resolve()
+        if not file.is_relative_to(folder.resolve()) or not file.is_file():
+            raise ValueError('解析输入必须是当前项目中的文件。')
+        return str(file)
+
+    if not isinstance(resolution_inputs, dict):
+        raise ValueError('resolution_inputs 必须是项目内的文件映射。')
+    roles = {'hkl', 'structure', 'ins', 'fcf', 'fcf_control', 'experiments', 'predictions',
+             'profiles', 'corrections', 'scale_geometry'}
+    for role, relative in resolution_inputs.items():
+        if role not in roles and not role.startswith(('template_', 'laue_')):
+            raise ValueError('未注册的解析输入角色。')
+        inputs[role] = path(relative)
+    if 'hkl' not in inputs:
+        inputs['hkl'] = path(project.get('reflections'))
+    reflection = Path(inputs['hkl'])
+    if 'reflection_format' not in supplied and reflection.suffix.lower() in {'.hkl', '.fcf', '.cif'}:
+        with reflection.open(encoding='utf-8-sig') as stream:
+            first_record = next((line.strip().lower() for line in stream
+                                 if line.strip() and not line.lstrip().startswith(('#', '!'))), '')
+        supplied['reflection_format'] = 'cif-f2' if first_record.startswith('data_') else 'hklf4'
+    if project.get('structure'):
+        if supplied.get('solver') == 'shelxt' and not any(
+                role == 'ins' or role.startswith('laue_') for role in inputs):
+            inputs['ins'] = path(project['structure'])
+        elif supplied.get('solver') != 'shelxt' and 'structure' not in inputs:
+            inputs['structure'] = path(project['structure'])
+    if 'structure' not in resolution_inputs and 'ins' not in resolution_inputs and not any(
+            role.startswith('laue_') for role in resolution_inputs):
+        for key in ('cell', 'elements'):
+            if project.get(key):
+                supplied.setdefault(key, project[key])
+    validate_settings(supplied)
+    executables = {}
+    if supplied.get('solver') == 'shelxt':
+        info = engine_info('shelxt')
+        if not info['available']:
+            raise ValueError(info['reason'])
+        executables['shelxt'] = info['executable']
+    request = {'mode': 'resolve', 'inputs': inputs, 'settings': supplied, 'executables': executables,
+               'scheduler': {'isolate_actions': True, 'cpu_threads': resource['cpu_threads'],
+                             'max_workers': workers, 'memory_mb': resource['memory_mb'],
+                             'default_task_memory_mb': max(1, resource['memory_mb']//max(1, workers))}}
+    if cache is not None:
+        request['cache'] = cache
+    engine.initialize(request, jobfolder/'session', tools=TOOLS, worker_module=WORKER)
+
+
 def initialize(jobfolder, project, job):
     host = HostBudget.configured()
+    if job['action'] == 'resolve':
+        _initialize_resolution(jobfolder, project, job, host)
+        job['workflow'] = SCHEMA
+        atomic_json(jobfolder/'job.json', job)
+        return
     actions = [step['action'] for step in job['steps']]
     nodes = []
     for index, action in enumerate(actions):
@@ -95,6 +164,8 @@ def advance_project(folder, project):
     cursor = project.get('workflowCursor', {})
     applied = cursor.get('completed', 0) if cursor.get('job') == job_id else 0
     with closing(Store(session)) as store:
+        if store.get('request')['mode'] == 'resolve':
+            return project
         for position,node in enumerate(store.summaries()):
             if position < applied:
                 continue
@@ -138,7 +209,10 @@ def status(jobfolder, job):
                 "SELECT payload FROM events WHERE kind IN ('host_queued','resources_admitted') ORDER BY seq"):
             item = json.loads(event['payload'])
             resources[item['node']] = item
-        for previous,node in zip(job['steps'], store.summaries()):
+        rows = store.summaries()
+        resolution = store.get('request')['mode'] == 'resolve'
+        ordered = [(dict(action=n['id']), n) for n in rows] if resolution else zip(job['steps'], rows)
+        for previous,node in ordered:
             attempt = store.db.execute('SELECT * FROM attempts WHERE node=? AND number=?',
                                        (node['id'],node['attempts'])).fetchone()
             step = dict(action=previous['action'], status=STATES.get(node['status'], node['status']),
@@ -153,9 +227,21 @@ def status(jobfolder, job):
                 step['elapsedSeconds'] = node['elapsed']
                 if node['status'] == 'succeeded':
                     result = store.node(node['id'])['result']
-                    warnings.extend(result['updates'].get('refinementWarnings', []))
+                    warnings.extend(result.get('updates', {}).get('refinementWarnings', []))
+                    if resolution:
+                        public = ('diagnostic', 'report', 'result_artifact', 'structure_cif', 'package', 'log')
+                        visible = [item for item in result.get('artifacts', [])
+                                   if node['id'] == 'pixel-export' and item.get('path', '').endswith(('.hkl', '.export.json'))]
+                        for key in public:
+                            item = result.get(key)
+                            if isinstance(item, dict) and 'path' in item and (item.get('role') not in {'audit_intensities'}):
+                                visible.append(item)
+                        if node['id'] in {'select', 'final-audit'}:
+                            step['scientificStatus'] = result.get('status')
+                    else:
+                        visible = result['artifacts']
                     step['artifacts'] = [(session/item['path']).relative_to(jobfolder.parents[1]).as_posix()
-                                         for item in result['artifacts']]
+                                         for item in visible]
                 for name in ('run.log', 'worker.stderr.log', 'worker.stdout.log'):
                     log = (log + _tail(out/name, 12000))[-8000:]
             if node['error'] and node['status'] in {'failed', 'blocked', 'interrupted'}:
@@ -208,7 +294,8 @@ def resume(jobfolder):
 def execute_step(ctx, tool, arguments):
     """Application-owned actions run inside the scheduler's isolated process."""
     if tool != ACTION:
-        raise ValueError('Unregistered workbench action')
+        from ariadne.agent.actions import execute
+        return execute(ctx, tool, arguments)
     from .runner import execute_step as calculate
 
     folder = ctx.root.parents[2]

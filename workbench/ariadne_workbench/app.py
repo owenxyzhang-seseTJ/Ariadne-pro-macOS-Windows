@@ -116,6 +116,7 @@ NATIVE_TOOLS=[
  ('refine','结构精修','结构求解与精修',['structure','reflections'],'使用带符号 F² 观测进行原生精修。'),
  ('autosolve','自动求解与精修','结构求解与精修',['reflections','cell','elements'],'生成候选结构、精修并独立比较；需要整个晶胞组成。'),
  ('solve','多起点相位求解','结构求解与精修',['reflections','cell','elements'],'电荷翻转、原子投影与 hybrid 相位路径。'),
+ ('resolve','孪晶与空间群比较','孪晶与高级分析',['reflections'],'共用观测划分、候选筛选、精修与留出比较。'),
  ('symmetry','空间群候选检查','结构求解与精修',['structure','reflections'],'比较声明的空间群候选和原点。'),
  ('maps','电子密度与 Patterson 图','结构与密度',['structure','reflections'],'导出 Fo−Fc、计算密度、Patterson 与 CCP4 文件。'),
  ('absolute','绝对结构诊断','结构求解与精修',['structure','reflections'],'基于固定模型的 Friedel 商诊断，附实际适用条件。'),
@@ -320,8 +321,15 @@ def _submit_job(folder,project,body,catalog):
     if action!='automatic':
         if selected is None:raise ValueError('动作未注册。')
         if not selected['available']:raise ValueError(selected.get('reason','所选动作尚未配置。'))
-        if not action.startswith('legacy:') and any(not project.get(key) for key in selected['requires']):raise ValueError('请先补充该动作所需的输入。')
+        if action != 'resolve' and not action.startswith('legacy:') and any(not project.get(key) for key in selected['requires']):raise ValueError('请先补充该动作所需的输入。')
     needs_model=action in {'refine','maps','symmetry','absolute','joint-refine','solve-observations'}
+    if action=='resolve':
+        inputs = settings.get('resolution_inputs', {})
+        if not isinstance(inputs, dict) or not (project.get('reflections') or inputs.get('hkl')):
+            raise ValueError('请提供反射表或项目内的反射文件路径。')
+        if not (project.get('structure') or project.get('cell') or settings.get('cell')
+                or any(role in {'structure', 'ins'} or role.startswith('laue_') for role in inputs)):
+            raise ValueError('请提供初始结构、SHELXT 控制文件或晶胞与整个晶胞的元素组成。')
     if needs_model and shelx:
         from .structure_input import native_model
         native_model(folder/project['structure'])

@@ -1,5 +1,5 @@
 export interface FileEntry {path:string;name:string;role:string;bytes:number}
-export interface Step {action:string;status:string;error?:string;artifacts?:string[];attempt?:number;nodeId?:string}
+export interface Step {scientificStatus?:string;action:string;status:string;error?:string;artifacts?:string[];attempt?:number;nodeId?:string}
 export interface Job {id:string;projectId:string;action:string;status:string;created:number;started?:number;finished?:number;message?:string;steps:Step[];logTail?:string;workflow?:string;runId?:string;cancelPending?:boolean}
 export interface StructureCompatibility {nativeCompatible:boolean;displayOnly:boolean;issues:string[];message?:string;npdAtoms?:string[];scientificWarnings?:string[]}
 export interface Project {id:string;name:string;created:number;updated:number;files:FileEntry[];frames:string[];structure?:string;structureCompatibility?:StructureCompatibility;reflections?:string;dials_reflections?:string;experiments?:string;pixels?:string;observations?:string;cell?:Cell;elements?:string[];spacegroup?:string;lastJob?:string;surface?:string;excluded?:number[];metrics?:Record<string,unknown>;selection:number[];checkpoints:boolean;demo?:string;jobs?:Job[];artifacts?:FileEntry[];importWarnings?:string[]}

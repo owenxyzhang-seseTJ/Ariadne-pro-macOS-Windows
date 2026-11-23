@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ariadne-pro": {
+      "command": "ariadne-mcp",
+      "args": []
+    }
+  }
+}

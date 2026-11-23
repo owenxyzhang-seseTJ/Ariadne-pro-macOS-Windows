@@ -1,6 +1,6 @@
 # Ariadne pro macOS / Windows
 
-[计算与调度升级使用说明](UPGRADE.zh-CN.md) · [工作台](workbench/README.zh-CN.md) · [LaTeX 技术报告](reports/compute-runtime/Ariadne-Pro-Technical-Report.tex)
+[计算与调度升级使用说明](UPGRADE.zh-CN.md) · [孪晶与空间群解析](RESOLUTION.zh-CN.md) · [工作台](workbench/README.zh-CN.md) · [LaTeX 技术报告](reports/compute-runtime/Ariadne-Pro-Technical-Report.tex)
 
 Ariadne pro 0.8.0 的 macOS 与 Windows 并行版本，共用同一份源码，各自提供原生 C++ 扩展、入口脚本、固定依赖和验证记录。
 

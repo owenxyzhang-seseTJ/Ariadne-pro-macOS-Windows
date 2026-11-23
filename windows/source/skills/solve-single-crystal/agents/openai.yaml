@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ariadne Pro 单晶解析"
+  short_description: "用可追溯的强度与像素证据比较孪晶、赝对称和空间群候选"
+  default_prompt: "使用 Ariadne Pro 解析我的单晶数据，根据现有观测比较空间群和孪晶模型。"

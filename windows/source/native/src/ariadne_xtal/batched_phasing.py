@@ -42,11 +42,8 @@ def _iterate(xp, initial, measured, lookup, band, target, options, iterations, s
     return best[:, measured], best_score
 
 
-def batched_proposals(cell, reflections, elements, options, seeds, iterations, *,
-                      scale=1., backend='batched_cpu', batch_size=16):
-    """Return one atom proposal per seed using shared work amplitudes and bands."""
-    if backend not in {'batched_cpu', 'metal', 'cuda'} or type(batch_size) is not int or not 1 <= batch_size <= 256:
-        raise ValueError('Specify batched_cpu, metal or cuda and a batch size in 1..256')
+def fft_backend(backend):
+    """Shared device and FFT execution context for phase proposals."""
     if backend == 'metal':
         try:
             import mlx.core as xp
@@ -75,6 +72,15 @@ def batched_proposals(cell, reflections, elements, options, seeds, iterations, *
         xp, context = np, nullcontext()
         to_device, to_cpu = np.asarray, np.asarray
         synchronize = sync_iteration = None
+    return xp, context, to_device, to_cpu, synchronize, sync_iteration
+
+
+def batched_proposals(cell, reflections, elements, options, seeds, iterations, *,
+                      scale=1., backend='batched_cpu', batch_size=16):
+    """Return one atom proposal per seed using shared work amplitudes and bands."""
+    if backend not in {'batched_cpu', 'metal', 'cuda'} or type(batch_size) is not int or not 1 <= batch_size <= 256:
+        raise ValueError('Specify batched_cpu, metal or cuda and a batch size in 1..256')
+    xp, context, to_device, to_cpu, synchronize, sync_iteration = fft_backend(backend)
     real_type, complex_type = (np.float64, np.complex128) if xp is np else (np.float32, np.complex64)
 
     hkl, observed, _, _ = merge_friedel_intensities(reflections, scale)

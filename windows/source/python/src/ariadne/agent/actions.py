@@ -181,6 +181,9 @@ def execute(ctx: Context, tool: str, args: dict) -> dict:
     elif tool == 'native.run':
         from .native_backend import run_native
         result = run_native(ctx, args)
+    elif tool.startswith('resolve.'):
+        from .resolve import execute as resolve_structure
+        result = resolve_structure(ctx, tool, args)
     elif tool == 'candidates.compare':
         result = compare(args['candidates'])
     elif tool == 'review':

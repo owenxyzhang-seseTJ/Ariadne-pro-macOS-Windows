@@ -10,24 +10,29 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRS = ("native/src", "native/tests", "python/src", "skills/ariadne-reduction/scripts",
                "tests", "tests_rebuild", "benchmarks")
 SOURCE_SUFFIXES = {".py", ".cpp", ".h", ".hpp"}
+SKILL_SUFFIXES = {".md", ".py", ".sh", ".yaml"}
+PLUGIN_FILES = (".codex-plugin/plugin.json", ".agents/plugins/marketplace.json",
+                ".mcp.json", "skills/ariadne-reduction/SKILL.md")
 
 
 def sync(check=False):
     source = ROOT / "macos/source"
     mirror = ROOT / "windows/source"
     changed = []
-    for directory in SOURCE_DIRS:
-        for path in sorted((source / directory).rglob("*")):
-            if path.suffix not in SOURCE_SUFFIXES or not path.is_file():
-                continue
-            relative = path.relative_to(source)
-            target = mirror / relative
-            if target.is_file() and target.read_bytes() == path.read_bytes():
-                continue
-            changed.append(relative.as_posix())
-            if not check:
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, target)
+    paths = [path for directory in SOURCE_DIRS for path in (source / directory).rglob("*")
+             if path.suffix in SOURCE_SUFFIXES and path.is_file()]
+    paths.extend(path for path in (source / "skills/solve-single-crystal").rglob("*")
+                 if path.suffix in SKILL_SUFFIXES and path.is_file())
+    paths.extend(source / name for name in PLUGIN_FILES)
+    for path in sorted(paths):
+        relative = path.relative_to(source)
+        target = mirror / relative
+        if target.is_file() and target.read_bytes() == path.read_bytes():
+            continue
+        changed.append(relative.as_posix())
+        if not check:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target)
     return changed
 
 

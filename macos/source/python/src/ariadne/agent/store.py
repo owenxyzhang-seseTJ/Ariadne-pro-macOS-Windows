@@ -299,7 +299,7 @@ def scientific_summary(result):
         return {}
     summary = {}
     for key in ('model_eligible', 'site_count', 'spacegroup', 'data_rank', 'num_latents', 'num_observed',
-                'predictive_nll', 'selected_candidate', 'artifact_count', 'scientific_acceptance', 'review_status'):
+                'predictive_nll', 'selected_candidate', 'artifact_count', 'scientific_acceptance', 'review_status', 'status', 'audit_evaluations', 'selection_components'):
         if key in result and isinstance(result[key], (str, int, float, bool, type(None))):
             summary[key] = result[key]
     for key in ('metrics', 'inspection', 'final_test'):
@@ -308,7 +308,7 @@ def scientific_summary(result):
                             if isinstance(v, (int, float, bool, type(None)))}
     if isinstance(result.get('audit'), dict):
         summary['audit'] = scientific_summary(result['audit'])
-    for key in ('candidates', 'eligible_candidates', 'failures', 'errors', 'warnings'):
+    for key in ('candidates', 'eligible_candidates', 'failures', 'errors', 'warnings', 'shortlist', 'finalists', 'contenders'):
         if isinstance(result.get(key), list):
             summary[key+'_count'] = len(result[key])
     if 'text' in result:

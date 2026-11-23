@@ -1,9 +1,9 @@
 {
-  "name": "ariadne-local",
-  "interface": {"displayName": "Local Ariadne"},
+  "name": "ariadne-pro-local",
+  "interface": {"displayName": "Local Ariadne Pro"},
   "plugins": [
     {
-      "name": "ariadne",
+      "name": "ariadne-pro",
       "source": {"source": "local", "path": "."},
       "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
       "category": "Productivity"

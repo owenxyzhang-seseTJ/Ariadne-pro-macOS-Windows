@@ -475,7 +475,7 @@ def start_analysis(job: str, analysis: Analysis, inputs: list[str],
                    estimator: Literal['signed-wls', 'nnls', 'poisson', 'poisson-gaussian'] = 'signed-wls',
                    timeout_seconds: int = 3600, refinement_method: Literal['anchors', 'em'] = 'anchors',
                    fit_positions: bool = False, position_derivatives: bool = False,
-                   confidence_level: float = .95) -> OperationHandle:
+                   confidence_level: float = .95, target_frames: int | None = None) -> OperationHandle:
     """Run a fixed Ariadne scientific adapter asynchronously, with immutable outputs.
 
 Input roles, allowed options and expected outputs are declared per analysis in
@@ -492,6 +492,9 @@ Options that do not apply to the selected analysis are rejected.
         raise ToolError('E_INPUT', 'Position settings require booleans')
     if type(confidence_level) not in (int, float) or not math.isfinite(confidence_level) or not .5 < confidence_level < 1:
         raise ToolError('E_INPUT', 'Confidence level must be finite and between .5 and 1')
+    if target_frames is not None and (analysis != 'build_overlaps' or type(target_frames) is not int
+                                      or not 1 <= target_frames <= 100_000):
+        raise ToolError('E_INPUT', 'Use target_frames in 1..100000 for build_overlaps')
     if fit_positions and estimator != 'signed-wls':
         raise ToolError('E_INPUT', 'Position nuisance fitting requires signed-wls')
     if (refinement_method != 'anchors' and analysis != 'joint_refine'
@@ -527,6 +530,8 @@ Options that do not apply to the selected analysis are rejected.
         argv += ['--method', refinement_method]
     if analysis == 'build_overlaps' and position_derivatives:
         argv += ['--position-derivatives']
+    if target_frames is not None:
+        argv += ['--target-frames', str(target_frames)]
     return submit_operation(path, stage, analysis, argv, [expected], timeout_seconds)
 
 

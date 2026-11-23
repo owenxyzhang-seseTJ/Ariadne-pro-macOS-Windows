@@ -156,6 +156,14 @@ def score_observation_groups(model, groups, *, scale=1., domain_fractions=None):
             "calibration": "conditional on fixed profile geometry, calibration, background basis and Gaussian variances"}
 
 
+OBSERVATION_SOLVE_FIELDS = ('phasing_options', 'spacegroup_candidates', 'options', 'domain_fractions',
+                            'refine_domain_fractions', 'phase_relation', 'restraints', 'constraints')
+
+
+def observation_solve_options(settings):
+    return {key: settings[key] for key in OBSERVATION_SOLVE_FIELDS if key in settings}
+
+
 def solve_observations(cell, elements, groups, *, initial_model=None,
                        phasing_options=None, refinement_options=None,
                        spacegroup_candidates=None, options=None,

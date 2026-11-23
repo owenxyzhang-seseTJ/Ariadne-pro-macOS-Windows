@@ -309,13 +309,14 @@ def run_native(action,project,folder,output,settings):
             result=refine_observations(s,groups,options,**{k:settings[k] for k in ('domain_fractions','refine_domain_fractions','phase_relation','constraints','restraints') if k in settings})
             if result.get('structure'):s=Structure.from_dict(result['structure'])
         else:
-            from ariadne_xtal.evidence_solver import solve_observations
+            from ariadne_xtal.evidence_solver import observation_solve_options, solve_observations
             result=solve_observations(Cell(**project['cell']),project['elements'],groups,initial_model=s,
-                                      phasing_options=settings.get('phasing_options'),refinement_options=settings.get('refinement_options'),options=options)
+                                      refinement_options=settings.get('refinement_options'),**observation_solve_options(settings))
             if result.get('refinement',{}).get('structure'):s=Structure.from_dict(result['refinement']['structure'])
     elif action=='symmetry':
         from ariadne_xtal.spacegroup_search import propose_spacegroups
-        proposals=propose_spacegroups(s,r.hkl,settings.get('candidates',[s.spacegroup]),
+        work_hkl = r.hkl if r.free_flags is None else r.hkl[~r.free_flags]
+        proposals=propose_spacegroups(s,work_hkl,settings.get('candidates',[s.spacegroup]),
                                       tolerance=settings.get('tolerance',.18),phase_limit=settings.get('phase_limit',.08))
         result={'proposals':[]}
         for i,p in enumerate(proposals):

@@ -12,6 +12,8 @@ CAPABILITIES = {
         "derivatives": "Exact symmetry/coordinate/Cholesky/log-tensor/occupancy/scale/twin chains; finite differences only for geometric restraint residuals",
         "constraints": "Site symmetry, continuous origin gauge, native equality/occupancy constraints; see API schema",
         "restraints": "Native distance, angle, similar-distance, planarity, ADP-similarity and rigid-bond residuals",
+        "twin_diagnostics": "Common-basis absence coverage, candidate lattice laws and fixed-model signed-intensity screening",
+        "twin_phasing": "Exact two-domain work-only phase proposals, CPU replay after optional Metal or CUDA screening",
         "twins": "Merohedral integer reciprocal laws; explicit indexed same-phase overlapping groups with jointly refined domain fractions and nullspace diagnostics",
         "pixel_likelihood": "Gaussian background-profiled observable compression and true Poisson joint signal/background fitting via installed Ariadne package",
         "joint_structure": "Direct R diag(c alpha) |F|^2 structural objective; no required deconvolved intensity table",

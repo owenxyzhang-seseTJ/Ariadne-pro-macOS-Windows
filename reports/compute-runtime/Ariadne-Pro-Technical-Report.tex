@@ -52,7 +52,7 @@
 \vspace{8mm}
 {\fontsize{29}{36}\selectfont\bfseries\color{ink}单晶衍射计算与持久工作流\par}
 \vspace{2mm}
-{\large\sffamily\color{muted}实测像素审计、批量相位筛选与工作台调度\par}
+{\large\sffamily\color{muted}实测像素、孪晶解析、批量相位筛选与工作台调度\par}
 \vspace{8mm}
 
 \noindent
@@ -62,7 +62,7 @@
 
 \vspace{8mm}
 \noindent{\large\bfseries\color{ink}摘要}\par
-单晶衍射解析同时处理像素计数、高维反射和多阶段计算。Ariadne Pro 将峰形预测、候选搜索和任务交付建立在可独立核验的接口上。三组实测扫描轮流留出后，训练得到的共享峰宽使三组留出像素的负对数预测似然均下降。批量粗筛将一组相位起点留在同一 GPU 上迭代，晋级候选用 CPU 双精度复算。工作台和 MCP 通过同一套持久调度器执行任务，已提交的结果能在取消、进程异常退出和恢复后继续进入下游。
+单晶衍射解析同时处理像素计数、高维反射和多阶段计算。Ariadne Pro 将峰形预测、候选搜索和任务交付建立在可独立核验的接口上。三组实测扫描轮流留出后，训练得到的共享峰宽使三组留出像素的负对数预测似然均下降。孪晶分级筛选将四个合成难例的完整精修从每例 24 次降到 3 次。批量粗筛将一组相位起点留在同一 GPU 上迭代，晋级候选用 CPU 双精度复算。工作台和 MCP 通过同一套持久调度器执行任务，已提交的结果能在取消和恢复后继续进入下游。
 
 \vspace{4mm}
 \capline{图 1\quad 计算和交付路径}
@@ -82,7 +82,7 @@
 
 \vspace{3mm}
 \noindent\textbf{报告数据口径。}
-实测对象以 A1–A3 和 M01 表示。报告提供汇总统计、评分方法和程序入口。完整结构、逐条反射、原始帧与实验文件由本地项目管理。
+实测对象使用匿名编号。报告提供汇总统计、评分方法和程序入口。完整结构、逐条反射、原始帧与实验文件由本地项目管理。
 
 \clearpage
 \section{数值内核与数据复用}
@@ -193,7 +193,7 @@ S06 & 1.804 & 0.369 & 4.870 & 3.404 & 3.844 / 2.399\\
 \subsection*{实测反射对照与跨平台运行}
 匿名实测用例 M01 含 71 条原始强度，其中 15 条留出。CPU、Metal 的首选结构 RMSD 分别为 \qty{0.724}{\angstromunit} 和 \qty{0.658}{\angstromunit}。两端的所有起点均未达到 \qty{0.25}{\angstromunit} 恢复阈值。按工作集拟合强度尺度后，留出反射的标准化 RMSE 为 67.46 和 55.38。
 
-本轮 GPU 对照在 Apple M5 上运行。CUDA/CuPy 接口面向已配齐设备运行库的环境，Windows 上的设备对照待依赖就绪后运行。
+以上相位对照在 Apple M5 上运行。Windows 的 CUDA 设备对照使用下文的双畴观测任务。
 
 \section{工作台的持久 DAG}
 
@@ -218,36 +218,29 @@ S06 & 1.804 & 0.369 & 4.870 & 3.404 & 3.844 / 2.399\\
 取消通过调度器回收计算子进程。进程异常退出后，工作台查询保存的状态，确认旧执行停止，再在同一任务下启动未完成节点的下一次执行。前序结果及旧执行记录随任务保留。旧项目使用原有项目目录继续读取。
 
 \clearpage
-\section*{验收与复现}
+\section{孪晶解析与定向像素回读}
 
-\capline{表 4\quad 工作台和计算运行时验证}
-\noindent\begin{tabularx}{\linewidth}{@{}p{48mm}Y@{}}
+解析 skill 首先区分精确重叠、赝度量、缺测和漏判对称。程序把等价反射、Friedel 对和共用观测成组分配到工作、选择和审计集。消光报告记录覆盖与显著违例。半晶胞 Patterson 样点记录奇偶类强度与采样掩膜。多个空间群和孪晶假设可在同一组实测强度上保留或晋级。
+
+对完全重叠的双畴，结构因子在候选律变换后的指数并集上批量计算。带权两列拟合用
+\(\widehat I_h = \beta_0 |F(h)|^2 + \beta_1 |F(Th)|^2\)
+估计尺度 \(\beta_0+\beta_1\) 和畴占比 \(\beta_1/(\beta_0+\beta_1)\)。短精修后以选择集评分决定完整精修的去向。对条件秩不足、区间触及边界或留出评分并列的情况保留备选解释。SHELXT 初解保留各自的 RES/HKL，并检查基底和共同强度尺度。
+
+\capline{表 4\quad 孪晶候选与实测窗口的配对对照}
+\noindent\begin{tabularx}{\linewidth}{@{}p{42mm}Y@{}}
 \toprule
-场景 & 观测结果\\
+比较对象 & 观测结果\\
 \midrule
-实测帧走完自动 DAG & 30 张实测帧，七个节点各执行一次。HKL 导出含 124 个带指数记录。\\
-工作台提交进程退出 & 新 API 进程读取的运行标识一致，任务获配额后完成。\\
-取消及调度进程异常退出 & 外部计算进程被回收。恢复后第一个节点仍为首次执行，第二个节点在第二次执行完成。\\
-节点报错后的恢复 & 精修结果由后续图谱节点继续使用。独立目录保存两次图谱运行。\\
-macOS 回归 & 数值及 MCP 运行时通过 246 项和 10 个子测试，工作台通过 26 项。\\
-Windows x64 回归 & 数值及 MCP 运行时通过 219 项，跳过 18 项。工作台通过 19 项，跳过 7 项 POSIX 外部进程用例。\\
-前端构建 & TypeScript 检查和生产构建通过。\\
+合成难例，4 组 & 每例完整精修从 24 次降到 3 次。两组流程均找回标注孪晶律。端到端中位提速 \(2.43\times\)。\\
+缓存，十万条反射 & 64 到 256 MiB 的数组预算使筛选耗时从 2.62 秒降到 2.11 秒。峰值进程内存由 330 增至 377 MiB。五组小样的热缓存准备中位提速 \(1.73\times\)。\\
+实测定向回读，3 组扫描 & 从 540 个可用帧位置选取 150 个，窗口准备从 20.86 秒降到 5.00 秒。339 个共同窗口的留出像素评分逐个一致。\\
+双畴盲解，5 个合成晶体 & CPU、Metal 和 CUDA 均恢复 5 个晶体。50:50 用例在联合观测下恢复至约 \qty{0.0013}{\angstromunit}。\\
 \bottomrule
 \end{tabularx}
 
-\subsection*{复现入口}
-\begin{itemize}
-  \item \code{tools/audit\_pixel\_profiles.py} 接收固定几何和反射预测目录，逐扫描输出匿名 Poisson 审计统计。
-  \item \code{tools/benchmark\_blind\_phasing.py} 使用合成用例或外部实测强度与评价参考。参数 \code{--gpu metal} 和 \code{--gpu cuda} 对应两种 GPU 后端。
-  \item \code{workbench/launch.py} 从已有科学环境启动工作台。
-  \item \code{ARIADNE\_PROJECTS\_DIR} 指定项目目录。\\
-        \code{ARIADNE\_HOST\_BUDGET} 指向工作台与 MCP 共用的资源配置。
-  \item \code{validation-summary.json} 保存逐组匿名评分、候选恢复、计时以及验证计数。
-\end{itemize}
-\noindent 使用 XeLaTeX 编译本报告。源文件与汇总指标可独立归档。
+定向回读按扫描分配预算，兼顾峰分离、解码成本和随机窗口。在预先给定两套取向的 113 个实测部分重叠窗口中，双畴轮廓在 102 个窗口降低留出像素的加权残差。具备同相、校正和贡献者记录的观测组可继续导出 HKLF 5 与逐组映射。三组公开衍射数据用于核对赝度量、消光等价和子晶格重合。另一组匿名参考的 \num{33029} 条既有积分观测用于验证强度证据入口。
 
-\subsection*{结论}
-Ariadne Pro 以实测像素评分判定峰形改进，以完整复算核查 GPU 筛选保留的解，并以持久工作流承接计算结果。共享峰宽的收益、较大批量 FFT 的提速和外部计算的恢复都由各自实验直接给出。三条证据共同支撑从像素到可追溯结果的工作台流程。
+双畴相位搜索直接拟合带符号混合强度。在相同 12 个起点和 160 次完整迭代预算下，50:50 用例的同机对照为 CPU 2.48 秒、Metal 1.11 秒，以及 Windows CPU 18.55 秒、CUDA 7.65 秒。耗时含候选精修，随机抽查单列。CPU 复算与固定留出负责评价晋级候选。
 
 \capline{方法与软件文献}
 \noindent{\small
@@ -256,7 +249,46 @@ Acta Crystallographica A \textbf{60}, 134–141 (2004)。
 \href{https://doi.org/10.1107/S0108767303027569}{DOI}\par
 J.~Beilsten-Edmands 等，\emph{Scaling diffraction data in the DIALS software package}，
 Acta Crystallographica D \textbf{76}, 385–399 (2020)。
-\href{https://doi.org/10.1107/S2059798320003198}{DOI}
+\href{https://doi.org/10.1107/S2059798320003198}{DOI}\par
+S.~Parkin，\emph{Practical hints and tips for solution of pseudo-merohedric twins: three case studies}，
+Acta Crystallographica E \textbf{77} (2021)。
+\href{https://doi.org/10.1107/S205698902100342}{DOI}
 }
+
+\clearpage
+\section*{验收与复现}
+
+\capline{表 5\quad 工作台和计算运行时验证}
+\noindent\begin{tabularx}{\linewidth}{@{}p{48mm}Y@{}}
+\toprule
+场景 & 观测结果\\
+\midrule
+实测帧走完自动 DAG & 30 张实测帧，七个节点各执行一次。HKL 导出含 124 个带指数记录。\\
+工作台提交进程退出 & 新 API 进程读取的运行标识一致，任务获配额后完成。\\
+取消及调度进程异常退出 & 外部计算进程被回收。恢复后第一个节点仍为首次执行，第二个节点在第二次执行完成。\\
+节点报错后的恢复 & 精修结果由后续图谱节点继续使用。独立目录保存两次图谱运行。\\
+ macOS 回归 & 数值及 MCP 运行时通过 264 项和 10 个子测试，工作台通过 27 项。\\
+ Windows x64 回归 & 孪晶解析、定向择窗及 HKLF 5 导出通过 22 项定向回归。\\
+ CLI、MCP 与工作台 & 同一输入取得相同观测划分、选中模型和畴占比。MCP 复用已开启的审计。\\
+前端构建 & TypeScript 检查和生产构建通过。\\
+\bottomrule
+\end{tabularx}
+
+\subsection*{复现入口}
+\begin{itemize}
+  \item \code{tools/audit\_pixel\_profiles.py} 接收固定几何和反射预测目录，逐扫描输出匿名 Poisson 审计统计。
+  \item \code{tools/benchmark\_blind\_phasing.py} 使用合成用例或外部实测强度与评价参考。参数 \code{--gpu metal} 和 \code{--gpu cuda} 对应两种 GPU 后端。
+  \item \code{tools/benchmark\_twin\_resolution.py} 比较分级筛选与全候选精修。\\
+        \code{tools/benchmark\_twin\_phasing.py} 运行同预算双畴盲解。\\
+        \code{tools/benchmark\_targeted\_windows.py} 对探测器窗口作配对评分。
+  \item \code{workbench/launch.py} 从已有科学环境启动工作台。
+  \item \code{ARIADNE\_PROJECTS\_DIR} 指定项目目录。\\
+        \code{ARIADNE\_HOST\_BUDGET} 指向工作台与 MCP 共用的资源配置。
+  \item \code{reports/compute-runtime} 和 \code{reports/twin-resolution} 下的 \code{validation-summary.json} 保存匿名评分、候选恢复、计时和验证计数。
+\end{itemize}
+\noindent 使用 XeLaTeX 编译本报告。源文件与汇总指标可独立归档。
+
+\subsection*{结论}
+Ariadne Pro 通过共享峰形、批量结构因子计算和分级精修减少重复计算。定向读帧把真实像素集中到有判别力的窗口。双畴联合观测扩展了相位搜索对等比例孪晶的适用性。持久工作流记录观测来源、候选决策和已冻结审计，供本地工作台、CLI 和 MCP 复查。
 
 \end{document}
